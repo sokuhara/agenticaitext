@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>演習0 AIエージェントに任せる価値がある仕事を探す</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#0d7a70;
+  --accent-soft:#e0f4f1;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="章の一覧">
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html" aria-current="page">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">演習 0</div>
+    <h1>AIエージェントに任せる価値がある仕事を探す</h1>
+    <p class="lede">「目標を与えると、手順を考え、道具を使い、結果を見ながら次を決めるAI」というAgentic AIの考え方を確認しました。ここでは、その言葉を覚えるのではなく、実際の仕事に当てはめて考えます。</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>前章まで</dt><dd>「はじめに」で、Agentic AIとCoding Agentが何を指すのかを確認しました。</dd>
+      <dt>この章</dt><dd>定義を実際の仕事に当てはめます。どこまで任せられて、どこから人が判断すべきかを、3か国の例で比べます。</dd>
+      <dt>次章へ</dt><dd>次に、PART 1から使う道具（VS Code、Ollama、モデル）をそろえます。</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="この章の目次">
+    <h2>この章の内容</h2>
+    <ol>
+      <li><a href="#se-1">課題</a></li>
+      <li><a href="#se-2">記入する表</a></li>
+      <li><a href="#se-3">注意</a></li>
+    </ol>
+  </nav>
+
+
+  <section class="sec" id="se-1">
+    <h2><span class="n">01</span>課題</h2>
+
+    <p>ここではまだコードを書きません。20分間、自分で考えてください。</p>
+
+    <div class="warn">
+      <span class="tag">これは何の課題ではないか</span>
+      <span class="mark">各国の現実を調べる課題ではありません。</span>その地域で起こりうる仕事の流れを仮定します。そのうえで、Agentに任せる範囲を設計します。<br><br>
+      問うているのは国の知識ではありません。<strong>「繰り返し・多段階・確認点」を見つけられるか</strong>です。
+    </div>
+
+    <p>次から<strong>1つ題材を選び</strong>、アメリカ、インド、ケニアのそれぞれについて考えてください。自分で別の題材を立てても構いません。</p>
+
+    <ul>
+      <li>奨学金申請の一次確認</li>
+      <li>病院予約の振り分け</li>
+      <li>農作物の集荷・配送確認</li>
+      <li>大学の提出物チェック</li>
+      <li>行政書類の不足確認</li>
+    </ul>
+
+    <p>選んだ題材について、次の条件を満たす仕事を国ごとに<strong>1つずつ</strong>挙げます。</p>
+
+    <ol>
+      <li>同じ形の作業が繰り返し発生する</li>
+      <li>1回の操作では終わらず、複数の手順が必要である</li>
+      <li>現在は主に人が行っている</li>
+      <li>間違えた場合に、確認や責任の所在が問題になる</li>
+    </ol>
+
+    <div class="note">
+      <span class="tag">この課題で確かめること</span>
+      「繰り返し」「多段階」「現在は人が担当している」。この言葉を書き写すだけでは足りません。<br><br><span class="mark">具体的に書いてください。</span>その仕事はいつ始まるか。誰が何を確認するか。どこで間違えると、誰が困るか。
+    </div>
+
+    <p><strong>選んだ題材：</strong> ________________________________</p>
+
+    <div class="note">
+      <span class="tag">配布用</span>
+      印刷して配れる形式：<a href="session0_handout.docx">session0_handout.docx</a>（Word・A4 2枚） ／ <a href="session0_handout.html">session0_handout.html</a>（HTML版）
+    </div>
+  </section>
+
+  <section class="sec" id="se-2">
+    <h2><span class="n">02</span>記入する表</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>国</th>
+          <th>仕事</th>
+          <th>開始のきっかけ</th>
+          <th>現在の担当者・手順</th>
+          <th>AIに任せた場合の利点</th>
+          <th>人間が残すべき確認</th>
+          <th>間違えた場合に困る人・こと</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>アメリカ</strong></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td><strong>インド</strong></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td><strong>ケニア</strong></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+
+    <h3>記入例</h3>
+
+    <table>
+      <thead>
+        <tr><th>国</th><th>仕事</th><th>開始のきっかけ</th><th>人間が残すべき確認</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>インド</td>
+          <td>奨学金申請書類の一次確認</td>
+          <td>学生が書類を提出する</td>
+          <td>書類不足の最終判定、例外処理、支給決定</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><span class="mark">「開始のきっかけ」を書くと、その仕事がループのどこから始まるのかが見えます。</span>「人間が残すべき確認」を書くと、任せる範囲の境目がどこにあるのかを、自分で決めることになります。この2列が、単なる仕事の一覧と、Agentの設計とを分けます。</p>
+  </section>
+
+  <section class="sec" id="se-3">
+    <h2><span class="n">03</span>注意</h2>
+
+    <p>知らない国については、<span class="mark">調べずに推測で書いてかまいません。</span>ただし、推測で書いた箇所には <code>※推測</code>、置いた前提には <code>［前提：……］</code> を付けてください。</p>
+
+    <div class="note">
+      <span class="tag">なぜ印を付けるのか</span>
+      これは意地悪ではなく、<span class="mark">自分の判断の根拠と仮定を、自分で見えるようにする訓練</span>です。3か国のうち1つは、ほとんど知らない国のはずです。それでも表は埋まります。どこが知識で、どこが仮定だったのかを、後から自分で切り分けられる状態にしておいてください。<br>
+      この用紙はPART 1でもう一度開きます。捨てずに持っていてください。
+    </div>
+
+    <p>正解を当てる課題ではありません。考えてほしいことは2つです。</p>
+
+    <p><span class="mark">どのような仕事が「AIに任せる候補」になるか。任せた場合、誰にどのような影響が出るか。</span></p>
+  </section>
+
+
+
+  <nav class="pager">
+    <a class="prev" href="index.html"><span class="dir">← PREV</span><span class="ttl">はじめに　AIがコードを書く時代に、何を学ぶのか</span></a>
+    <a class="next" href="setup.html"><span class="dir">NEXT →</span><span class="ttl">セットアップ　道具をそろえる</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'コピー';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'コピーしました';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'コピー';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

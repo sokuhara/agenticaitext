@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 7 自分でAgentを組み立てる</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#7c3aed;
+  --accent-soft:#f0eafe;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="章の一覧">
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html" aria-current="page">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 7</div>
+    <h1>自分でAgentを組み立てる</h1>
+    <p class="lede">ここまではClineを使いました。この章では、Agentの中身を自分で作ります。Python、LangChain、LangGraph、MCPを使います。Agentに判断、再試行、人間の承認を追加します。</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>前章まで</dt><dd>PART 6では、テストを使ってVibe Chatへ機能を追加しました。</dd>
+      <dt>この章</dt><dd>失敗するテストを1件用意します。Agentに原因を調べさせ、修正と再試行を行わせます。最後は人間の承認で止めます。</dd>
+      <dt>次章へ</dt><dd>PART 8では、同じ考え方を動画制作へ応用します。</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="この章の目次">
+    <h2>この章の内容</h2>
+    <ol>
+      <li><span class="n">7.1</span><a href="#s7-1">素のPythonで最小のAgentを作る</a></li>
+      <li><span class="n">7.2</span><a href="#s7-2">LangChainで部品をつなぐ</a></li>
+      <li><span class="n">7.3</span><a href="#s7-3">LangGraphで仕事の流れを設計する</a></li>
+      <li><span class="n">7.4</span><a href="#s7-4">人間の承認・中断・再開</a></li>
+      <li><span class="n">7.5</span><a href="#s7-5">発展：MCPで現在の状況につなぐ</a></li>
+      <li><span class="n">7.6</span><a href="#s7-6">提出物</a></li>
+    </ol>
+  </nav>
+
+
+  <section class="sec" id="s7-0" style="margin-bottom:44px">
+    <h2><span class="n">7.0</span>この章で何をするか</h2>
+
+    <div class="prompt"><span class="tag">MISSION</span>失敗しているテストを1件、Agentに修正させてください。テストが成功しても、Agentを終了させません。差分を表示し、人間の承認を待つようにします。</div>
+
+    <h3><span class="n">7.0.1</span>始める前の準備</h3>
+
+    <p>PART 6で作った<code>vibe-chat/</code>を使います。最初に、テストが失敗する状態を作ります。</p>
+
+    <h4>壊し方</h4>
+
+    <p><code>app.py</code> を開き、<span class="mark">空の名前を弾いている部分をコメントアウトしてください。</span>PART 5の5.5でやったのと同じです。</p>
+
+    <p>そのうえで <code>pytest</code> を実行し、テストが落ちることを確認します。</p>
+
+<pre><code>pytest</code></pre>
+
+    <div class="note">
+      <span class="tag">Agentには修正場所を教えません</span>
+      Agentには「テストが失敗しています。原因を調べて修正してください」と伝えます。Agentが原因を発見できるか確認します。
+    </div>
+
+<pre><code>cd vibe-chat
+pytest</code></pre>
+
+    <p>テストが失敗することを確認してください。<span class="mark">この失敗を調査し、修正し、テストを通すことが、この章のAgentの目標です。</span></p>
+
+    <h3><span class="n">7.0.2</span>この章の完成条件</h3>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　Agentが、失敗したテストを読む</p>
+      <p><strong>2</strong>　修正対象のファイルを提案する</p>
+      <p><strong>3</strong>　修正して <code>pytest</code> を実行する</p>
+      <p><strong>4</strong>　成功しても、<code>git diff</code> を示して<strong>人間の承認で止まる</strong></p>
+    </div>
+
+    <p>4番が重要です。Agentは自分で完了を決めません。最終判断を人間へ返します。Clineでは、この機能が最初から用意されていました。この章では自分で実装します。</p>
+
+    <div class="note">
+      <span class="tag">必修と発展</span>
+      すべてをゼロから書く必要はありません。授業では次のように扱います。<br><br>
+      <strong>7.1</strong>　必修。素のPythonでツール呼び出しを書く<br>
+      <strong>7.2</strong>　講師デモ＋一部穴埋め。全部を書き写す必要はない<br>
+      <strong>7.3〜7.4</strong>　必修。停止条件、承認、再試行<br>
+      <strong>7.5</strong>　発展。MCP
+    </div>
+
+    <div class="note">
+      <span class="tag">この章の作り方</span>
+      <span class="mark">同じ処理を3段階で作ります。</span><br><br>
+      <strong>7.1</strong>　ツール呼び出しの中身を自分で書く<br>
+      <strong>7.2</strong>　LangChainに定型処理を任せる<br>
+      <strong>7.3〜7.4</strong>　LangGraphで仕事の流れと人間の承認を設計する<br>
+      <strong>7.5</strong>　そのAgentを、現在の外部データにつなぐ<br><br>
+      7.1を省略しないでください。ライブラリが代行する処理を理解するためです。<br>
+      LangGraphの目的は、コードを短くすることではありません。処理の流れを明確にすることです。
+    </div>
+  </section>
+
+  <section class="sec" id="s7-1">
+    <h2><span class="n">7.1</span>素のPythonで最小のAgentを作る</h2>
+
+    <p>PART 3では、ツール呼び出しの4手順を学びました。ホストがツールを示します。モデルがツールを選びます。ホストが実行します。ホストが結果をモデルへ返します。7.1では、この処理をPythonで書きます。</p>
+
+    <h3><span class="n">7.1.1</span>ツールに制約を付ける</h3>
+
+    <p>自分で作るツールにも制約が必要です。プロジェクト外のファイルを読めないようにします。テストの実行時間も制限します。</p>
+
+<pre><code>import subprocess
+from pathlib import Path
+
+PROJECT_ROOT = Path.cwd().resolve()
+
+
+def _safe_path(path: str) -&gt; Path:
+    target = (PROJECT_ROOT / path).resolve()
+    if PROJECT_ROOT not in target.parents and target != PROJECT_ROOT:
+        raise ValueError("プロジェクト外のファイルは扱えません")
+    return target
+
+
+def read_file(path: str) -&gt; str:
+    return _safe_path(path).read_text(encoding="utf-8")[:4000]
+
+
+WRITE_ROOTS = [PROJECT_ROOT, PROJECT_ROOT / "tests"]
+
+
+def write_file(path: str, content: str) -&gt; str:
+    target = _safe_path(path)
+    if not any(root == target.parent or root in target.parents
+               for root in WRITE_ROOTS):
+        raise ValueError("プロジェクト直下と tests/ 以外は書き換えません")
+    if target.suffix != ".py":
+        raise ValueError(".py 以外は書き換えません")
+    target.write_text(content, encoding="utf-8")
+    return f"{path} を更新しました"
+
+
+def run_tests() -&gt; str:
+    r = subprocess.run(
+        ["pytest"],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    return (r.stdout + r.stderr)[-4000:]
+
+
+TOOLS = {"read_file": read_file, "write_file": write_file, "run_tests": run_tests}</code></pre>
+
+    <p><code>_safe_path</code>は、プロジェクト外へのアクセスを防ぎます。<code>WRITE_ROOTS</code>は、書き込み先を制限します。この2つがない場合、Agentは不要なファイルを読む、または変更する可能性があります。</p>
+
+    <div class="warn">
+      <span class="tag">これは演習用に危険を縮めた書き換えツールです</span>
+      この例はファイル全体を上書きします。実務では、差分を表示し、人間が承認した後で適用する方法が安全です。この演習では、書き込み先を2つのディレクトリに制限します。
+    </div>
+
+    <h3><span class="n">7.1.2</span>ツールの定義とループ</h3>
+
+<pre><code>import ollama
+
+MODEL = "qwen3.8:27b"
+
+SCHEMA = [
+    {"type": "function", "function": {
+        "name": "read_file",
+        "description": "プロジェクト内のファイルを読む",
+        "parameters": {"type": "object",
+                       "properties": {"path": {"type": "string"}},
+                       "required": ["path"]}}},
+    {"type": "function", "function": {
+        "name": "write_file",
+        "description": "プロジェクト内の .py ファイルを書き換える",
+        "parameters": {"type": "object",
+                       "properties": {"path": {"type": "string"},
+                                      "content": {"type": "string"}},
+                       "required": ["path", "content"]}}},
+    {"type": "function", "function": {
+        "name": "run_tests",
+        "description": "pytest を実行して結果を返す",
+        "parameters": {"type": "object", "properties": {}}}},
+]
+
+
+def agent(goal: str, max_steps: int = 12) -&gt; str:
+    messages = [{"role": "user", "content": goal}]
+
+    for step in range(max_steps):
+        reply = ollama.chat(model=MODEL, messages=messages, tools=SCHEMA)
+        # ライブラリのバージョンでオブジェクト型か辞書型かが変わる。
+        # 辞書に揃えてから扱う。
+        msg = dict(reply["message"])
+        messages.append(msg)
+
+        calls = msg.get("tool_calls") or []
+        if not calls:
+            return msg["content"]            # 提案がなければ終了
+
+        for call in calls:
+            fn = dict(dict(call)["function"])
+            name = fn["name"]
+            args = dict(fn["arguments"])
+            print(f"[{step}] {name}({args})")
+            try:
+                result = TOOLS[name](**args)
+            except Exception as e:            # 失敗も結果として返す
+                result = f"ERROR: {e}"
+            messages.append({"role": "tool", "content": str(result)})
+
+    return "打ち切りました（最大ステップ数に到達）"
+
+
+print(agent("pytest を実行し、失敗しているテストの原因を調べて直してください"))</code></pre>
+
+    <div class="warn">
+      <span class="tag">動かないときに最初に見るところ</span>
+      <code>ollama</code> パッケージは、バージョンによって応答が辞書だったりオブジェクトだったりします。<span class="mark">上のコードは <code>dict()</code> で包んで揃えていますが、それでも <code>KeyError</code> や <code>AttributeError</code> が出ることがあります。</span><br><br>
+      エラーが出た場合は、<code>print(reply)</code>で応答を確認します。ツール呼び出しが入っているキーを探してください。これはライブラリの形式に関する問題です。
+    </div>
+
+    <h3><span class="n">7.1.3</span>このループに、Agentの核が入っています</h3>
+
+    <table>
+      <thead><tr><th>コードの場所</th><th>PART 3で説明したこと</th></tr></thead>
+      <tbody>
+        <tr><td><code>SCHEMA</code></td><td>ホストがツール一覧を渡す</td></tr>
+        <tr><td><code>msg["tool_calls"]</code></td><td>モデルが呼び出しを提案する</td></tr>
+        <tr><td><code>TOOLS[name](**args)</code></td><td><strong>ホストが実行する</strong></td></tr>
+        <tr><td><code>{"role": "tool", ...}</code></td><td>結果をモデルに戻す</td></tr>
+        <tr><td><code>for step in range(...)</code></td><td>ループ</td></tr>
+      </tbody>
+    </table>
+
+    <p><code>TOOLS[name](**args)</code>がツールを実行します。この行で、ファイルの読み書きやテストが実行されます。</p>
+
+    <p>モデルはツールの使用を提案します。実際にツールを実行するのは、このPythonプログラムです。</p>
+
+    <div class="warn">
+      <span class="tag">この実装に足りないもの</span>
+      この実装には、承認、差分表示、失敗後の戻り先がありません。また、中断後に再開できません。<br><br>
+      <span class="mark">7.2以降は、この不足を順に埋めていく作業です。</span>
+    </div>
+  </section>
+
+  <section class="sec" id="s7-2">
+    <h2><span class="n">7.2</span>LangChainで部品をつなぐ</h2>
+
+    <p>LangChainは、7.1で書いた処理を部品として提供します。最初に6つの概念を確認します。</p>
+
+    <h3><span class="n">7.2.1</span>LangChainの6つの概念</h3>
+
+    <table>
+      <thead><tr><th>概念</th><th>役割</th><th>この章で使う場所</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Model I/O</strong></td><td>モデルへ入力し、出力を受け取る</td><td>旅行案内とAgentのモデル呼び出し</td></tr>
+        <tr><td><strong>Chain</strong></td><td>Prompt、Model、出力処理を順番につなぐ</td><td>旅行案内の構造化出力</td></tr>
+        <tr><td><strong>Agent</strong></td><td>次に使うツールをモデルが選ぶ</td><td>テスト失敗の調査と修正</td></tr>
+        <tr><td><strong>Retrieval</strong></td><td>外部データを取得して回答に使う</td><td>7.5の厨房ボード</td></tr>
+        <tr><td><strong>Memory</strong></td><td>途中の状態や会話を保持する</td><td>7.4の中断と再開</td></tr>
+        <tr><td><strong>Callbacks</strong></td><td>処理中のイベントを記録・表示する</td><td>今回は概念だけ。必修コードには入れない</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">全部を使う必要はありません</span>
+      必要な部品だけを使います。最初にModel I/OとChainを試します。その後、Agent、Memory、Retrievalへ進みます。
+    </div>
+
+    <h3><span class="n">7.2.2</span>小演習：旅行案内を決まった形で出す</h3>
+
+    <p>自由な文章から特定の項目を取り出すことは困難です。次のプログラムは、出力を<strong>観光地名、都道府県、交通手段、見どころ</strong>の4項目に固定します。</p>
+
+<pre><code>uv add langchain langchain-ollama pydantic</code></pre>
+
+<pre><code>from pydantic import BaseModel, Field
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama import ChatOllama
+
+
+class Destination(BaseModel):
+    name: str = Field(description="観光地の名前")
+    prefecture: str = Field(description="都道府県名")
+    access: str = Field(description="東京からの主な移動手段")
+    highlight: str = Field(description="その観光地の見どころ")
+
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "あなたは日本の旅行アドバイザーです。"),
+    ("human", "東京から約1時間で行ける観光地を1つ提案してください。"),
+])
+
+model = ChatOllama(model="qwen3.8:27b", temperature=0)
+structured_model = model.with_structured_output(Destination)
+
+# Prompt → Model → Destination の順につなぐ
+chain = prompt | structured_model
+result = chain.invoke({})
+
+print("観光地:", result.name)
+print("都道府県:", result.prefecture)
+print("移動手段:", result.access)
+print("見どころ:", result.highlight)</code></pre>
+
+    <div class="note">
+      <span class="tag">画像のコードから変更した点</span>
+      画像の例はOpenAIのモデルと<code>PydanticOutputParser</code>を使っています。この教材ではOllamaのQwenを使います。<code>with_structured_output()</code>で、出力をPydanticの形式へ変換します。
+    </div>
+
+    <h4>学生が行うこと</h4>
+    <ol>
+      <li>プログラムを実行し、4項目が別々に表示されることを確認します。</li>
+      <li><code>Destination</code>へ<code>recommended_food</code>を追加します。</li>
+      <li>もう一度実行し、食べ物も出力されることを確認します。</li>
+      <li>自由文ではなく構造化する利点を1文で書きます。</li>
+    </ol>
+
+    <p>これがChainです。人間が処理の順番を決めています。モデルはツールを選んでいません。そのため、これはまだAgentではありません。</p>
+
+    <h3><span class="n">7.2.3</span>ChainからAgentへ進む</h3>
+
+    <p>ここから、7.1で自分で書いたツール呼び出しをLangChainへ置き換えます。LangChainは、この部分を部品として提供します。</p>
+
+    <table>
+      <thead><tr><th>7.1で自分で書いたもの</th><th>7.2でLangChainに任せるもの</th></tr></thead>
+      <tbody>
+        <tr><td><code>SCHEMA</code>（JSON Schema）</td><td>関数の型ヒントとdocstringから生成</td></tr>
+        <tr><td><code>tool_calls</code> の取り出し</td><td>Agentが処理</td></tr>
+        <tr><td>実行結果を会話へ追加する</td><td>Agentが処理</td></tr>
+        <tr><td><code>for step in range(...)</code></td><td>Agentが処理</td></tr>
+      </tbody>
+    </table>
+
+<pre><code>uv add langchain langchain-ollama</code></pre>
+
+<pre><code>from langchain.agents import create_agent
+from langchain_core.tools import tool
+from langchain_ollama import ChatOllama
+
+
+@tool
+def read_file_tool(path: str) -&gt; str:
+    &quot;&quot;&quot;プロジェクト内のファイルを読む。パスはリポジトリ直下からの相対で指定する。&quot;&quot;&quot;
+    return read_file(path)                # 7.1で書いた制約付きの関数をそのまま使う
+
+
+@tool
+def run_tests_tool() -&gt; str:
+    &quot;&quot;&quot;pytest を実行し、テストの結果をそのまま返す。&quot;&quot;&quot;
+    return run_tests()                    # 7.1で書いたものをそのまま使う
+
+
+@tool
+def write_file_tool(path: str, content: str) -&gt; str:
+    &quot;&quot;&quot;プロジェクト直下または tests/ 内の .py ファイルを書き換える。&quot;&quot;&quot;
+    return write_file(path, content)      # 7.1で書いた制約付きの関数をそのまま使う
+
+
+llm = ChatOllama(model="qwen3.8:27b")
+
+agent_executor = create_agent(
+    model=llm,
+    tools=[read_file_tool, write_file_tool, run_tests_tool],
+    system_prompt=(
+        "pytest の失敗を調べ、必要最小限の修正を行う。"
+        "修正後は必ず pytest を実行する。"
+    ),
+)</code></pre>
+
+    <p><code>llm.bind_tools()</code>は、モデルとツールを接続するだけです。<code>agent_executor</code>は、ツール呼び出しのループも実行します。7.3では<code>agent_executor</code>を使います。</p>
+
+    <p>7.1で手書きした <code>SCHEMA</code> が、関数のシグネチャとdocstringから自動的に作られます。</p>
+
+    <div class="warn">
+      <span class="tag">Agentを作る関数の名前は変わります</span>
+      LangChainのAPIは変更されることがあります。<code>create_agent</code>が見つからない場合は、使用中のバージョンと公式ドキュメントを確認してください。関数名が変わっても、基本処理は7.1のループと同じです。
+    </div>
+
+    <h3><span class="n">7.2.4</span>演習：docstringを変えて比較する</h3>
+
+    <div class="note">
+      <span class="tag">やること</span>
+      最初に、現在のdocstringで実行結果を記録します。次に、<code>read_file_tool</code>のdocstringを「データを取得する」へ変更します。同じ依頼を実行し、<span class="mark">どのツールが選ばれたかを比較してください。</span><br><br>
+      最後に元の具体的なdocstringへ戻します。曖昧な説明がツール選択へ与えた影響を1文で書きます。
+    </div>
+
+    <p>ツールのdocstringは、モデルが読む説明です。モデルは、その説明を使ってツールを選びます。</p>
+
+    <div class="note">
+      <span class="tag">ライブラリは道具です</span>
+      LangChainを使っても、基本処理は7.1と同じです。処理が分からない場合は、7.1のコードを確認してください。実行前に、使用中のバージョンと公式ドキュメントも確認します。
+    </div>
+  </section>
+
+  <section class="sec" id="s7-3">
+    <h2><span class="n">7.3</span>LangGraphで仕事の流れを設計する</h2>
+
+    <p>次に、処理の流れを作ります。失敗後の分岐、再試行の上限、人間へ確認する位置を決めます。</p>
+
+    <h3><span class="n">7.3.1</span>作る流れ</h3>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:18px 12px">
+      <svg viewBox="0 0 720 300" style="width:100%;max-width:720px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LangGraphの経路図">
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 z" fill="#9aa0ab"/>
+          </marker>
+        </defs>
+        <g font-family="system-ui, sans-serif" font-size="14" text-anchor="middle">
+          <g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5">
+            <rect x="16"  y="120" width="92"  height="42" rx="9"/>
+            <rect x="160" y="120" width="118" height="42" rx="9"/>
+            <rect x="330" y="120" width="92"  height="42" rx="9"/>
+            <rect x="474" y="42"  width="98"  height="42" rx="9"/>
+            <rect x="474" y="232" width="98"  height="42" rx="9"/>
+          </g>
+          <rect x="612" y="42" width="86" height="42" rx="9" fill="#eef0f2" stroke="#b9bec7" stroke-width="1.5"/>
+          <g fill="var(--ink)" font-weight="700">
+            <text x="62"  y="147">plan</text>
+            <text x="219" y="147">implement</text>
+            <text x="376" y="147">check</text>
+            <text x="523" y="69">review</text>
+            <text x="523" y="259">give up</text>
+            <text x="655" y="69">終了</text>
+          </g>
+          <g stroke="#9aa0ab" stroke-width="1.6" fill="none" marker-end="url(#ah)">
+            <path d="M108,141 H152"/>
+            <path d="M278,141 H322"/>
+            <path d="M422,134 H448 V63 H466"/>
+            <path d="M572,63 H604"/>
+            <path d="M422,150 H460 V253 H466"/>
+            <path d="M376,162 V196 H219 V166"/>
+            <path d="M523,84 V104 H240 V116" stroke-dasharray="5 4"/>
+          </g>
+          <g font-size="12" fill="#6c727d" font-weight="600">
+            <rect x="424" y="86"  width="48" height="18" rx="9" fill="#fff"/><text x="448" y="99">pass</text>
+            <rect x="416" y="192" width="88" height="18" rx="9" fill="#fff"/><text x="460" y="205">fail（3回）</text>
+            <rect x="258" y="187" width="104" height="18" rx="9" fill="#fff"/><text x="310" y="200">fail（3回未満）</text>
+            <rect x="556" y="24"  width="96" height="18" rx="9" fill="#fff"/><text x="604" y="37">approve / stop</text>
+            <rect x="328" y="95"  width="50" height="18" rx="9" fill="#fff"/><text x="353" y="108">revise</text>
+          </g>
+        </g>
+      </svg>
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:6px">
+        実線が正常な経路、破線が <code>revise</code> による差し戻し
+      </div>
+    </div>
+
+
+    <p>LLMを呼ぶ場所は<code>implement</code>だけです。ほかの処理は通常のPythonです。</p>
+
+<pre><code>uv add langgraph</code></pre>
+
+<pre><code>import subprocess
+from typing import TypedDict
+
+from langgraph.graph import StateGraph, START, END
+
+MAX_ATTEMPTS = 3
+
+
+class State(TypedDict, total=False):
+    goal: str
+    attempts: int
+    check_output: str
+    passed: bool
+    diff: str
+    decision: str
+    review_feedback: str
+
+
+def plan(state: State) -&gt; State:
+    return {**state, "attempts": 0}
+
+
+def implement(state: State) -&gt; State:
+    # ここだけがAgentの呼び出し。7.2で作った agent_executor をそのまま使う。
+    prompt = state["goal"]
+    if state.get("check_output"):
+        prompt += f"\n\n前回の実行結果:\n{state['check_output']}"
+    if state.get("review_feedback"):
+        prompt += f"\n\n人間からの指摘:\n{state['review_feedback']}"
+    agent_executor.invoke({"messages": [("user", prompt)]})
+    return {**state, "attempts": state["attempts"] + 1}
+
+
+def check(state: State) -&gt; State:
+    r = subprocess.run(["pytest"], cwd=PROJECT_ROOT,
+                       capture_output=True, text=True, timeout=120)
+    return {**state,
+            "check_output": (r.stdout + r.stderr)[-4000:],
+            "passed": r.returncode == 0}
+
+
+def route_after_check(state: State) -&gt; str:
+    if state["passed"]:
+        return "review"
+    if state["attempts"] &gt;= MAX_ATTEMPTS:
+        return "give_up"
+    return "implement"
+
+
+def give_up(state: State) -&gt; State:
+    print("3回試しても通りませんでした。人間に引き継ぎます。")
+    print(state["check_output"])
+    return state</code></pre>
+
+    <div class="note">
+      <span class="tag">ここではまだ組み立てません</span>
+      ノードと分岐は用意できました。グラフの組み立てと<code>compile()</code>は7.4で行います。まだ<code>review</code>がないため、ここでは実行しません。
+    </div>
+
+    <h3><span class="n">7.3.2</span>停止条件を設計に埋める</h3>
+
+    <p><code>MAX_ATTEMPTS</code>は再試行の上限です。3回失敗した場合、Agentは処理を止め、人間へ結果を返します。</p>
+
+    <p>無限の再試行は、コストと安全性の問題を起こします。</p>
+
+    <p><strong>自分でAgentを作るなら、停止条件も自分で書きます。</strong></p>
+
+    <div class="note">
+      <span class="tag">なぜ check が独立したノードなのか</span>
+      <code>pytest</code> をLLMに「実行したことにさせる」のではなく、グラフのノードとして必ず通します。PART 5で完了条件をテストにしたのは、ここで効いてきます。<span class="mark">Agentが「完了しました」と言えるのは、<code>check</code> ノードが成功を返したときだけ</span>という構造になります。
+    </div>
+  </section>
+
+  <section class="sec" id="s7-4">
+    <h2><span class="n">7.4</span>人間の承認・中断・再開</h2>
+
+    <p><code>review</code>ノードで処理を止め、人間の判断を待ちます。</p>
+
+<pre><code>from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import StateGraph, START, END
+from langgraph.types import interrupt, Command
+
+
+def review(state: State) -&gt; State:
+    diff = subprocess.run(["git", "diff"], cwd=PROJECT_ROOT,
+                          capture_output=True, text=True).stdout
+    answer = interrupt({
+        "diff": diff[:4000],
+        "check_output": state["check_output"],
+        "question": "採用しますか？",
+        "choices": ["approve", "revise", "stop"],
+        "when_revise": "直してほしい点を書いてください",
+    })
+    return {**state,
+            "diff": diff,
+            "decision": answer["decision"],
+            "review_feedback": answer.get("feedback", "")}
+
+
+def route_after_review(state: State) -&gt; str:
+    if state["decision"] == "revise":
+        return "implement"        # 指摘を渡して直させ直す
+    return END                    # approve も stop も終了</code></pre>
+
+    <h3><span class="n">7.4.1</span>ここで初めて組み立てる</h3>
+
+<pre><code>graph = StateGraph(State)
+graph.add_node("plan", plan)
+graph.add_node("implement", implement)
+graph.add_node("check", check)
+graph.add_node("review", review)
+graph.add_node("give_up", give_up)
+
+graph.add_edge(START, "plan")
+graph.add_edge("plan", "implement")
+graph.add_edge("implement", "check")
+graph.add_conditional_edges("check", route_after_check)
+graph.add_conditional_edges("review", route_after_review)
+graph.add_edge("give_up", END)
+
+app = graph.compile(checkpointer=MemorySaver())
+
+config = {"configurable": {"thread_id": "task-001"}}
+app.invoke({"goal": "pytest の失敗を直してください"}, config)
+# → interrupt で停止し、差分が返ってくる
+
+# 人間が差分を読んでから再開する
+app.invoke(Command(resume={"decision": "approve"}), config)
+
+# 直してほしい点がある場合
+app.invoke(Command(resume={
+    "decision": "revise",
+    "feedback": "テスト側ではなく実装側を直してください",
+}), config)</code></pre>
+
+    <p><code>revise</code>を選ぶと、処理は<code>implement</code>へ戻ります。Agentは、前回のテスト結果と人間の指摘を使って再修正します。</p>
+
+    <p>承認機能には、差し戻しの経路と指摘を渡す仕組みが必要です。</p>
+
+    <div class="warn">
+      <span class="tag">MemorySaverはメモリ上の保存です</span>
+      <code>thread_id</code> により、<strong>同じPythonプロセスの中では</strong>途中の状態を指定して再開できます。<span class="mark">プログラムを終了すると MemorySaver の状態は消えます。</span><br><br>
+      別の日にも再開したい場合は、SQLiteやPostgreSQLなど永続的なcheckpointerを使います。この章では、演習中に止めて再開するところまでで十分です。
+    </div>
+
+    <div class="warn">
+      <span class="tag">副作用は承認の後ろに置く</span>
+      <code>interrupt()</code> を含むノードは、<strong>再開時に先頭から実行されることを前提に書いてください。</strong>承認前に外部への書き込みを置くと、再開のたびに同じ処理が繰り返されます。<br><br>
+      <span class="mark">メール送信、課金、ファイル削除などの副作用は、承認の後に別のノードとして置きます。</span>ノードを小さく分けるのは、見やすさのためだけではありません。
+    </div>
+
+    <h3><span class="n">7.4.2</span>どこに承認を置くか</h3>
+
+    <table>
+      <thead><tr><th>置くべきところ</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td>取り消せない操作の前</td><td>削除、送信、公開、課金。戻せないものは必ず止める</td></tr>
+        <tr><td>影響範囲が広がるとき</td><td>変更ファイル数や行数がしきい値を超えたら止める</td></tr>
+        <tr><td>Agentが行き詰まったとき</td><td><code>give_up</code> は失敗ではなく、正しい終わり方のひとつ</td></tr>
+        <tr><td>外部に出るとき</td><td>ネットワーク送信、外部APIの呼び出し</td></tr>
+      </tbody>
+    </table>
+
+    <p>演習0で書いてもらった<strong>「人間が残すべき確認」</strong>の列を思い出してください。<span class="mark">あのとき言葉で書いたものを、いまコードとして置いています。</span></p>
+  </section>
+
+  <section class="sec" id="s7-5">
+    <h2><span class="n">7.5</span>発展：MCPで現在の状況につなぐ</h2>
+
+    <p>ここまでは、ツールを自分で作りました。MCPは、既存の外部ツールをAgentへ接続するための共通規格です。</p>
+
+    <p>この節では、読み取り専用のMCPツールを1つ作ります。外部データの変化によって、Agentの判断が変わることを確認します。</p>
+
+    <div class="note">
+      <span class="tag">ここでClineに戻る理由</span>
+      自作AgentからMCPへ接続するには、追加の接続コードが必要です。この節では、MCPクライアントとしてClineを使います。目的は、別プロセスのツールを共通形式で接続することです。自作Agentからの接続は<a href="appendix-c.html">付録C</a>で扱います。
+    </div>
+
+    <table>
+      <thead><tr><th>7.1で書いたツール</th><th>7.5のMCPツール</th></tr></thead>
+      <tbody>
+        <tr><td>Agentと同じPythonプロセスにある関数</td><td>別プロセスのサーバが提供する関数</td></tr>
+        <tr><td>自分でSchemaを書く</td><td>サーバからツール定義を受け取る</td></tr>
+        <tr><td>自分のリポジトリに密結合</td><td>同じサーバをClineなど別クライアントも使える</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">最初に繋ぐものの選び方</span>
+      最初からPlaywright、Git、データベース、AWSを使うと、接続、認証、権限の問題が同時に発生します。この演習では、サーバを1つ、読み取り専用ツールを1つだけ使います。
+    </div>
+
+    <h3><span class="n">7.5.1</span>厨房ボードサーバを立てる</h3>
+
+<pre><code>uv add mcp</code></pre>
+
+<pre><code># tools/kitchen_board_mcp.py
+import json
+from pathlib import Path
+
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("Kitchen Board")
+
+DATA_PATH = Path(__file__).parent.parent / "data" / "kitchen_board.json"
+
+
+@mcp.tool()
+def get_kitchen_board() -&gt; list[dict]:
+    &quot;&quot;&quot;現在の厨房ボードを取得する。注文の優先順位を判断するときだけ使う。&quot;&quot;&quot;
+    return json.loads(DATA_PATH.read_text(encoding="utf-8"))
+
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")</code></pre>
+
+<pre><code>// data/kitchen_board.json
+[
+  {"order_id": 31, "table": 12, "item": "Prawn Curry",
+   "status": "pending", "wait_minutes": 14, "allergy_alert": true},
+  {"order_id": 32, "table": 4,  "item": "Chicken Biryani",
+   "status": "pending", "wait_minutes": 11, "allergy_alert": false},
+  {"order_id": 33, "table": 8,  "item": "Masala Dosa",
+   "status": "cooking", "wait_minutes": 9,  "allergy_alert": false}
+]</code></pre>
+
+<pre><code>{
+  "mcpServers": {
+    "kitchen-board": {
+      "command": "uv",
+      "args": ["run", "python", "tools/kitchen_board_mcp.py"]
+    }
+  }
+}</code></pre>
+
+    <div class="warn">
+      <span class="tag">この設定はCline用です</span>
+      この<code>mcpServers</code>設定はCline用です。7.3の自作Agentは、この設定を読みません。自作Agentには別のMCPクライアントが必要です。
+    </div>
+
+    <h4>接続の確認</h4>
+
+    <div class="prompt"><span class="tag">PROMPT</span>MCPの get_kitchen_board を1回だけ呼び、
+返ってきた order_id をそのまま3件表示してください。</div>
+
+    <p>実行履歴にツール名が表示され、3件の番号が返れば接続成功です。</p>
+
+    <h3><span class="n">7.5.2</span>ミッション：厨房ボードを読め</h3>
+
+    <div class="warn">
+      <span class="tag">状況</span>
+      12時18分。ボードには注文が並んでいます。待ち時間が長い注文、アレルギー警告のある注文、すでに調理中の注文が混ざっています。<br><br>
+      <span class="mark">Agentに「次に取るべき2つの行動」を判断させなさい。ただし、注文一覧はAgentの中にはありません。</span>MCPから取得しなければ、判断できません。
+    </div>
+
+    <div class="prompt"><span class="tag">PROMPT</span>あなたは厨房の補助Agentです。
+
+現在の注文一覧を MCP の get_kitchen_board から取得し、
+次に取るべき行動を2つ、理由とともに示してください。
+
+ただし、アレルギー警告のある注文は、
+「調理開始」ではなく「人間の確認が必要」と報告してください。</div>
+
+<pre><code>kitchen-board.get_kitchen_board({})
+  ↓
+現在の注文データが返る
+  ↓
+Agent:
+「Order 32 の調理を開始する。待ち時間11分で、警告はない。
+ Order 31 は待ち時間14分と最長だが、甲殻類アレルギー警告があるため、
+ 調理開始ではなく人間の確認が必要である。」</code></pre>
+
+    <p>Order 31は待ち時間が最長です。しかし、アレルギー警告があります。そのため、Agentは調理を開始せず、人間へ確認を求めます。</p>
+
+    <h3><span class="n">7.5.3</span>状況を変えて、もう一度聞く</h3>
+
+    <div class="warn">
+      <span class="tag">緊急連絡</span>
+      Table 4 の注文はキャンセルされました。<br>
+      Table 15 は待ち時間18分、アレルギー警告なしです。
+    </div>
+
+    <p><code>data/kitchen_board.json</code>を変更します。その後、同じ質問をもう一度送ります。Agentのコードとプロンプトは変更しません。</p>
+
+    <p>優先順位が変わります。ここで確かめてほしいのは4つです。</p>
+
+    <ul>
+      <li>Agentは注文一覧を<strong>覚えていたのではない</strong></li>
+      <li>毎回、MCP経由で<strong>現在の状況</strong>を取得している</li>
+      <li>外部データが変われば、<strong>判断も変わる</strong></li>
+      <li>ただし、アレルギーの判断は<strong>人間に返す</strong></li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">ここがMCPの価値です</span>
+      <span class="mark">MCPが面白くなるのは、Agentが「いまの状況」を取りに行って、行動を変えるときです。</span><br><br>
+      Agentは店の状況を事前に知りません。MCPツールを使って、現在の状況を取得します。
+    </div>
+
+    <h3><span class="n">7.5.4</span>何が起きているか</h3>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　<code>kitchen_board_mcp.py</code> がAgentとは別のプロセスで動く</p>
+      <p><strong>2</strong>　Agentは起動時に「使える道具の名前・説明・引数」を受け取る</p>
+      <p><strong>3</strong>　Agentが <code>get_kitchen_board</code> を選ぶ</p>
+      <p><strong>4</strong>　MCPサーバが現在のデータを返す</p>
+      <p><strong>5</strong>　返った結果を読んで、Agentが次の判断をする</p>
+    </div>
+
+    <p>処理は7.1の4手順と同じです。MCPでは、ツールが別のプロセスで動きます。</p>
+
+    <h3><span class="n">7.5.5</span>次にできること</h3>
+
+    <table>
+      <thead><tr><th>今回</th><th>次にできること</th></tr></thead>
+      <tbody>
+        <tr><td>JSONの厨房ボード</td><td>SQLiteや業務APIの現在データ</td></tr>
+        <tr><td>読み取り専用</td><td>人間承認付きの更新操作</td></tr>
+      </tbody>
+    </table>
+
+    <p>2行目へ進むときは、7.4で決めた承認の位置を思い出してください。<strong>読み取りから書き込みへ変わった瞬間に、取り消せない操作が入ります。</strong></p>
+
+    <div class="note">
+      <span class="tag">つなぐときの原則</span>
+      <span class="mark">有効化するツールは、その作業に必要な最小限にする。</span>信頼できるサーバだけを使う。<br><br>
+      有効なツールの定義は、モデルへ毎回渡されます。使わないツールは無効にしてください。MCPサーバは、与えられた権限の範囲で操作を行います。信頼できるサーバだけを接続してください。
+    </div>
+
+    <p>この章では、ツール呼び出し、ループ、分岐、停止条件、人間の承認、中断、再開、外部データ取得を実装しました。PART 8では、同じ仕組みを動画制作へ応用します。</p>
+  </section>
+
+  <section class="sec" id="s7-6">
+    <h2><span class="n">7.6</span>提出物</h2>
+
+    <p>7.0.2で決めた完成条件を、実際に満たしたことを示してください。</p>
+
+    <table>
+      <thead><tr><th></th><th>出すもの</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>7.1〜7.4のコード。<code>_safe_path</code> と <code>WRITE_ROOTS</code> を含むこと</td></tr>
+        <tr><td><strong>2</strong></td><td>Agentの実行ログ。何回で通ったか、途中で何をしたか</td></tr>
+        <tr><td><strong>3</strong></td><td><code>interrupt</code> で止まった画面と、そこで示された <code>git diff</code></td></tr>
+        <tr><td><strong>4</strong></td><td><strong><code>revise</code> を1回は使うこと。</strong>どんな指摘を渡し、Agentの2回目がどう変わったか</td></tr>
+        <tr><td><strong>5</strong></td><td>7.5を行った場合、<code>kitchen_board.json</code> の変更前後で、Agentの判断がどう変わったか</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">4番が中心です</span>
+      <span class="mark">一発で承認したものより、差し戻して直させた記録のほうを評価します。</span>承認の仕組みは、承認するために作るのではありません。差し戻せるようにするために作ります。<br><br>
+      1回で通ってしまった場合は、意図的に不十分な修正を承認せず、指摘を書いて戻してください。
+    </div>
+
+    <h3><span class="n">7.6.1</span>考えておくこと</h3>
+
+    <p>次章の準備です。答えは書かなくて構いません。</p>
+
+    <blockquote>
+      あなたが作ったAgentの「停止条件」「承認の位置」「戻り先」は、コードを直す仕事に固有のものでしたか。<br>
+      それとも、まったく別の仕事にも当てはまりますか。
+    </blockquote>
+  </section>
+
+
+
+  
+
+
+  <nav class="pager">
+    <a class="prev" href="part6.html"><span class="dir">← PREV</span><span class="ttl">PART 6　テストを盾に機能を足す</span></a>
+    <a class="next" href="part8.html"><span class="dir">NEXT →</span><span class="ttl">PART 8　Agentic AIで動画制作を回す</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'コピー';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'コピーしました';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'コピー';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

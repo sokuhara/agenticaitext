@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 8 Run video production with an agent</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#be185d;
+  --accent-soft:#fce7f0;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html" aria-current="page">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 8</div>
+    <h1>Run video production with an agent</h1>
+    <p class="lede">The agent you built has state, tools, branching and approval. Here you apply the same design to work that is not coding. Video is the subject; the design is the point.</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>Previously</dt><dd>In Part 7 you built tool calling, branching, stopping conditions, human approval, interruption and resuming with your own hands.</dd>
+      <dt>This part</dt><dd>You apply the same design to non-coding work: concept, fact check, script, material, assembly, evaluation, correction. You approve the concept, the facts and the publish decision.</dd>
+      <dt>Next</dt><dd>Releasing and operating an agent is covered in Appendix C.</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="Contents of this part">
+    <h2>In this part</h2>
+    <ol>
+      <li><span class="n">8.1</span><a href="#s8-1">Break video production into stages</a></li>
+      <li><span class="n">8.2</span><a href="#s8-2">Set up state and tools in Colab</a></li>
+      <li><span class="n">8.3</span><a href="#s8-3">Hand concept through storyboard to the agent</a></li>
+      <li><span class="n">8.4</span><a href="#s8-4">After approval, assemble the video</a></li>
+      <li><span class="n">8.5</span><a href="#s8-5">Evaluate, and run the correction loop</a></li>
+      <li><span class="n">8.6</span><a href="#s8-6">Reasons you might not publish</a></li>
+    </ol>
+  </nav>
+
+
+
+  <section class="sec" id="s8-0" style="margin-bottom:44px">
+    <h2><span class="n">8.0</span>What you do in this part</h2>
+
+    <h3>What this part is about</h3>
+
+    <p>The agent you built in Part 7 had <strong>state, tools, branching and approval.</strong> <span class="mark">Here you move that design to work that is not coding.</span></p>
+
+    <p>Video production is the subject. The purpose is twofold: break multi-stage work into pieces, and <strong>separate what a machine can judge from what a person must judge.</strong></p>
+
+    <h3>By the end</h3>
+    <p>You will be able to design a production workflow that runs from concept to a publish decision, and build a notebook that includes a correction loop.</p>
+
+    <h3>The loop you repeat</h3>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　Break the work into stages</p>
+      <p><strong>2</strong>　Decide the state and the tools</p>
+      <p><strong>3</strong>　Decide where a human approves</p>
+      <p><strong>4</strong>　Run it</p>
+      <p><strong>5</strong>　When it fails, send it back</p>
+    </div>
+
+    <p>The same shape as <code>plan → implement → check → branch</code> in Part 7. <span class="mark">There are more stages, and nothing else changes.</span></p>
+
+    <h3><span class="n">8.0.1</span>The final assignment</h3>
+
+    <div class="prompt"><span class="tag">FINAL MISSION</span>Pick one theme: something local that students should know,
+something genuinely useful about university life,
+or a social issue close to you.
+
+Build a production agent that completes a one-minute explainer video.
+
+The agent plans the structure, checks the facts, writes the script,
+specifies the material, assembles the video, reads the check result
+and corrects it.
+
+You approve the concept, verify the facts, and decide on publishing.</div>
+
+    <div class="warn">
+      <span class="tag">This is not a video contest</span>
+      <span class="mark">You are not being marked on how the video looks.</span> You are being marked on how you divided the work, where you put the human checks, and how you sent it back when it failed.<br><br>
+      A polished video can still score low, <strong>if the flow runs straight through with no approval and no retry.</strong><br><br>
+      Text and still images are perfectly acceptable. <span class="mark">With a fact-checking node and a threshold that hands over to a person, that is a good submission.</span>
+    </div>
+
+    <h3><span class="n">8.0.2</span>Why Colab</h3>
+
+    <table>
+      <thead><tr><th></th><th>Reason</th></tr></thead>
+      <tbody>
+        <tr><td><strong>You can borrow a GPU</strong></td><td>Your own machine's specification stops mattering. Everyone runs under the same conditions</td></tr>
+        <tr><td><strong>The tools are there</strong></td><td>Python, ffmpeg, image and audio handling, all in one notebook</td></tr>
+        <tr><td><strong>The stages are visible</strong></td><td>Each cell can show plan, run, check separately</td></tr>
+        <tr><td><strong>Easy to hand in</strong></td><td>The <code>.mp4</code> and the notebook go out as they are</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">8.0.3</span>Connecting to Colab from VS Code</h3>
+
+    <p>Colab works in a browser, but <span class="mark">you can connect to it from VS Code.</span> Same environment as Part 3 onwards, borrowing only the GPU.</p>
+
+    <table>
+      <thead><tr><th></th><th>Colab in a browser</th><th>Connected from VS Code</th></tr></thead>
+      <tbody>
+        <tr><td>Editing</td><td>The Colab editor</td><td><span class="mark">VS Code, with Cline available</span></td></tr>
+        <tr><td>Git</td><td>Awkward</td><td>Works as usual</td></tr>
+        <tr><td>Mounting Drive</td><td>Needed</td><td>Not needed</td></tr>
+        <tr><td>Moving files</td><td>Through the browser</td><td>Right-click to send or fetch</td></tr>
+      </tbody>
+    </table>
+
+    <h4>How to connect</h4>
+
+    <ol>
+      <li>In the extensions panel (<code>Ctrl</code> + <code>Shift</code> + <code>X</code>), search for <strong>Colab</strong> and install <span class="mark">the one published by Google</span></li>
+      <li>Create an <code>.ipynb</code> file in your working folder</li>
+      <li>Press <strong>Select Kernel</strong> at the top right</li>
+      <li>Choose <strong>Colab</strong></li>
+      <li>Choose <strong>New Colab Server (CPU, GPU or TPU)</strong></li>
+      <li>Press <strong>Allow</strong> when asked about your Google account</li>
+      <li>Follow the instructions in the browser window that opens</li>
+      <li>Back in VS Code, choose <strong>GPU</strong></li>
+      <li>Pick <strong>T4 GPU</strong> from the accelerator list</li>
+    </ol>
+
+    <h4>Check that it connected</h4>
+
+<pre><code>import torch
+
+print("GPU available:", torch.cuda.is_available())
+print("GPU name:", torch.cuda.get_device_name(0)
+      if torch.cuda.is_available() else "No GPU")</code></pre>
+
+    <p>Success looks like this.</p>
+
+<pre><code>GPU available: True
+GPU name: Tesla T4</code></pre>
+
+    <h4>Moving files</h4>
+
+    <table>
+      <thead><tr><th>What you want</th><th>How</th></tr></thead>
+      <tbody>
+        <tr><td>Send a local file to Colab</td><td>Right-click in the explorer → <strong>Upload to Colab</strong></td></tr>
+        <tr><td>Bring a Colab file back</td><td>Open the <strong>Colab</strong> tab, right-click the file → <strong>download</strong></td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">Disconnecting deletes the files</span>
+      An <code>.mp4</code> you created on the Colab side <span class="mark">disappears when the runtime stops.</span> It is not saved to Drive.<br><br>
+      <strong>Download it as soon as the work is done.</strong> Build your submission first, then disconnect.
+    </div>
+
+    <div class="note">
+      <span class="tag">If you cannot connect from VS Code</span>
+      You can work in the browser instead. <span class="mark">In that case you have to enable the GPU yourself.</span> The steps are in <a href="appendix-a.html">Appendix A</a>, A.12.<br><br>
+      <strong>This part assumes the VS Code connection.</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">Colab does not assume local Ollama</span>
+      The 27B model you have used since Part 3 <span class="mark">does not run reliably on Colab.</span> The runtime is temporary and the GPU allocation is not guaranteed.<br><br>
+      So this part splits into two routes.
+    </div>
+
+    <table>
+      <thead><tr><th>Route</th><th>What you build</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Standard</strong></td><td>A <strong>production workflow</strong> with state, tools, branching and approval. No LLM; templates and rules carry the stages</td></tr>
+        <tr><td><strong>Extended</strong></td><td>A <strong>production agent</strong>, with an LLM connected to the concept, script and storyboard nodes</td></tr>
+      </tbody>
+    </table>
+
+    <p>The standard route is enough to meet the aim of this part. <span class="mark">Not having access to a video generation API costs you no marks.</span></p>
+
+    <p>Strictly, a standard-route submission is not an "AI agent". <strong>It is the skeleton of an agentic workflow.</strong> The design problem is identical. What differs is that the judgement sits with people and rules.</p>
+  </section>
+
+  <section class="sec" id="s8-1">
+    <h2><span class="n">8.1</span>Break video production into stages</h2>
+
+    <p>First, split the work into stages. <span class="mark">The same thing you did in Exercise 0.</span></p>
+
+    <p>Repetitive, multi-step, currently done by people. Break that apart.</p>
+
+    <table>
+      <thead><tr><th>Stage</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Concept</strong></td><td>Narrow the theme down to three points worth making</td></tr>
+        <tr><td><strong>Fact check</strong></td><td>Confirm each point is true. Keep the source</td></tr>
+        <tr><td><strong>Script</strong></td><td>Write text that fits one minute (roughly 150 words)</td></tr>
+        <tr><td><strong>Storyboard</strong></td><td>Say what appears in each shot</td></tr>
+        <tr><td><strong>Material</strong></td><td>Prepare images, audio and subtitles</td></tr>
+        <tr><td><strong>Assembly</strong></td><td>Combine into one video with ffmpeg</td></tr>
+        <tr><td><strong>Evaluation</strong></td><td>Check length, subtitle timing, volume, errors</td></tr>
+      </tbody>
+    </table>
+
+    <p>The same shape as <code>plan → implement → check</code> in Part 7. Two things differ: the number of stages, and <span class="mark">the fact that <code>check</code> cannot decide everything mechanically.</span></p>
+
+    <p>A test passes or fails. <strong>"Is this video any good" has no automated answer.</strong></p>
+
+    <h3><span class="n">8.1.1</span>So split the checking in two</h3>
+
+    <table>
+      <thead><tr><th>A machine can judge</th><th>A person must judge</th></tr></thead>
+      <tbody>
+        <tr><td>Whether the length is between 55 and 65 seconds</td><td>Whether the concept matches the brief</td></tr>
+        <tr><td>Whether the subtitle character count matches the script</td><td>Whether it is factually correct</td></tr>
+        <tr><td>Whether audio and subtitle timecodes line up</td><td>Whether anything is misleading</td></tr>
+        <tr><td>Whether the output file plays</td><td>Whether it should be published</td></tr>
+      </tbody>
+    </table>
+
+    <p>The left column becomes your <code>check</code> node. The right column becomes an <code>interrupt</code>.</p>
+
+    <p><span class="mark">That split is the design work in this assignment.</span></p>
+  </section>
+
+  <section class="sec" id="s8-2">
+    <h2><span class="n">8.2</span>Set up state and tools in Colab</h2>
+
+<pre><code>!apt-get -qq install ffmpeg
+!pip -q install langgraph pydantic</code></pre>
+
+<pre><code>from typing import TypedDict
+
+
+class VideoState(TypedDict, total=False):
+    theme: str
+    points: list[str]        # the three points
+    sources: list[str]       # where each point came from
+    script: str
+    shots: list[dict]        # storyboard
+    caption_only: bool       # build with subtitles and no audio
+    audio_path: str
+    subtitle_path: str
+    video_path: str
+    check_report: dict
+    attempts: int
+    approved: bool</code></pre>
+
+    <p>Structurally the same as <code>State</code> in Part 7. <span class="mark">There are more stages. The thinking is unchanged.</span></p>
+
+    <div class="note">
+      <span class="tag">Use the starter notebook</span>
+      Calling ffprobe, generating subtitles, assembling with ffmpeg, and a skeleton graph. <span class="mark">All of that is in the starter notebook (<a href="../part8_starter.ipynb">part8_starter.ipynb</a>).</span><br><br>
+      Written from scratch, you will spend the session debugging video processing and never reach the point of this part.
+    </div>
+
+    <p>There are only four things you design and rewrite.</p>
+
+    <table>
+      <thead><tr><th></th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>The state: what <code>VideoState</code> holds</td></tr>
+        <tr><td><strong>2</strong></td><td>The approval points: where you <code>interrupt</code></td></tr>
+        <tr><td><strong>3</strong></td><td>The send-back targets: which stage a failure returns to</td></tr>
+        <tr><td><strong>4</strong></td><td>The check conditions: what the machine decides</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">8.2.1</span>The tools</h3>
+
+    <table>
+      <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>make_subtitles</code></td><td>Generate an SRT subtitle file from the script</td></tr>
+        <tr><td><code>make_audio</code></td><td>Produce audio from the script (TTS, or silence plus subtitles)</td></tr>
+        <tr><td><code>make_slide</code></td><td>Generate a still image per shot (drawing with PIL is fine)</td></tr>
+        <tr><td><code>assemble_video</code></td><td>Combine images, audio and subtitles with ffmpeg</td></tr>
+        <tr><td><code>inspect_video</code></td><td>Read length and resolution with ffprobe, and run the machine checks</td></tr>
+      </tbody>
+    </table>
+
+    <p>Same shape as <code>@tool</code> in Part 7. <strong>Write the docstrings carefully.</strong></p>
+  </section>
+
+  <section class="sec" id="s8-3">
+    <h2><span class="n">8.3</span>Hand concept through storyboard to the agent</h2>
+
+    <p>These stages produce text: concept, fact check, script, storyboard, in that order.</p>
+
+    <p>Start by deciding, in one sentence, <span class="mark">who should do what after watching this.</span> Leave that vague and the agent simply adds plausible-looking footage.</p>
+
+    <div class="warn">
+      <span class="tag">Do not skip the fact-checking node</span>
+      Have an LLM write a script and <strong>plausible numbers and proper nouns appear in it.</strong> <span class="mark">They read as naturally as the true parts, which is what makes them hard to catch.</span><br><br>
+      This is section 1.2.3 from Part 1. Marking <code>*guess</code> in Exercise 0 was practice for exactly this.<br><br>
+      Keep a source in <code>sources</code> for each point, and <strong>do not let a point without a source reach the script.</strong> Implement that as a node. "Be careful about it" is not an implementation.
+    </div>
+
+    <p>On the standard route, <span class="mark">you supply the three sources yourself.</span> The workflow does not manufacture facts by searching the web.</p>
+
+    <p><strong>On the extended route</strong>, you may gather candidates with search, MCP or an external API. <span class="mark">The final verification is still done by a person.</span></p>
+
+    <p>Once the storyboard exists, put in <strong>the first human approval.</strong></p>
+
+<pre><code>def review_plan(state: VideoState) -&gt; VideoState:
+    decision = interrupt({
+        "points": state["points"],
+        "sources": state["sources"],
+        "script": state["script"],
+        "question": "Is the concept sound and are the facts checked? (approve / revise)",
+    })
+    return {**state, "approved": decision == "approve"}</code></pre>
+
+    <p>You stop here because <span class="mark">what follows is hard to undo.</span> Speech synthesis and video encoding cost time and money. Carry a wrong script forward and the amount you have to redo grows sharply.</p>
+
+    <p>This is the "before anything irreversible" rule from 7.4.</p>
+  </section>
+
+  <section class="sec" id="s8-4">
+    <h2><span class="n">8.4</span>After approval, assemble the video</h2>
+
+    <p>Once approved, build the material and combine it.</p>
+
+<pre><code>ffmpeg -y \
+  -f concat -safe 0 -i shots.txt \
+  -i narration.wav \
+  -vf "subtitles=subtitles.srt" \
+  -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest \
+  output.mp4</code></pre>
+
+    <p>You can let the agent write this, but <strong>read the command yourself.</strong></p>
+
+    <p><span class="mark">Wrong ffmpeg options often produce a different result rather than an error.</span> Do not rely on it stopping to tell you something is wrong.</p>
+
+    <div class="warn">
+      <span class="tag">Where it usually goes wrong</span>
+      Images at different resolutions between shots. Audio at inconsistent sample rates. Subtitles not encoded as UTF-8. A missing frame rate that changes the length.<br><br>
+      <span class="mark">ffmpeg happily runs in all of those cases.</span> <strong>That is why 8.5 needs <code>inspect_video</code>.</strong>
+    </div>
+  </section>
+
+  <section class="sec" id="s8-5">
+    <h2><span class="n">8.5</span>Evaluate, and run the correction loop</h2>
+
+    <p>Inspect the finished video. <span class="mark">The left column of 8.1.1, turned into code.</span></p>
+
+<pre><code>def check_video(state: VideoState) -&gt; VideoState:
+    info = ffprobe(state["video_path"])
+    report = {
+        "duration_ok": 55 &lt;= info["duration"] &lt;= 65,
+        "has_audio": info["has_audio"],
+        "subtitle_chars": count_chars(state["subtitle_path"]),
+        "script_chars": len(state["script"]),
+    }
+    report["passed"] = (
+        report["duration_ok"]
+        and (info["has_audio"] or state["caption_only"])
+    )
+    return {**state, "check_report": report}</code></pre>
+
+    <p><code>caption_only</code> exists so that a run with no audio can still pass. <span class="mark">You can finish with subtitles alone.</span> A standard-route submission without TTS does not fail the check.</p>
+
+    <p>When it fails, decide which stage it returns to. <strong>Not back to the beginning.</strong></p>
+
+    <p>Too long goes back to the script. No audio goes back to the material. Misaligned subtitles go back to assembly.</p>
+
+<pre><code>def route(state: VideoState) -&gt; str:
+    r = state["check_report"]
+    if r["passed"]:
+        return "review_final"
+    if state["attempts"] &gt;= 3:
+        return "give_up"
+    if not r["duration_ok"]:
+        return "script"      # back to the script
+    return "assemble"        # only redo the assembly</code></pre>
+
+    <p><strong>Submission requirement: run the correction loop at least once.</strong></p>
+
+    <div class="warn">
+      <span class="tag">The first run always fails</span>
+      The starter notebook is configured so that <span class="mark">the video comes out at about 70 seconds.</span> That misses the 55-to-65 second window, so the first check fails. <strong>This is deliberate, so that everyone goes round the correction loop at least once.</strong><br><br>
+      Design where it goes from there. Back to the script to shorten the points, or back to the storyboard to trim seconds off a shot?<br><br>
+      <strong>What this assignment is looking at is what happens when something fails.</strong>
+    </div>
+  </section>
+
+  <section class="sec" id="s8-6">
+    <h2><span class="n">8.6</span>Reasons you might not publish</h2>
+
+    <p>A finished video is not the same as one you should publish. Check these before the final approval.</p>
+
+    <table>
+      <thead><tr><th>Concern</th><th>What to check</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Wrong information</strong></td><td>Does each of the three points have a source? Does the source actually say that?</td></tr>
+        <tr><td><strong>Copyright</strong></td><td>Licence terms for images, music and fonts. Any issue with what the generator was trained on</td></tr>
+        <tr><td><strong>Likeness</strong></td><td>Does a real person appear? Does anything resemble one?</td></tr>
+        <tr><td><strong>Disclosure</strong></td><td>Is this a context where AI generation has to be stated?</td></tr>
+        <tr><td><strong>Cost</strong></td><td>What did one video cost? How many times did you rebuild it?</td></tr>
+        <tr><td><strong>Logs</strong></td><td>Can you trace afterwards what ran at which stage?</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">8.6.1</span>What to hand in</h3>
+
+    <div class="prompt"><span class="tag">SUBMISSION</span>Upload the final assignment to the nmims2026 system.
+
+https://github.com/shunokuhara/nmims/tree/main/nmims2026</div>
+
+    <div class="warn">
+      <span class="tag">Check before you upload</span>
+      <span class="mark">No API keys, tokens or personal data left in the notebook.</span> Check the output cells too, not only the code.<br><br>
+      <strong>The moment before something goes to a public place is your last chance to catch it.</strong>
+    </div>
+
+    <p>Submit the following.</p>
+
+    <table>
+      <thead><tr><th></th><th>What</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>The finished <code>.mp4</code></td></tr>
+        <tr><td><strong>2</strong></td><td>The notebook, with the graph, nodes, tools and approval points readable</td></tr>
+        <tr><td><strong>3</strong></td><td>A log of the stages: where it failed, where it went back to, how many rounds it took</td></tr>
+        <tr><td><strong>4</strong></td><td>Where you approved or rejected, and why</td></tr>
+        <tr><td><strong>5</strong></td><td>Your findings for each row of the 8.6 table</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">8.6.2</span>Evaluating other people's work</h3>
+
+    <p>Submitting is not the end. <span class="mark">You review the classmates assigned to you</span>, as in Exercise 1.</p>
+
+    <table>
+      <thead><tr><th></th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>How many</strong></td><td>7</td></tr>
+        <tr><td><strong>Time</strong></td><td>40 minutes</td></tr>
+        <tr><td><strong>Grading</strong></td><td><span class="mark">Your evaluations are graded too</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>What you are judging</h4>
+
+    <p>Different from Exercise 1. <strong>Not how the video looks.</strong></p>
+
+    <table>
+      <thead><tr><th>Criterion</th><th>What to look at</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Stage breakdown</strong></td><td>How many stages, and is there a reason for the split?</td></tr>
+        <tr><td><strong>Approval points</strong></td><td>Where does it hand over to a person? <span class="mark">Does it stop before anything irreversible?</span></td></tr>
+        <tr><td><strong>Send-back design</strong></td><td>Where does a failed check return to? Does it start over from nothing?</td></tr>
+        <tr><td><strong>Fact checking</strong></td><td>Are there sources? Is there a verification node?</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">Open the notebook</span>
+      <span class="mark">Do not score from the video alone.</span> None of the four criteria can be judged without reading the notebook.<br><br>
+      The graph definition, the order of the nodes, where <code>interrupt</code> sits. <strong>That is where their design is.</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">Why the video quality is not scored</span>
+      Text and still images can score highly if the design is good. <span class="mark">An elaborate video scores low if the flow is a straight line.</span><br><br>
+      As stated in 8.0.1. <strong>What is being judged here is the mechanism, not the footage.</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">At the end of this course</span>
+      In Exercise 0 you looked for work worth delegating, across three countries. <span class="mark">Look again at the column you wrote headed "check a human must keep".</span><br><br>
+      What you did in this part was turn that column into code.<br><br>
+      Approving the concept, verifying the facts, deciding to publish. <strong>Where to stop was your decision, all the way through.</strong><br><br>
+      The technology will keep changing. Library names and model names will be different next year.<br><br>
+      What does not change is the work itself. <span class="mark">Break the job into pieces. Decide how much to delegate. Design where it stops.</span>
+    </div>
+  </section>
+
+
+
+  <nav class="pager">
+    <a class="prev" href="part7.html"><span class="dir">← PREV</span><span class="ttl">PART 7　Build the agent yourself</span></a>
+    <a class="next" href="appendix-a.html"><span class="dir">NEXT →</span><span class="ttl">APPENDIX A　Running everything with local models</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

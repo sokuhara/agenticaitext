@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 3 Run a Coding Agent</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#b91c1c;
+  --accent-soft:#fdeaea;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html" aria-current="page">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 3</div>
+    <h1>Run a Coding Agent</h1>
+    <p class="lede">In Part 2 you moved the code yourself. Here an agent reads files, writes them and runs commands, and your job becomes approving each step.</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>Previously</dt><dd>Part 2 rebuilt a street by talking to a small model. You did the pasting, saving and reloading.</dd>
+      <dt>This part</dt><dd>Cline builds a whole small app. You watch it read, write and run, and you approve each operation.</dd>
+      <dt>Next</dt><dd>Part 4 tests what the agent produced, and has it fixed where it falls short.</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="Contents of this part">
+    <h2>In this part</h2>
+    <ol>
+      <li><span class="n">3.0</span><a href="#s3-0">What you do in this part</a></li>
+      <li><span class="n">3.1</span><a href="#s3-1">Exercise: let Cline build an app</a></li>
+      <li><span class="n">3.2</span><a href="#s3-2">Why the same request gives different results</a></li>
+      <li><span class="n">3.3</span><a href="#s3-3">How much to delegate</a></li>
+      <li><span class="n">3.4</span><a href="#s3-4">Optional: add a delete feature</a></li>
+      <li><span class="n">3.5</span><a href="#s3-5">What we know so far</a></li>
+    </ol>
+  </nav>
+
+
+
+  <section class="sec" id="s3-0" style="margin-bottom:44px">
+    <h2><span class="n">3.0</span>What you do in this part</h2>
+
+    <p>In this part you hand over the pasting, saving and running <span class="mark">that you did by hand in Part 2.</span></p>
+
+    <h3>By the end</h3>
+    <p>An agent will build a whole small app. It reads files, writes them and runs commands. <strong>You will be able to watch that happen.</strong></p>
+    <p>You will also be able to say where a human judgement was needed.</p>
+
+    <h3>The order of work</h3>
+
+    <div class="flow-steps">
+      <p><strong>1　Do it (3.1)</strong>　Let Cline build an app</p>
+      <p><strong>2　Learn from the result (3.2–3.3)</strong>　How to ask, and how much to delegate</p>
+      <p><strong>3　Extend it (3.4)</strong>　Add a delete feature and watch the agent loop</p>
+    </div>
+
+    <p><span class="mark">You start by doing.</span> The vocabulary comes afterwards. Reading 3.4 after finishing 3.1 connects the words to what you saw on screen.</p>
+  </section>
+
+  <section class="sec" id="s3-1">
+    <h2><span class="n">3.1</span>Exercise: let Cline build an app</h2>
+
+    <p>Exercise 1 in Part 2 changed things that already existed, by name. You did the moving. <span class="mark">Here the agent builds from nothing.</span></p>
+
+    <p>What it builds, though, is deliberately small. <span class="mark">A single HTML file, no server, no database.</span></p>
+
+    <div class="warn">
+      <span class="tag">What this exercise is for</span>
+      Not "did you produce an impressive app". <span class="mark">Did you watch an agent read files, write them and run commands.</span><br><br>
+      Ask for more and the experience changes. Instead of "the agent did some work" you get <strong>"the environment kept breaking".</strong> That is why databases, authentication, real-time messaging and containers are all excluded.
+    </div>
+
+    <div class="note">
+      <span class="tag">The whole exercise</span>
+      Work down the list. <span class="mark">Do not skip steps.</span><br><br>
+      Make a folder → open it in VS Code → install Cline → connect to the server → test the connection → switch to Plan → send the task → read the plan → decide how you will approve → switch to Act → approve one at a time → open it in a browser → check it works → write down what happened
+    </div>
+
+    <h3><span class="n">3.1.1</span>Open a working folder in VS Code</h3>
+
+    <ol>
+      <li>Create a folder on your desktop called <code>vibe-chat</code></li>
+      <li>Start VS Code</li>
+      <li><strong>File → Open Folder</strong></li>
+      <li>Select <code>vibe-chat</code> and press <strong>Select Folder</strong></li>
+      <li>If asked about trust, press <strong>Yes, I trust the authors</strong></li>
+      <li>Check that <code>vibe-chat</code> appears in the Explorer on the left</li>
+    </ol>
+
+    <div class="warn">
+      <span class="tag">Do not start without opening a folder</span>
+      <span class="mark">Cline works inside the folder you have open.</span> Without one, it has nowhere to put files and will not get far.
+    </div>
+
+    <h3><span class="n">3.1.2</span>Install Cline</h3>
+
+    <ol>
+      <li>Press <strong>Extensions</strong> in the left icon column (<code>Ctrl</code> + <code>Shift</code> + <code>X</code>)</li>
+      <li>Type <code>Cline</code> in the search box</li>
+      <li><span class="mark">Pick the top result, published by Cline</span></li>
+      <li>Press <strong>Install</strong></li>
+      <li>Press the Cline icon that appears in the left column</li>
+    </ol>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/cline-install.png" alt="Extensions search results for Cline, with the official one at the top and several similarly named extensions below" style="width:100%;max-width:560px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">"Cline — Autonomous coding agent", at the top, is the right one</div>
+    </div>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/cline-installed.png" alt="The Cline extension page showing publisher cline.bot and Disable and Uninstall buttons" style="width:100%;max-width:560px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        Once installed you get <strong>Disable</strong> and <strong>Uninstall</strong>. <span style="color:var(--accent);font-weight:700">Check the publisher reads <code>cline.bot</code>.</span>
+      </div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">Several similar names</span>
+      <span class="mark">Cline Chinese, DSH Cline, Cline (Nightly), Cline Pro, Cline Max.</span> All of them are different extensions.<br><br>
+      Pick <strong>the top result, published by Cline, with the blue check mark.</strong> The download count is an order of magnitude higher.
+    </div>
+
+    <p>After installing, <span class="mark">a robot icon appears at the bottom of the left icon column.</span> That is Cline. Click it to open the panel.</p>
+
+    <div class="warn">
+      <span class="tag">There are two gear icons. This trips people up</span>
+      <strong>The gear in the extensions list.</strong> It opens Enable / Disable / Uninstall. <span class="mark">Not that one.</span><br><br>
+      <strong>The gear at the top right of the Cline panel.</strong> That is where the connection settings are. Open the panel from the robot icon first, then look at its top right.
+    </div>
+
+    <div class="note">
+      <span class="tag">Remember these two places</span>
+      <strong>The gear, top right.</strong> Used in 3.1.3 for the connection.<br>
+      <strong>The Plan / Act buttons, bottom right of the input box.</strong> You pick Plan in 3.1.6 and switch to Act in 3.1.8.<br><br>
+      <span class="mark">Know those two and the rest is just following steps.</span>
+    </div>
+
+    <h3><span class="n">3.1.3</span>Connect to the shared server</h3>
+
+    <div class="warn">
+      <span class="tag">This exercise uses the 27B model</span>
+      <span class="mark">Not the <code>qwen3.5:4b</code> from Part 2.</span> You connect to the 27B model on the shared server.<br><br>An agent has to emit tool calls in a strict format, over and over, without drifting. <strong>A 4B model is not dependable enough at that for this exercise to finish.</strong>
+    </div>
+
+    <h4>Getting past the first screen</h4>
+
+    <p>The first time you open Cline, it asks how you intend to use it.</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/cline-howuse.png" alt="The How will you use Cline screen with four options, Bring my own API key selected" style="width:100%;max-width:340px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        Choose <span style="color:var(--accent);font-weight:700">Bring my own API key</span> and press Continue
+      </div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">Pick the fourth option</span>
+      <span class="mark">Not Absolutely Free, ClinePass or Frontier Model.</span> Each of those connects to an outside service and needs an account, and usually payment. Do not press <strong>Login to Cline</strong> either.<br><br>
+      Choose <strong>Bring my own API key</strong>.
+    </div>
+
+    <div class="note">
+      <span class="tag">Settings will not open until you clear this screen</span>
+      Choosing Settings from the <code>…</code> menu at the top right does nothing yet. <span class="mark">Get past this screen first.</span>
+    </div>
+
+    <div class="warn">
+      <span class="tag">If you picked "Absolutely Free"</span>
+      You get a screen offering free models. <span class="mark">Press nothing. Use <strong>Back</strong> at the bottom.</span>
+
+      <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px;margin-top:12px">
+        <img src="../img/cline-select-model.png" alt="The Select a free model screen with several free models and a Create my Account button" style="width:100%;max-width:300px;border-radius:8px;border:1px solid var(--line)">
+      </div>
+
+      <strong>Do not press Create my Account.</strong> That creates an account on Cline's cloud service.
+    </div>
+
+    <h4>Set the provider</h4>
+
+    <p>Pressing Continue takes you to <strong>Configure your provider</strong>. It defaults to <code>OpenRouter</code>.</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/cline-provider.png" alt="Configure your provider screen with API Provider set to OpenRouter" style="width:100%;max-width:340px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        <span style="color:var(--accent);font-weight:700">Change the API Provider first</span>
+      </div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">Change the provider before anything else</span>
+      <span class="mark">Set it to <code>OpenAI Compatible</code>.</span> The fields change, and a <strong>Base URL</strong> box appears.<br><br>
+      While it is still on OpenRouter there is nowhere to put the Base URL. If the Model field contains something like <code>anthropic/claude-sonnet-5</code>, clear it and replace it.
+    </div>
+
+    <h4>Fill in five fields</h4>
+
+    <table>
+      <thead><tr><th>Field</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>API Provider</td><td><code>OpenAI Compatible</code></td></tr>
+        <tr><td>Base URL</td><td>From the table below. <strong>Including the trailing <code>/v1</code></strong></td></tr>
+        <tr><td>OpenAI Compatible API Key</td><td><code>ollama</code> (anything works)</td></tr>
+        <tr><td>Model ID</td><td>The model name your instructor gives you</td></tr>
+        <tr><td>Custom Headers</td><td>Two of them, below</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">Do not forget the <code>/v1</code></span>
+      <span class="mark">This is the single most common mistake here.</span> <code>https://pc11.okuharalab.com</code> on its own does not work.<br><br>
+      It has to be <code>https://pc11.okuharalab.com<strong>/v1</strong></code>.<br><br>
+      Without it you get <code>Response stream ended without a finish reason</code>. <strong>When you see that error, check the <code>/v1</code> first.</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">The API key can be anything</span>
+      The Ollama server at the other end never looks at it. <span class="mark">Some versions will not let you continue with an empty field, so put <code>ollama</code> in it.</span><br><br>
+      The real authentication happens in the custom headers below.
+    </div>
+
+    <h4>Add two custom headers</h4>
+
+    <p>Press <strong>Add Header</strong> twice.</p>
+
+    <table>
+      <thead><tr><th>Header name</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td><code>CF-Access-Client-Id</code></td><td>The Client ID your instructor gives you</td></tr>
+        <tr><td><code>CF-Access-Client-Secret</code></td><td>The Client Secret your instructor gives you</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">Select the whole field before typing the header name</span>
+      <strong>Add Header</strong> leaves placeholder text such as <code>header</code> in the name box. <span class="mark">Type over it without selecting and you get <code>heaCF-Access-Client-Id</code>.</span><br><br>
+      Click the box, press <code>Ctrl</code> + <code>A</code>, then type. <strong>The box only shows part of the text, so a broken name is invisible.</strong>
+    </div>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/cline-settings-done.png" alt="Cline settings with OpenAI Compatible, a Base URL, a Model ID and two custom headers" style="width:100%;max-width:660px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        Finished. <span style="color:var(--accent);font-weight:700">This is what it should look like</span>
+      </div>
+    </div>
+
+    <h4>Which server to use</h4>
+
+    <p>There are five servers. <span class="mark">The last digit of your student number decides which one you use.</span></p>
+
+    <table>
+      <thead><tr><th>Last digit</th><th>Base URL</th></tr></thead>
+      <tbody>
+        <tr><td><strong>0, 1</strong></td><td><code>https://pc11.okuharalab.com/v1</code></td></tr>
+        <tr><td><strong>2, 3</strong></td><td><code>https://pc21.okuharalab.com/v1</code></td></tr>
+        <tr><td><strong>4, 5</strong></td><td><code>https://pc31.okuharalab.com/v1</code></td></tr>
+        <tr><td><strong>6, 7</strong></td><td><code>https://pc41.okuharalab.com/v1</code></td></tr>
+        <tr><td><strong>8, 9</strong></td><td><code>https://pc51.okuharalab.com/v1</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>If everyone piles onto one server, everyone waits. <strong>Use the one for your number.</strong></p>
+
+    <div class="note">
+      <span class="tag">The values are handed out in class</span>
+      Client ID, Client Secret, Model ID. <span class="mark">None of them are printed here.</span> Use what you are given, and do not paste them anywhere else.
+    </div>
+
+    <h3><span class="n">3.1.4</span>Test the connection</h3>
+
+    <p>After saving, look at the Cline chat screen. <span class="mark">Check by eye that the selected model is the one your instructor specified.</span></p>
+
+    <p>Then send this in Chat mode.</p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Reply only with: Connection successful</div>
+
+    <p>A reply means you are connected. <strong>Do not move on without one.</strong></p>
+
+    <h4>When it does not connect</h4>
+
+    <table>
+      <thead><tr><th>Symptom</th><th>Where to look</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>Response stream ended without a finish reason</code></td>
+          <td><strong>A missing <code>/v1</code> on the Base URL.</strong> Or a broken custom header name</td>
+        </tr>
+        <tr>
+          <td>An auth error, a 302, or a login page comes back</td>
+          <td>The header values. Did you select all before typing?</td>
+        </tr>
+        <tr>
+          <td>Model not found</td>
+          <td>The Model ID. Compare it character by character</td>
+        </tr>
+        <tr>
+          <td>Nothing happens at all</td>
+          <td>The first-run screen is not finished. Go back to the start of 3.1.3</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">Is it the server or your settings?</span>
+      A way to tell them apart is in <a href="appendix-a.html">Appendix A</a>, A.11. <span class="mark">You call the server directly from a terminal and see how far you get.</span><br><br>
+      Once you know the server is fine, the problem is in Cline. You can work that out before calling the instructor over.
+    </div>
+
+    <h3><span class="n">3.1.5</span>Decide what gets approved</h3>
+
+    <p>Above the chat input there is an <strong>Auto-approve</strong> section. Open it and you get five checkboxes.</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/cline-autoapprove.png" alt="Cline Auto-approve settings with Read files, Edit files, Execute commands, Fetch web content and Use MCP servers" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        Anything ticked here <span style="color:var(--accent);font-weight:700">runs without asking you</span>
+      </div>
+    </div>
+
+    <h4>Settings for this exercise</h4>
+
+    <table>
+      <thead><tr><th>Item</th><th>Setting</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><code>Read files</code></td><td><strong>ON</strong></td><td>Reading breaks nothing</td></tr>
+        <tr><td><code>Edit files</code></td><td><strong>OFF</strong></td><td><span class="mark">So you see what gets written</span></td></tr>
+        <tr><td><code>Execute commands</code></td><td><strong>OFF</strong></td><td><span class="mark">So you see what gets run</span></td></tr>
+        <tr><td><code>Fetch web content</code></td><td><strong>OFF</strong></td><td>Not used in this exercise</td></tr>
+        <tr><td><code>Use MCP servers</code></td><td><strong>OFF</strong></td><td>Covered in Part 7</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">Do not leave the defaults</span>
+      Straight after installing, <code>Read, Edit, Web Fetch, MCP</code> are all on. <span class="mark">In that state, files get rewritten without asking you.</span><br><br>
+      <strong>The only one that should stay on is <code>Read files</code>.</strong> Untick the other four.
+    </div>
+
+    <h3><span class="n">3.1.6</span>Switch to Plan, then send the task</h3>
+
+    <div class="warn">
+      <span class="tag">Change the mode before you send</span>
+      The <strong>Plan / Act</strong> toggle sits at the <span class="mark">bottom right of the Cline input box.</span> Press <strong>Plan</strong>, on the left, first.<br><br>
+      Send while Act is still highlighted and implementation starts before you have seen a plan.
+    </div>
+
+    <h4>How to switch to Plan</h4>
+
+    <ol>
+      <li>Press the <strong>Cline icon</strong> on the left to open the chat</li>
+      <li>Look at the message input box at the bottom</li>
+      <li>Find <strong>Plan</strong> and <strong>Act</strong> at its bottom right</li>
+      <li>Press <strong>Plan</strong> once</li>
+      <li>Check that <strong>Plan is highlighted and Act is not</strong></li>
+    </ol>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/cline-plan-act.png" alt="The Cline input area with Auto-approve set to Read only, and the Plan and Act buttons at the bottom right" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        <strong>Plan / Act</strong> at the bottom right. Auto-approve reads <span style="color:var(--accent);font-weight:700">Read</span> only
+      </div>
+    </div>
+
+    <div class="note">
+      <span class="tag">What Plan mode is for</span>
+      Plan mode is for agreeing, before anything is built, on <span class="mark">what to make, which files to create, and how you will check it.</span><br><br>
+      The goal at this stage is not to get files created. Cline may read the folder or ask you questions. That is it gathering what it needs for the plan.
+    </div>
+
+    <h4>What you are building</h4>
+
+    <p>A one-page posting form. <strong>Not an AI chat.</strong></p>
+
+<pre><code>User name: [ Asha              ]
+Status:    [ Present         v ]
+Message:   [ Hello everyone!   ]
+           [ Send ]
+
+Messages
+Asha — Present
+Hello everyone!</code></pre>
+
+    <h4>The prompt to send</h4>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Create a simple one-page message board in one file named index.html.
+
+Requirements:
+- User name input
+- Status select: Present, Away, Focus
+- Message input
+- Send button
+- Submitted messages appear below the form
+- Keep messages only in a JavaScript array
+- Reject empty user names and messages
+- Use textContent to display user input
+- Put HTML, CSS, and JavaScript in index.html
+
+Do not use:
+- Python
+- Node.js
+- React
+- Database
+- WebSocket
+- Fetch
+- Polling
+- External libraries
+- Multiple files
+
+The workspace is empty. Do not inspect it.
+Keep the plan under 10 lines.
+Do not create or edit files yet. Show the plan only.</div>
+
+    <p>This part builds <code>index.html</code> only, so that you can concentrate on operating a coding agent. <span class="mark">A Python and Flask web app comes in a later part.</span></p>
+
+    <p>The list of exclusions matters. Without it, the agent tends to be helpful and add a server, a database, real-time messaging and several files. <span class="mark">Every one of those is another thing that can break in front of you.</span></p>
+
+    <h4>Read the plan</h4>
+
+    <p>Cline replies with an implementation plan. <span class="mark">Do not switch to Act yet. Stop and read it.</span></p>
+
+    <ul>
+      <li>Is <code>index.html</code> the only file it will create?</li>
+      <li>Does it put the HTML, CSS and JavaScript in that one file?</li>
+      <li>Does it keep messages only in a JavaScript array?</li>
+      <li>Does it use <code>textContent</code> for user input?</li>
+      <li>Has anything crept in: Python, Node.js, an external library?</li>
+    </ul>
+
+    <p>If something extra appeared, or a needed check is missing, ask for a fix <strong>while still in Plan mode.</strong></p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Revise the plan to follow the requirements exactly.
+Use only one file: index.html.
+Do not add any unrequested features.
+Show the revised plan only.</div>
+
+    <p>Read the revised plan before moving on. <span class="mark">Repeat until you are satisfied with it.</span></p>
+
+    <div class="note">
+      <span class="tag">When the plan is done</span>
+      The plan is finished when you can answer these four in your own words.<br><br>
+      <strong>1.</strong> What are we building? <strong>2.</strong> Which files? <strong>3.</strong> Where does the data live? <strong>4.</strong> What will make it finished?
+    </div>
+
+    <h4>Two things that go wrong in Plan mode</h4>
+
+    <p>Switching to Plan does not guarantee a good plan. <span class="mark">Both of these are common in this exercise.</span></p>
+
+    <div class="warn">
+      <span class="tag">Failure 1: it keeps checking the folder</span>
+      Cline may propose <code>Get-ChildItem</code> and similar listing commands over and over, each time worded slightly differently. <span class="mark">If it already knows the folder is empty, another listing tells it nothing new.</span><br><br>
+      Reject it because the purpose is duplicated, not because of the number of attempts, and tell it to stop.
+    </div>
+
+    <div class="prompt"><span class="tag">PROMPT</span>The workspace is empty, and directory inspection is complete.
+Do not run any more directory-listing commands.
+Now show the implementation plan only.
+Do not create or edit files yet.</div>
+
+    <div class="warn">
+      <span class="tag">Failure 2: one file turns into a system</span>
+      Even when you specify <code>index.html</code> only, Cline may come back with a plan involving <code>package.json</code>, <code>server.js</code>, Express, React, WebSocket or a Python server.<br><br>
+      <span class="mark">A detailed, convincing plan is not necessarily a plan that follows your request.</span> Do not move to Act. Shrink it back while still in Plan mode.
+    </div>
+
+    <div class="prompt"><span class="tag">PROMPT</span>This plan does not follow the requirements.
+Use only one file: index.html.
+Put the HTML, CSS, and JavaScript in that file.
+Store messages only in a JavaScript array.
+Do not use Python, Node.js, Express, React, Vite, WebSocket,
+fetch, polling, a database, or external libraries.
+Keep the revised plan under 10 lines.
+Do not create or edit files yet. Show the revised plan only.</div>
+
+    <div class="note">
+      <span class="tag">This is why Plan mode exists</span>
+      Run a bad plan in Act mode and you get files and packages you did not want. In Plan mode, <span class="mark">a human can spot the drift and correct it before a single file changes.</span>
+    </div>
+
+    <h3><span class="n">3.1.7</span>Before pressing Act, decide how you will approve</h3>
+
+    <p>Pressing Act in 3.1.8 starts the implementation immediately. <span class="mark">Read this section to the end first,</span> and decide which operations you will allow and which you will refuse.</p>
+
+    <p>You turned <code>Edit files</code> and <code>Execute commands</code> off in 3.1.5. That means the agent has to ask you each time.</p>
+
+    <h4>What to decide</h4>
+
+    <table>
+      <thead><tr><th>What Cline asks for</th><th>What to do</th></tr></thead>
+      <tbody>
+        <tr><td>Creating <code>index.html</code></td><td>Read the diff on the right, then <strong>Save</strong></td></tr>
+        <tr><td>A needed addition to <code>index.html</code></td><td>Read the diff, then <strong>Save</strong></td></tr>
+        <tr><td>Creating another file</td><td><strong>Reject</strong></td></tr>
+        <tr><td>Listing files or folders</td><td><strong>Reject.</strong> You already told it the folder is empty</td></tr>
+        <tr><td><code>pip install</code> / <code>npm install</code></td><td><strong>Reject.</strong> Not needed here</td></tr>
+        <tr><td>Deleting a file</td><td><strong>Reject</strong></td></tr>
+        <tr><td>Sending anything outside</td><td><strong>Reject</strong></td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">The button names change</span>
+      File creation and edits show <strong>Save</strong>. Commands show <strong>Run Command</strong>. Refusing is always <strong>Reject</strong>.<br><br>
+      Do not approve mechanically. <span class="mark">Check what the operation is, and what it is being done to.</span>
+    </div>
+
+    <div class="warn">
+      <span class="tag">No commands are needed in this exercise</span>
+      You open <code>index.html</code> directly in a browser. <code>Get-ChildItem</code> lists files; it does not run the app. <span class="mark">No <code>pip install</code>, no <code>npm install</code>, no server.</span><br><br>
+      If Cline proposes a command, ask what it is for. If this exercise does not need it, Reject.
+    </div>
+
+    <h3><span class="n">3.1.8</span>Switch to Act and approve one at a time</h3>
+
+    <p>Once the plan and your approval policy are settled, press <strong>Act</strong> at the bottom right. <span class="mark">The moment you switch, it carries the plan over and starts building.</span></p>
+
+    <div class="warn">
+      <span class="tag">Pressing Act is your last checkpoint</span>
+      You do not need to send "please start" after switching. <strong>Pressing Act is the signal.</strong><br><br>
+      If anything in the plan is still wrong, do not press it. Fix the plan in Plan mode first.
+    </div>
+
+    <p>Watch the screen and approve each request in turn, using the table above. <span class="mark">The agent loop described in 3.5 plays out in front of you.</span></p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/cline-create-index.png" alt="Cline asking to create index.html, with the diff on the right and Save and Reject buttons" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        Target is <code>index.html</code> and the diff matches the plan. <strong>Read it, then Save</strong>
+      </div>
+    </div>
+
+    <div class="note">
+      <span class="tag">One file can still mean several Saves</span>
+      For a long file, Cline may write the HTML and CSS first and append the JavaScript afterwards. <span class="mark">Do not reject on count alone.</span><br><br>
+      Open each diff. Save if it adds a necessary part that is not there yet. Reject a duplicate, or a change that is not in the plan.
+    </div>
+
+    <div class="warn">
+      <span class="tag">Looking finished is not the same as working</span>
+      Reject the JavaScript append and the page will render beautifully while Send does nothing. Try it in the browser, and if it does not work, ask Cline to add only the missing JavaScript.
+    </div>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/cline-vibe-chat-before-fix.png" alt="The Vibe Chat page rendered with a form and Messages showing 0" style="width:100%;max-width:520px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        <span style="color:var(--accent);font-weight:700">A page appearing and a feature working are different things</span>
+      </div>
+    </div>
+
+    <div class="prompt"><span class="tag">PROMPT</span>The Send button does not work because the JavaScript is missing.
+
+Edit index.html only.
+Add only the missing JavaScript immediately before &lt;/body&gt;.
+
+Requirements:
+- Handle the form submit event
+- Prevent the default page reload
+- Validate that user name and message are not empty
+- Push { name, status, message } into the existing messages array
+- Display messages below the form
+- Update the message count
+- Create DOM elements and use textContent for all user input
+- Do not use innerHTML
+- Do not change the existing HTML or CSS
+- Do not create another file</div>
+
+    <div class="note">
+      <span class="tag">The <code>$0.0000</code> and <code>6.1k / 128.0k</code> at the top right</span>
+      <code>$0.0000</code> is the cost Cline is reporting. On the shared Qwen server it stays at zero.<br><br>
+      <code>6.1k / 128.0k</code> is not money. <span class="mark">It is how much of the context window the conversation is using.</span> The longer it gets, the slower the replies and the more easily older instructions are lost. If it starts repeating the same checks, stop it and say what to do next.
+    </div>
+
+    <h4>If the connection drops</h4>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/cline-socket-error.png" alt="A SocketError message with Retry and Start New Task buttons" style="width:100%;max-width:700px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        After a dropped connection, choose <strong>Retry</strong> or <strong>Start New Task</strong>
+      </div>
+    </div>
+
+<pre><code>terminated: SocketError: other side closed (UND_ERR_SOCKET)</code></pre>
+
+    <p>This is not an error in the app you are building. <span class="mark">It means the connection between Cline and the model server was cut.</span> A busy shared server, a long response or a very large output can all cause it.</p>
+
+    <table>
+      <thead><tr><th>Situation</th><th>Choose</th></tr></thead>
+      <tbody>
+        <tr><td>The plan was fine and the connection simply dropped</td><td><strong>Retry</strong></td></tr>
+        <tr><td>A bad plan, long reasoning or repeated checks are in the history</td><td><strong>Start New Task</strong></td></tr>
+        <tr><td>You do not know which files were created</td><td><strong>Start New Task</strong>, then have it look at <code>index.html</code> only</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">In the case shown above, Start New Task</span>
+      When the history holds an oversized plan, several folder checks and a long correction thread, Retry resumes from all of it. <span class="mark">That makes another drop, or a return to the earlier wrong plan, more likely.</span> Starting a new task from the <code>+</code> at the top is usually the better choice.
+    </div>
+
+    <div class="note">
+      <span class="tag">It is tedious, and that is the point</span>
+      You will be asked to approve many times. <span class="mark">Seeing what the agent is about to do is the exercise.</span><br><br>
+      Auto-approving everything finishes faster. <span class="mark">It also means you never see what the agent chose to do.</span> <strong>Section 3.1.11 asks you to describe exactly that</strong>, so the approvals are where the material comes from.
+    </div>
+
+    <div class="note">
+      <span class="tag">When you hit an error</span>
+      Paste the error text, or what you saw when you tried it, <strong>straight back to Cline.</strong> "One change at a time, and show the current state" from Part 2 works here too.
+    </div>
+
+    <h3><span class="n">3.1.9</span>Open it in a browser</h3>
+
+    <p>No server is involved. In the VS Code Explorer, right-click <code>index.html</code> and choose <strong>Reveal in File Explorer</strong>. Double-click the file there and it opens in your default browser.</p>
+
+    <p>After every edit, press <code>Ctrl</code> + <code>R</code> in the browser to reload.</p>
+
+    <h3><span class="n">3.1.10</span>Check that it works</h3>
+
+    <ol>
+      <li>Type <code>Asha</code> in User name</li>
+      <li>Set Status to <code>Present</code></li>
+      <li>Type <code>Hello everyone!</code> in Message</li>
+      <li>Press <strong>Send</strong></li>
+      <li>Check that Messages goes from <code>0</code> to <code>1</code> and shows "Asha", "Present" and "Hello everyone!"</li>
+      <li>Reload the browser and <span class="mark">check that the message disappears</span></li>
+    </ol>
+
+    <p>Step 6 is correct behaviour. <strong>You designed it not to store anything.</strong> Part 4 counts that as one of the missing pieces.</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/cline-vibe-chat-complete.png" alt="Vibe Chat with one message posted, Messages showing 1, Asha Present Hello everyone" style="width:100%;max-width:520px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        The agent's report is not the evidence. <span style="color:var(--accent);font-weight:700">You pressing Send and seeing the result is.</span>
+      </div>
+    </div>
+
+    <h4>Two more tests</h4>
+
+    <ol>
+      <li>Leave the name or the message empty and press Send. Check that nothing is posted and an error appears</li>
+      <li>Type <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> as the message. Check that no alert runs and it shows as plain text</li>
+    </ol>
+
+    <div class="note">
+      <span class="tag">You can reject an unnecessary final check</span>
+      Cline may propose commands that re-read the file, search for a string, count lines or list files. <span class="mark">None of those tell you whether Send works.</span><br><br>
+      If it only repeats a check it has already done, Reject and use the browser yourself.<br><br>
+      Even a harmless command can be rejected when it is not needed. <strong>Approval is about "is this necessary", not only "is this dangerous".</strong>
+    </div>
+
+    <h4>What counts as done</h4>
+
+    <table>
+      <thead><tr><th>Should work</th><th>Does not need to work</th></tr></thead>
+      <tbody>
+        <tr><td>The page opens in a browser</td><td>Login</td></tr>
+        <tr><td>Sending adds to the list</td><td>Data surviving a reload</td></tr>
+        <tr><td>Name and status are shown</td><td>Several people at once</td></tr>
+        <tr><td>You did not write code by hand</td><td>A polished design</td></tr>
+      </tbody>
+    </table>
+
+    <p>The right-hand column is <span class="mark">what Part 4 counts as missing.</span> You do not need to build it now.</p>
+
+    <h3><span class="n">3.1.11</span>Read the work log</h3>
+
+    <p>The Cline panel you have just been using is the teaching material. Scroll back up and record these four things.</p>
+
+    <ol>
+      <li><strong>What did the agent do first?</strong> Check the folder, create a file, or run a command?</li>
+      <li><strong>Which files changed?</strong> How many?</li>
+      <li><strong>How did you decide on Save, Run Command and Reject?</strong> Give a reason for at least one</li>
+      <li><strong>What made you call it done?</strong> Write what you did, not what Cline reported</li>
+    </ol>
+
+    <p>Then name <span class="mark">one point in the process where a human check was required.</span></p>
+
+    <div class="warn">
+      <span class="tag">The fourth one is the point</span>
+      An agent can read a file, search for a string and report "verified". <span class="mark">None of that shows whether Send works.</span><br><br>
+      <strong>The evidence is that a person pressed Send in a browser and looked at the result.</strong> Part 5 replaces some of that manual checking with tests.
+    </div>
+
+    <h3><span class="n">3.1.12</span>What to hand in</h3>
+
+    <table>
+      <thead><tr><th></th><th>What</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>A screenshot of the working app (one is enough)</td></tr>
+        <tr><td><strong>2</strong></td><td>The four notes from 3.1.11: first action, files changed, approval decisions, evidence of completion</td></tr>
+        <tr><td><strong>3</strong></td><td>One point where a human check was needed, and why</td></tr>
+        <tr><td><strong>4</strong></td><td>One place where the agent failed, repeated itself or drifted. If none, a place where you considered rejecting, and what you decided</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">Do not manufacture a failure</span>
+      If it went smoothly, you do not need to add features until something breaks. <span class="mark">Write about a moment you considered rejecting, and why you decided as you did.</span>
+    </div>
+  </section>
+
+  <section class="sec" id="s3-2">
+    <h2><span class="n">3.2</span>Why the same request gives different results</h2>
+
+    <p>You have just seen the result change with the way you asked. <span class="mark">Agents do not only fail because they are not capable enough.</span> They also fail when they were not given what they needed.</p>
+
+    <p>Ask only "fix the login screen" and the agent does not know:</p>
+
+    <ul>
+      <li>Which screen you mean</li>
+      <li>What it is allowed to change</li>
+      <li>What the existing design rules are</li>
+      <li>What to check once it is done</li>
+    </ul>
+
+    <p>Left without those, it produces something plausible. <strong>The confident wrong answer from Part 1, section 1.2.3, arriving as code.</strong></p>
+
+    <p><strong>Context engineering</strong> means <span class="mark">giving the right information at the right moment</span>, so the agent can make a decision.</p>
+
+    <p>It does not mean handing over a long document all at once.</p>
+
+    <h3><span class="n">3.2.1</span>Four kinds of context</h3>
+
+    <table>
+      <thead><tr><th>Kind</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><strong>The goal</strong></td><td>"Validate the email address format"</td></tr>
+        <tr><td><strong>Constraints</strong></td><td>"Do not change the existing API." "Keep the change minimal."</td></tr>
+        <tr><td><strong>Project rules</strong></td><td>Coding conventions, which libraries, how to run tests</td></tr>
+        <tr><td><strong>Current state</strong></td><td>The file in question, error logs, test results, open issues</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">3.2.2</span>How you hand it over changes the result</h3>
+
+    <p>This instruction gives only the goal.</p>
+
+    <div class="prompt" style="border-color:#d97706"><span class="tag" style="background:#d97706">POOR</span>Fix the validation.</div>
+
+    <p>With all four, the agent can decide.</p>
+
+    <div class="prompt"><span class="tag">BETTER</span>Fix the email validation in src/user.py.
+Do not change the API return values.
+Make the failing tests in tests/test_user.py pass, and run the existing tests too.
+Before editing, briefly explain the cause and what you intend to change.</div>
+
+    <p>Line 1 is the target, line 2 the constraint, line 3 how to verify, line 4 how to proceed. <span class="mark">Same request, different handover, different result.</span></p>
+
+    <div class="warn">
+      <span class="tag">More information is not automatically better</span>
+      Stale specifications, piles of unrelated files, contradictory instructions. <strong>All of them make the agent's judgement worse.</strong><br><br>
+      As section 1.2.1 showed, context is finite and the middle gets dropped. <span class="mark">Give what is needed, in the amount needed, without contradictions.</span>
+    </div>
+  </section>
+
+  <section class="sec" id="s3-3">
+    <h2><span class="n">3.3</span>How much to delegate</h2>
+
+    <p>Coding agents suit work where <span class="mark">the conditions are clear and the result can be checked.</span></p>
+
+    <p>The opposite does not suit them: vague conditions, and results no machine can verify.</p>
+
+    <table>
+      <thead><tr><th>Easy to delegate</th><th>Needs a human</th></tr></thead>
+      <tbody>
+        <tr><td>Finding related files</td><td>Deciding what to build</td></tr>
+        <tr><td>Working out how existing code is structured</td><td>Ordering the requirements</td></tr>
+        <tr><td>Implementing a small feature</td><td>Choosing the design approach</td></tr>
+        <tr><td>Adding and running tests</td><td>Deciding the scope of a change</td></tr>
+        <tr><td>Reading an error and trying a fix</td><td>Approving a release to production</td></tr>
+        <tr><td>Routine refactoring</td><td>Judging security, legal and user impact</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">3.3.1</span>What "delegate" means</h3>
+
+    <p><span class="mark">It does not mean letting it run unchecked.</span></p>
+
+    <p>You start by giving the agent a narrow area. For example:</p>
+
+    <ul>
+      <li>It may only change things inside this folder</li>
+      <li>Running tests is allowed; sending anything outside is not</li>
+      <li>Config files and credentials are off limits</li>
+      <li>Changes go through a pull request, never straight in</li>
+    </ul>
+
+    <p>From Part 4 onwards you <strong>widen that area safely</strong>, using tests, linters, CI and approval steps.</p>
+
+    <p>Deciding to widen it, though, stays a human job to the end.</p>
+
+    <h3><span class="n">3.3.2</span>Degrees of autonomy</h3>
+
+    <p>Autonomy is not on or off. It comes in steps.</p>
+
+    <p><span class="mark">As you read, think about which step each of your three jobs from Exercise 0 would need.</span></p>
+
+    <table>
+      <thead><tr><th>Step</th><th>The machine</th><th>The human</th><th>Where it appears here</th></tr></thead>
+      <tbody>
+        <tr><td>Completion</td><td>Predicts the next few lines</td><td>Constantly. Accepts line by line</td><td>—</td></tr>
+        <tr><td>Chat</td><td>Answers and shows code</td><td>Copies, pastes, runs</td><td>Exercise 1, Part 2</td></tr>
+        <tr><td>Copilot</td><td>Proposes concrete changes</td><td>Approves one at a time</td><td>—</td></tr>
+        <tr><td><strong>Agent</strong></td><td>Plans, uses tools, executes, checks its own result, repeats</td><td>Sets the goal, approves at key points</td><td><strong>3.1, and Part 5 onwards</strong></td></tr>
+        <tr><td>Autonomous</td><td>Takes a request and runs to completion</td><td>Looks only at the result</td><td>Not covered</td></tr>
+      </tbody>
+    </table>
+
+    <p>Further down the table is faster. <span class="mark">Further down also means a mistake is likely to reach you later, and larger.</span></p>
+
+    <p>Part 2 and this part are the speed. Part 4 counts the cost. Part 5 onwards puts approval and tests back in. <strong>The shape of this course is a movement up and down that table.</strong></p>
+
+    <h3><span class="n">3.3.3</span>The basic loop when using an agent</h3>
+
+    <p>The flow you just went through, with names attached.</p>
+
+    <table>
+      <thead><tr><th></th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Plan</strong></td><td>Settle the goal, the scope and how you will check. Do not let it edit yet</td></tr>
+        <tr><td><strong>Act</strong></td><td>Let the agent search, implement and run tests</td></tr>
+        <tr><td><strong>Review</strong></td><td>Look at the diff, the test results, and anything changed that should not have been</td></tr>
+        <tr><td><strong>Accept or Reject</strong></td><td>A human decides whether to take the change or keep working</td></tr>
+      </tbody>
+    </table>
+
+    <p>Plan, Act, Review, Accept or Reject. <span class="mark">These are not buttons in one product. They are the working procedure underneath.</span></p>
+
+    <p>The same holds in Cline, in a command-line agent, and in whatever tool replaces both.</p>
+
+    <div class="note">
+      <span class="tag">Agents come in three shapes</span>
+      Built into an editor (Cline, Cursor). Used from a terminal (Claude Code). Running independently in the cloud (Devin, Jules).<br><br>
+      <span class="mark">They look and feel different. The loop in 3.5 and these four steps are the same in all of them.</span> This course uses Cline.
+    </div>
+  </section>
+
+  <section class="sec" id="s3-4">
+    <h2><span class="n">3.4</span>Optional: add a delete feature</h2>
+
+    <div class="prompt"><span class="tag">TASK</span>Add the following to the Vibe Chat you built in 3.1.
+
+Put a Delete button on every message.
+Pressing it removes only that message and updates the count.
+
+Edit index.html only. Keep the current design and the Send feature.</div>
+
+    <div class="note">
+      <span class="tag">What is new here</span>
+      The agent reads an existing file. It proposes a change. A human reads the diff and approves. A human checks the result in a browser. If it is wrong, the agent fixes it again.<br><br>
+      <span class="mark">That cycle is what we mean by the agent loop.</span>
+    </div>
+
+    <h3><span class="n">3.4.1</span>A hint</h3>
+
+    <p>Write your own instruction first. If you get stuck, this is a starting point. <strong>Begin in Plan mode.</strong></p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Improve the existing Vibe Chat in index.html.
+
+Add one Delete button to each displayed message.
+When clicked, delete only that message and update the message count.
+
+Requirements:
+- Edit index.html only
+- Preserve the current design and existing Send behavior
+- Keep messages only in the existing JavaScript array
+- Use textContent for user-provided text
+- Do not use external libraries, storage, fetch, or additional files
+- Keep the plan under 8 lines
+
+Do not edit the file yet. Show the plan only.</div>
+
+    <h4>Reading the plan</h4>
+
+    <ul>
+      <li>Is <code>index.html</code> the only file it changes?</li>
+      <li>Does it keep the current design and the Send behaviour?</li>
+      <li>Does it update the count after a delete?</li>
+      <li>Has it added an external library or another file?</li>
+    </ul>
+
+    <h3><span class="n">3.4.2</span>What counts as finished</h3>
+
+    <p>All of the following, checked in a browser.</p>
+
+    <ol>
+      <li>Press <code>Ctrl</code> + <code>R</code> to reload</li>
+      <li>Send two messages</li>
+      <li>Press Delete on the first one</li>
+      <li>Check that only the first disappears</li>
+      <li>Check that the second is still there</li>
+      <li>Check that the count goes from <code>2</code> to <code>1</code></li>
+      <li>Check that you can still send a new message</li>
+    </ol>
+
+    <div class="warn">
+      <span class="tag">Delete working while Send is broken is a fail</span>
+      Do not check only Delete. <span class="mark">Check Send as well.</span> Agents sometimes break a feature you never asked them to touch.
+    </div>
+
+    <h3><span class="n">3.4.3</span>If it does not work</h3>
+
+    <p>Tell Cline what actually happened. Delete does nothing, the wrong message vanishes, the count does not change, and so on.</p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>I created two messages and clicked Delete on the first message.
+The first message did not disappear, and the count stayed at 2.
+
+Inspect index.html and fix only this problem.
+Do not redesign the page or add files.
+After editing, tell me exactly what changed.</div>
+
+    <p>Read the diff, Save, then run the same test again. <span class="mark">The test result feeds the next fix. That is the agent loop.</span></p>
+
+    <table>
+      <thead><tr><th></th><th></th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>Read</td><td>The agent reads the existing <code>index.html</code></td></tr>
+        <tr><td><strong>2</strong></td><td>Decide</td><td>It works out what to change in the array and the rendering</td></tr>
+        <tr><td><strong>3</strong></td><td>Propose</td><td>Cline shows the diff with Save / Reject</td></tr>
+        <tr><td><strong>4</strong></td><td>Execute</td><td>You press Save and Cline writes the file</td></tr>
+        <tr><td><strong>5</strong></td><td>Observe</td><td>You try Delete and Send in the browser</td></tr>
+        <tr><td><strong>6</strong></td><td>Correct</td><td>You feed the failure back, and it returns to step 2 if needed</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">3.4.4</span>Who did what</h3>
+
+    <table>
+      <thead><tr><th>Who</th><th>What they did in this task</th></tr></thead>
+      <tbody>
+        <tr><td><strong>The LLM</strong></td><td>Proposed reading the file, and proposed the change for the delete feature</td></tr>
+        <tr><td><strong>Cline</strong></td><td>Passed the file contents to the LLM, showed the diff, wrote the file after approval</td></tr>
+        <tr><td><strong>You</strong></td><td>Set the goal, read the plan and the diff, decided Save or Reject, verified in a browser</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">The model did not write the file</span>
+      The LLM proposes operations. Cline performs them. <span class="mark">With auto-approve off, nothing runs until a human approves it.</span>
+    </div>
+
+    <h3><span class="n">3.4.5</span>What to hand in</h3>
+
+    <table>
+      <thead><tr><th></th><th>What</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>A screenshot showing the Delete buttons and two messages</td></tr>
+        <tr><td><strong>2</strong></td><td>A screenshot after deleting one, with the count at 1</td></tr>
+        <tr><td><strong>3</strong></td><td>The plan, and your reason for one Save or Reject decision</td></tr>
+        <tr><td><strong>4</strong></td><td>One sentence each on what the LLM, Cline and you did</td></tr>
+        <tr><td><strong>5</strong></td><td>If something went wrong: the symptom, your fix instruction, and the re-check</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">Why a 27B model</span>
+      The model behind Cline has to propose file operations in a strict format. <span class="mark">This part uses the 27B model your instructor specifies.</span> MCP comes in Part 7.
+    </div>
+  </section>
+
+  <section class="sec" id="s3-5">
+    <h2><span class="n">3.5</span>What we know so far</h2>
+
+    <p>Cline takes a goal. It reads files and proposes changes. Once you approve, it writes the code. <span class="mark">You no longer copy and paste anything.</span></p>
+
+    <p>What you built is practice. Reload the page and the data is gone. Two people cannot share it. There are no automated tests.</p>
+
+    <div class="warn">
+      <span class="tag">Working is not the same as usable</span>
+      <span class="mark">An app that runs and an app you would hand to someone else are different things.</span> Part 4 measures that distance on the app you just built.
+    </div>
+
+    <p>In the next part you inspect what the AI produced, and ask whether you would actually ship it.</p>
+  </section>
+
+
+
+  <nav class="pager">
+    <a class="prev" href="part2.html"><span class="dir">← PREV</span><span class="ttl">PART 2　Try Vibe Coding</span></a>
+    <a class="next" href="part4.html"><span class="dir">NEXT →</span><span class="ttl">PART 4　Test it, then have it fixed</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

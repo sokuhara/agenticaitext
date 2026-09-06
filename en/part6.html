@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 6 Add features without breaking things</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#0f9d76;
+  --accent-soft:#e3f6ef;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html" aria-current="page">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 6</div>
+    <h1>Add features without breaking things</h1>
+    <p class="lede">Requirements change once something works. That is the normal case in real work. Here you add features to Vibe Chat, and a change request arrives partway through. With tests in place, breaking something shows up straight away.</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>Previously</dt><dd>In Part 5 you moved Vibe Chat to Flask and turned your finish conditions into tests. You also broke the code on purpose to check the tests were real.</dd>
+      <dt>This part</dt><dd>You add two features to the same app. The first is planned; the second arrives as an unexpected request. No existing test may break.</dd>
+      <dt>Next</dt><dd>Part 7 builds the inside of an agent: tool calling, branching, stopping conditions and human approval, in your own Python.</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="Contents of this part">
+    <h2>In this part</h2>
+    <ol>
+      <li><span class="n">6.1</span><a href="#s6-1">What you add in this part</a></li>
+      <li><span class="n">6.2</span><a href="#s6-2">Five steps for every change</a></li>
+      <li><span class="n">6.3</span><a href="#s6-3">Feature 1: allow deleting</a></li>
+      <li><span class="n">6.4</span><a href="#s6-4">An unplanned change request</a></li>
+      <li><span class="n">6.5</span><a href="#s6-5">What to hand in</a></li>
+      <li><span class="n">6.6</span><a href="#s6-6">What we know so far</a></li>
+    </ol>
+  </nav>
+
+
+
+  <section class="sec" id="s6-1">
+    <h2><span class="n">6.1</span>What you add in this part</h2>
+
+    <div class="prompt"><span class="tag">MISSION</span>Add two features to the Flask Vibe Chat from Part 5.
+
+You know about the first one now. The second arrives partway through.
+Either way, do not break a single existing test.</div>
+
+    <h3><span class="n">6.1.1</span>What difference the tests make</h3>
+
+    <p>In Part 4, every fix meant checking Send and Delete by hand. <span class="mark">One fix took about an hour and twenty minutes.</span></p>
+
+    <p>Now you have tests. <strong>After adding a feature, one <code>pytest</code> tells you whether the old behaviour still holds.</strong></p>
+
+    <div class="note">
+      <span class="tag">This is what "tests as a shield" means</span>
+      Tests do not prove your code is correct. <span class="mark">They tell you that behaviour you already checked once is still there.</span><br><br>
+      Checking everything by hand after every change is not sustainable. So you write the checkable parts down while you still remember them. <strong>That is what Part 5 was for.</strong>
+    </div>
+
+    <h3><span class="n">6.1.2</span>Before you start</h3>
+
+    <p>Run <code>pytest</code> and <span class="mark">confirm that it passes right now.</span></p>
+
+<pre><code>pytest</code></pre>
+
+    <p>Add features on top of a failing test suite and <strong>you will not be able to tell whether a later failure is old or new.</strong></p>
+  </section>
+
+  <section class="sec" id="s6-2">
+    <h2><span class="n">6.2</span>Five steps for every change</h2>
+
+    <p>You repeat the same five steps for each feature. <span class="mark">Learn them first.</span></p>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　<strong>Write the finish conditions</strong>　what has to be true to be done</p>
+      <p><strong>2</strong>　<strong>Predict what will change</strong>　which file, and where in it</p>
+      <p><strong>3</strong>　<strong>Ask in Plan mode</strong>　read the plan before it builds</p>
+      <p><strong>4</strong>　<strong>Approve the diff</strong>　compare it with your prediction</p>
+      <p><strong>5</strong>　<strong>Check with <code>pytest</code> and the browser</strong>　both of them</p>
+    </div>
+
+    <h3><span class="n">6.2.1</span>What happens if you skip one</h3>
+
+    <table>
+      <thead><tr><th>Skipped</th><th>What follows</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong> conditions</td><td>The agent works to its own idea of finished, and you have nothing to compare against</td></tr>
+        <tr><td><strong>2</strong> prediction</td><td><span class="mark">You read the diff without being able to judge it</span></td></tr>
+        <tr><td><strong>3</strong> plan</td><td>You notice the wrong approach after it has been built</td></tr>
+        <tr><td><strong>4</strong> approval</td><td>Unrelated code gets rewritten</td></tr>
+        <tr><td><strong>5</strong> checking</td><td>Tests pass while the page is broken</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">Step 2 is the one people skip</span>
+      Read a diff without a prediction and <span class="mark">you will think you are reading it when you are not.</span> It becomes "looks like reasonable code, Save".<br><br>
+      Write down "this function in <code>app.py</code> and this part of <code>templates/index.html</code> should change" beforehand. <span class="mark">Then a diff that touches something else stands out immediately.</span>
+    </div>
+  </section>
+
+  <section class="sec" id="s6-3">
+    <h2><span class="n">6.3</span>Feature 1: allow deleting</h2>
+
+    <p>Put a Delete button on each message. <span class="mark">Pressing it removes only that message.</span></p>
+
+    <div class="note">
+      <span class="tag">If you did the optional task in Part 3</span>
+      You may already have a version that deletes inside the browser. <span class="mark">This time the deletion happens on the server.</span> It stays deleted after a reload.
+    </div>
+
+    <h3><span class="n">6.3.1</span>Step 1: write the finish conditions</h3>
+
+    <p>Write these down, on paper or in a file. <strong>Before you ask the agent anything.</strong></p>
+
+    <table>
+      <thead><tr><th></th><th>Condition</th><th>Who checks</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>Every message has a Delete button</td><td>A person looks</td></tr>
+        <tr><td><strong>2</strong></td><td>Pressing it removes only that message</td><td>A person tries it</td></tr>
+        <tr><td><strong>3</strong></td><td>It stays deleted after a reload</td><td>A person tries it</td></tr>
+        <tr><td><strong>4</strong></td><td>Deleting an id that does not exist does not crash the app</td><td><span class="mark">A test decides</span></td></tr>
+        <tr><td><strong>5</strong></td><td>The existing send tests still pass</td><td><span class="mark">A test decides</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">6.3.2</span>Step 2: predict what will change</h3>
+
+    <p>Write this down before moving on.</p>
+
+    <ul>
+      <li><code>app.py</code>　a delete route, and code that removes one item from the list</li>
+      <li><code>templates/index.html</code>　a button on each message</li>
+      <li><code>tests/test_app.py</code>　tests for deleting</li>
+      <li><span class="mark">The existing tests should not change</span></li>
+    </ul>
+
+    <div class="warn">
+      <span class="tag">That last line is the important one</span>
+      If an existing test has been rewritten, <span class="mark">something broke and the test was adjusted to match.</span><br><br>
+      When you see that in a diff, ask why. <span class="mark">There are legitimate reasons: the specification genuinely changed.</span> <strong>But you should hear the reason before you accept it.</strong>
+    </div>
+
+    <h3><span class="n">6.3.3</span>Step 3: ask in Plan mode</h3>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Add a delete feature to the Flask Vibe Chat.
+
+Requirements:
+- Each message in the list has a Delete button
+- Clicking it removes only that message from the Python list
+- The message stays deleted after reloading the page
+- Deleting a non-existent message must not crash the app
+- Add a test for deleting a message
+- Add a test for deleting a non-existent message
+- Do not change the existing tests
+
+Edit app.py, templates/index.html and tests/test_app.py only.
+Keep the plan under 10 lines.
+Do not edit the file yet. Show the plan only.</div>
+
+    <p>The third line from the bottom matters. <span class="mark">Without it, an existing test can be quietly rewritten to fit.</span></p>
+
+    <h3><span class="n">6.3.4</span>Step 4: approve the diff</h3>
+
+    <p>Compare it with what you wrote in 6.3.2.</p>
+
+    <table>
+      <thead><tr><th>What the diff shows</th><th>Decision</th></tr></thead>
+      <tbody>
+        <tr><td>Only the three files you predicted</td><td><strong>Save</strong></td></tr>
+        <tr><td>An existing test has been changed</td><td><span class="mark">Ask why. Reject if the answer does not convince you</span></td></tr>
+        <tr><td>A file you did not predict</td><td><strong>Reject</strong></td></tr>
+        <tr><td>The send logic has been rewritten</td><td><strong>Reject</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">6.3.5</span>Step 5: check both ways</h3>
+
+    <p><strong>Tests and browser. One is not enough.</strong></p>
+
+<pre><code>pytest</code></pre>
+
+    <p>Once it passes, check conditions 1 to 3 from 6.3.1 in the browser.</p>
+
+    <div class="warn">
+      <span class="tag">Tests can pass while the page is broken</span>
+      Tests only look at the server side. <span class="mark">A button that is not rendered, or does nothing when clicked, is invisible to them.</span><br><br>
+      The reverse happens too: the page works and a test fails. <strong>You are done when both agree.</strong>
+    </div>
+  </section>
+
+  <section class="sec" id="s6-4">
+    <h2><span class="n">6.4</span>An unplanned change request</h2>
+
+    <p>Requirements change after something already works. <span class="mark">In real work, this is the normal case.</span></p>
+
+    <div class="warn">
+      <span class="tag">Urgent</span>
+      Suppose a report comes in: someone posted a message containing language aimed at hurting another person.<br><br>
+      <strong>Make it impossible to post a message containing a banned word.</strong> Keep the list of banned words in <code>app.py</code>.<br><br>
+      When a post is refused, show the reason on the page. <span class="mark">Do not break anything that already works.</span>
+    </div>
+
+    <h3><span class="n">6.4.1</span>Predict first</h3>
+
+    <p>Write this before you ask. <span class="mark">Predicting and then reading a diff is a completely different activity from reading one cold.</span></p>
+
+    <ul>
+      <li>How does the data change? Where does the banned-word list live?</li>
+      <li>How does the logic change? At what point in sending is the check made?</li>
+      <li>How does the page change? Where does the reason appear?</li>
+      <li><strong>Which of the existing tests would fail?</strong></li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Think about that last one</span>
+      The existing tests were "an empty name is rejected" and "an empty message is rejected". <span class="mark">Would adding a banned-word check make those fail?</span><br><br>
+      They should not. <span class="mark">If they do fail, the new check has been put somewhere it interferes with the old one.</span> <strong>That is worth finding before you approve the diff.</strong>
+    </div>
+
+    <h3><span class="n">6.4.2</span>Write the finish conditions</h3>
+
+    <table>
+      <thead><tr><th></th><th>Condition</th><th>Who checks</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>A message with a banned word is not posted</td><td><span class="mark">A test</span></td></tr>
+        <tr><td><strong>2</strong></td><td>A message without one is posted as before</td><td><span class="mark">A test</span></td></tr>
+        <tr><td><strong>3</strong></td><td>When refused, the reason appears on the page</td><td>A person looks</td></tr>
+        <tr><td><strong>4</strong></td><td>Every existing test still passes</td><td><span class="mark">A test</span></td></tr>
+      </tbody>
+    </table>
+
+    <p>Do not forget number 2. <strong>Ask only for "block banned words" and an implementation that blocks everything also passes.</strong></p>
+
+    <h3><span class="n">6.4.3</span>Ask for it</h3>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Add a banned-word check to the Flask Vibe Chat.
+
+Requirements:
+- Keep a list of banned words in app.py
+- A message containing a banned word must not be added to the list
+- Show the reason on the page when a message is rejected
+- A message without banned words must still be added as before
+- Add a test for a rejected message
+- Add a test for an accepted message
+- Do not change the existing tests
+
+Edit app.py, templates/index.html and tests/test_app.py only.
+Keep the plan under 10 lines.
+Do not edit the file yet. Show the plan only.</div>
+
+    <h3><span class="n">6.4.4</span>What to look for in the diff</h3>
+
+    <table>
+      <thead><tr><th>Check</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Is the empty-input check still there?</td><td><span class="mark">Has it been replaced by the new one?</span></td></tr>
+        <tr><td>Is the word match case sensitive?</td><td>Either is fine, but <strong>was it decided on purpose?</strong></td></tr>
+        <tr><td>Where does the reason appear?</td><td>Somewhere you can actually see it</td></tr>
+        <tr><td>Have the existing tests been changed?</td><td>If so, ask why</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">6.4.5</span>Check it</h3>
+
+<pre><code>pytest</code></pre>
+
+    <p>You should have at least four passing tests. <span class="mark">The two from before, and the two from this change.</span> More if you added delete tests.</p>
+
+    <p>Then try both cases in the browser: a message with a banned word, and one without.</p>
+
+    <div class="note">
+      <span class="tag">This is where Part 5 pays off</span>
+      You added two features, and <span class="mark">one command told you the existing behaviour still holds.</span><br><br>
+      Without tests, this would mean checking sending, deleting, empty input and banned words by hand. <span class="mark">Four checks after every single change.</span> <strong>And the list only grows.</strong>
+    </div>
+  </section>
+
+  <section class="sec" id="s6-5">
+    <h2><span class="n">6.5</span>What to hand in</h2>
+
+    <p>Both features together.</p>
+
+    <table>
+      <thead><tr><th>Item</th><th>What</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Finish conditions</strong></td><td>For each feature, split into what a person checks and what a machine decides</td></tr>
+        <tr><td><strong>Your prediction</strong></td><td><span class="mark">What you wrote before asking</span></td></tr>
+        <tr><td><strong>The actual diff</strong></td><td>Which files changed, and the gist of each</td></tr>
+        <tr><td><strong>Prediction versus reality</strong></td><td><strong>Anything that differed, and what it was</strong></td></tr>
+        <tr><td><strong>Your decisions</strong></td><td>Reasons for Save or Reject</td></tr>
+        <tr><td><strong>Test output</strong></td><td><code>pytest</code> output, and how many tests you now have</td></tr>
+        <tr><td><strong>Screenshots</strong></td><td>Delete working, and a banned word being refused</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">Write the "prediction versus reality" line</span>
+      If it matched, say so. <span class="mark">If it did not, work out why.</span><br><br>
+      Was your prediction too shallow, or did the agent do more than you asked? <strong>Answering that is what makes the next prediction better.</strong>
+    </div>
+
+    <p>Submission is through the same peer evaluation system as Exercise 1. Use the <strong>Assignment 4</strong> card.</p>
+  </section>
+
+  <section class="sec" id="s6-6">
+    <h2><span class="n">6.6</span>What we know so far</h2>
+
+    <p>You added two features. <span class="mark"><code>pytest</code> told you the existing behaviour was intact.</span></p>
+
+    <p>In Part 4, a single fix took about an hour and twenty minutes, most of it manual checking. <span class="mark">Here the checking was one command, run twice.</span></p>
+
+    <div class="warn">
+      <span class="tag">Tests do not guarantee correctness</span>
+      A test can pass while <span class="mark">the specification behind it is wrong, in which case the code is wrongly correct.</span><br><br>
+      What goes in the banned-word list. What to show when a post is refused. <strong>Those are decisions a person makes.</strong> The tests only confirm that what you decided is still holding.
+    </div>
+
+    <h3><span class="n">6.6.1</span>What you have picked up so far</h3>
+
+    <table>
+      <thead><tr><th>Part</th><th>What you learned to do</th></tr></thead>
+      <tbody>
+        <tr><td><strong>3</strong></td><td>Have an agent create files, and approve each one</td></tr>
+        <tr><td><strong>4</strong></td><td>Test it yourself, find a problem, have it fixed</td></tr>
+        <tr><td><strong>5</strong></td><td>Decide what "done" means and hand the checking to a machine</td></tr>
+        <tr><td><strong>6</strong></td><td>Add features with tests behind you</td></tr>
+      </tbody>
+    </table>
+
+    <p>Up to now the agent has been someone else's product. <span class="mark">You have been watching Cline from the outside, approving what it proposed.</span></p>
+
+    <p>In Part 7 you build the inside of it. <strong>Tool calling, the loop, stopping conditions, human approval.</strong> What Cline was doing, written by you in Python.</p>
+  </section>
+
+
+
+  <nav class="pager">
+    <a class="prev" href="part5.html"><span class="dir">← PREV</span><span class="ttl">PART 5　Turn the check into tests</span></a>
+    <a class="next" href="part7.html"><span class="dir">NEXT →</span><span class="ttl">PART 7　Build the agent yourself</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

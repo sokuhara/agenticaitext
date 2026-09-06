@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 1 LLMの仕組みと限界</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#4f46e5;
+  --accent-soft:#eef0fe;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="章の一覧">
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html" aria-current="page">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 1</div>
+    <h1>LLMの仕組みと限界</h1>
+    <p class="lede">Coding Agentの中心にはLLMがあります。ただしLLMは、それ単体ではファイル1つ読めません。この章では、LLMが何をする部品で、どこで、なぜ間違えるのかを押さえます。</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>前章まで</dt><dd>セットアップで、VS Code、Ollama、モデルの準備が終わりました。</dd>
+      <dt>この章</dt><dd>AIの頭脳にあたるLLMが、何をする部品で、何ができず、なぜ間違えるのかを見ます。</dd>
+      <dt>次章へ</dt><dd>PART 2では、まずAIと対話しながらコードを作り、その速さと限界を体験します。</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="この章の目次">
+    <h2>この章の内容</h2>
+    <ol>
+      <li><span class="n">1.1</span><a href="#s1-1">LLMは何をする部品か</a></li>
+      <li><span class="n">1.2</span><a href="#s1-2">コンテキストと誤り</a></li>
+      <li><span class="n">1.3</span><a href="#s1-3">演習：モデルの限界を自分で確かめる</a></li>
+      <li><span class="n">1.4</span><a href="#s1-4">ここまでで分かったこと</a></li>
+    </ol>
+  </nav>
+
+  <section class="sec" id="s1-1">
+    <h2><span class="n">1.1</span>LLMは何をする部品か</h2>
+
+    <p>大規模言語モデル（LLM）は、巨大なニューラルネットワークです。膨大なテキストで学習されています。</p>
+
+    <p>やっていることは単純です。<span class="mark">これまでの文脈から、次に来る言葉を1つ選ぶ。それを繰り返します。</span></p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:18px 12px">
+      <svg viewBox="0 0 720 320" style="width:100%;max-width:720px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Next-token prediction">
+        <defs>
+          <marker id="tk" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 z" fill="#9aa0ab"/>
+          </marker>
+        </defs>
+        <g font-family="system-ui, sans-serif">
+
+          <g font-size="12" fill="#6c727d" font-weight="700">
+            <text x="14" y="55">Step 1</text>
+            <text x="14" y="115">Step 2</text>
+            <text x="14" y="175">Step 3</text>
+          </g>
+
+          <g font-size="14" text-anchor="middle">
+            <g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4">
+              <rect x="78"  y="34" width="62" height="30" rx="7"/>
+              <rect x="146" y="34" width="62" height="30" rx="7"/>
+              <rect x="78"  y="94" width="62" height="30" rx="7"/>
+              <rect x="146" y="94" width="62" height="30" rx="7"/>
+              <rect x="214" y="94" width="46" height="30" rx="7"/>
+              <rect x="78"  y="154" width="62" height="30" rx="7"/>
+              <rect x="146" y="154" width="62" height="30" rx="7"/>
+              <rect x="214" y="154" width="46" height="30" rx="7"/>
+              <rect x="266" y="154" width="58" height="30" rx="7"/>
+            </g>
+            <g fill="var(--ink)">
+              <text x="109" y="54">Once</text><text x="177" y="54">upon</text>
+              <text x="109" y="114">Once</text><text x="177" y="114">upon</text><text x="237" y="114">a</text>
+              <text x="109" y="174">Once</text><text x="177" y="174">upon</text><text x="237" y="174">a</text><text x="295" y="174">time</text>
+            </g>
+
+            <g fill="#eef0f2" stroke="#b9bec7" stroke-width="1.4">
+              <rect x="240" y="34" width="46" height="30" rx="7"/>
+              <rect x="292" y="94" width="58" height="30" rx="7"/>
+              <rect x="356" y="154" width="66" height="30" rx="7"/>
+            </g>
+            <g fill="#4b5160" font-weight="700">
+              <text x="263" y="54">a</text>
+              <text x="321" y="114">time</text>
+              <text x="389" y="174">there</text>
+            </g>
+          </g>
+
+          <g stroke="#9aa0ab" stroke-width="1.5" fill="none" marker-end="url(#tk)">
+            <path d="M212,49 H234"/>
+            <path d="M264,109 H286"/>
+            <path d="M328,169 H350"/>
+          </g>
+
+          <rect x="452" y="30" width="252" height="158" rx="10"
+                fill="var(--paper)" stroke="var(--line)" stroke-width="1.4"/>
+          <text x="468" y="52" font-size="12" font-weight="700" fill="var(--accent)">Candidates at Step 2</text>
+          <text x="468" y="70" font-size="11" fill="#6c727d">after &#8220;Once upon a&#8221;</text>
+
+          <g font-size="12">
+            <g fill="var(--accent)"><rect x="468" y="82" width="150" height="16" rx="4"/></g>
+            <text x="474" y="94" fill="#fff" font-weight="700">time</text>
+            <text x="628" y="94" fill="var(--ink)" font-weight="700">0.87</text>
+
+            <rect x="468" y="106" width="24" height="16" rx="4" fill="#b9c0cc"/>
+            <text x="498" y="118" fill="#4b5160">day</text>
+            <text x="628" y="118" fill="#6c727d">0.05</text>
+
+            <rect x="468" y="130" width="12" height="16" rx="4" fill="#c9cfd8"/>
+            <text x="486" y="142" fill="#4b5160">hill</text>
+            <text x="628" y="142" fill="#6c727d">0.02</text>
+
+            <rect x="468" y="154" width="8" height="16" rx="4" fill="#d5dae1"/>
+            <text x="482" y="166" fill="#4b5160">moment</text>
+            <text x="628" y="166" fill="#6c727d">0.01</text>
+          </g>
+
+          <rect x="14" y="216" width="690" height="86" rx="10"
+                fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+          <text x="34" y="244" font-size="13" font-weight="700" fill="var(--accent)">The model only picks the next token.</text>
+          <text x="34" y="268" font-size="13" fill="var(--ink)">It repeats this. Sentences, paragraphs and code all come out of the same loop.</text>
+          <text x="34" y="290" font-size="13" fill="var(--ink)">Nothing is planned in advance.</text>
+        </g>
+      </svg>
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        次のトークンを予測して繋げる。この繰り返しだけで文章とコードが出てきます
+      </div>
+    </div>
+
+    <p>この最小単位を<strong>トークン</strong>と呼びます。英語では単語より細かく分割されます。日本語では文字や語句にまたがります。「hello」は1トークンです。「こんにちは」は2〜3トークンです。</p>
+
+    <p>LLMは、入力をトークンに変換してから処理します。</p>
+
+    <p>この繰り返しから、翻訳、要約、対話、プログラミングが生まれます。とくにコードは得意です。理由は2つあります。形式が厳密であること。学習データが大量にあることです。</p>
+
+    <h3><span class="n">1.1.1</span>部品としての限界</h3>
+
+    <p>ここが出発点です。<span class="mark">LLMは、テキストを受け取ってテキストを返す部品です。それ以上のことはしません。</span></p>
+
+    <table>
+      <thead><tr><th>できないこと</th></tr></thead>
+      <tbody>
+        <tr><td>ファイルを読む</td></tr>
+        <tr><td>コマンドを実行する</td></tr>
+        <tr><td>いま何が起きているかを知る（知識は学習時点で止まっています）</td></tr>
+        <tr><td>自分の答えが正しいか確かめる</td></tr>
+      </tbody>
+    </table>
+
+    <p>どれほど賢くても、LLM単体ではコードベースに触れません。</p>
+
+    <p><strong>この4つをどう埋めるか。それがCoding Agentの設計です。</strong>1.2で限界を見ます。PART 3で埋め方を見ます。</p>
+
+    <div class="note">
+      <span class="tag">推論過程が見えるモデルについて</span>
+      答える前に、思考の途中経過を出力するモデルがあります。<code>ollama run qwen3.5:4b</code> を実行すると、本文の前に <code>&lt;think&gt;</code> の中身が長く流れます。<span class="mark">処理は止まっていません。待ってください。</span><br><br>
+      ただし、そこに出るものを「モデルの本当の思考」と考えないでください。あれも生成されたテキストです。最終的な答えと矛盾することもあります。参考にはなります。根拠にはなりません。
+    </div>
+  </section>
+
+  <section class="sec" id="s1-2">
+    <h2><span class="n">1.2</span>コンテキストと誤り</h2>
+
+    <p>LLMで詰まる場面は、2種類しかありません。<span class="mark">入りきらないか、間違っているのに自信があるかです。</span></p>
+
+    <h3><span class="n">1.2.1</span>コンテキストウィンドウ</h3>
+
+    <p>LLMには<strong>コンテキストウィンドウ</strong>という制限があります。ワーキングメモリにあたります。入力と出力の合計トークン数が、この範囲に収まる必要があります。</p>
+
+    <p>2026年の上位モデルには、100万トークン級のものもあります。手元で動かすモデルでも、20万トークン以上に対応するものがあります。</p>
+
+    <p>ただし<span class="mark">「対応している」と「実際に使える」は別です。</span></p>
+
+    <div class="warn">
+      <span class="tag">2つの落とし穴</span>
+      <strong>1. 設定しなければ使えない。</strong><br>
+      ローカルで動かす場合、ランタイム側の既定値のほうが小さいことがあります。モデルが26万トークンに対応していても、<code>num_ctx</code> を設定しなければ既定値で切られます。<span class="mark">エラーは出ません。履歴が静かに消えます。</span>（<a href="appendix-a.html">付録A</a> A.3.2）<br><br>
+      <strong>2. 長いほど賢いわけではない。</strong><br>
+      コンテキストの真ん中にある情報は、取りこぼされることがあります。<strong>Lost in the Middle</strong> と呼ばれます。長さを伸ばしても解決しません。
+    </div>
+
+    <p>Coding Agentが長い作業の途中で、さっき作ったファイルを忘れることがあります。原因はたいていここです。</p>
+
+    <p>対処は2つあります。途中で履歴を要約すること。新しいセッションへ引き継ぐこと。PART 6で実際に行います。</p>
+
+    <h3><span class="n">1.2.2</span>知識は学習時点で止まっている</h3>
+
+    <p>モデルが知っているのは、学習が終わった時点までの世界です。</p>
+
+    <p>ライブラリのAPIは変わります。非推奨になった書き方も、モデルの中には残っています。新しいバージョンは知りません。</p>
+
+    <p><span class="mark">「動くけれど古い書き方」が出てくる原因の多くは、これです。</span></p>
+
+    <h3><span class="n">1.2.3</span>もっともらしい誤り</h3>
+
+    <p><strong>ハルシネーション</strong>とは、事実と異なる情報を、本当のように答える現象です。</p>
+
+    <blockquote>
+      「2025年8月に発表された新しいプログラミング言語について教えて」<br>
+      →「NeoScript は、JavaScriptの非同期処理を根本から見直し、GoogleとMetaが共同で開発しました…」<br>
+      （そのような言語も、発表も存在しない）
+    </blockquote>
+
+    <p>厄介なのは口調です。<span class="mark">正しい答えと誤った答えが、まったく同じ口調で返ってきます。</span>自信のなさは表示されません。</p>
+
+    <p>だから「AIが嘘をつく」と身構えても、あまり役に立ちません。<strong>必要な情報を与えないまま答えさせると、それらしいもので埋まる。</strong>そう理解するほうが実用的です。</p>
+
+    <div class="note">
+      <span class="tag">演習0の回収</span>
+      <a href="exercise0.html">演習0</a>で、3か国について仕事を挙げてもらいました。<span class="mark">そのうち1つは、ほとんど知らない国だったはずです。それでも表は埋まりました。</span><br><br>
+      いま説明したことが、数十分前にあなた自身の手で起きています。<br><br>
+      あのとき <code>※推測</code> と <code>［前提：……］</code> を書いてもらったのは、このためです。根拠のある記述と、埋めただけの記述を、後から区別できるようにしておく。これがそのままAgentを扱う技術になります。
+    </div>
+
+    <p>対処は<strong>グラウンディング</strong>です。外部の正確な情報源を与え、その根拠に基づいて答えさせます。</p>
+
+    <p>手段は2つあります。RAGとTool Useです。Tool Useが、PART 3で扱う内容になります。PART 6で <code>llms.txt</code> をローカルに置いてから実装させるのも、同じ考えです。</p>
+  </section>
+
+  <section class="sec" id="s1-3">
+    <h2><span class="n">1.3</span>演習：モデルの限界を自分で確かめる</h2>
+
+    <p>1.1と1.2で説明したことを、手元のモデルで再現します。<span class="mark">読んで納得するのと、自分の画面で起こすのとでは、後の理解が変わります。</span>所要20分。</p>
+
+    <p>ターミナルの開き方とモデルの入れ方は<a href="setup.html">セットアップ</a>にあります。まだの人は先に済ませてください。</p>
+
+<pre><code>ollama run qwen3.5:4b</code></pre>
+
+    <h3><span class="n">1.3.1</span>実験1：知識は学習時点で止まっている</h3>
+
+    <div class="prompt"><span class="tag">PROMPT</span>あなたの知識は、いつの時点までのものですか。
+そのあとに起きた出来事を1つ挙げて、内容を説明してください。</div>
+
+    <p>後半を求められると、多くのモデルは<strong>それらしい出来事を作ります。</strong>「知りません」と答えるモデルもあります。<span class="mark">どちらが返ってきたかを記録してください。</span></p>
+
+    <h3><span class="n">1.3.2</span>実験2：もっともらしい誤り</h3>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Python の標準ライブラリにある quickload モジュールの使い方を、
+コード例つきで説明してください。</div>
+
+    <p>そんなモジュールはありません。<strong>それでも、動きそうなコード例が返ることがあります。</strong>返ってきた文章の口調を見てください。正しい答えのときと、区別がつくでしょうか。</p>
+
+    <div class="note">
+      <span class="tag">ここが要点です</span>
+      <span class="mark">誤りは、誤りらしい顔をして出てきません。</span>自信のなさは表示されません。だからPART 4以降で、機械が判定する仕組みを外側に置くことになります。
+    </div>
+
+    <h3><span class="n">1.3.3</span>実験3：冒頭の指示は最後まで守られるか</h3>
+
+    <p>配布する長文ファイルを使います。<span class="mark">冒頭にだけ決まりが書かれていて、末尾で質問が来る</span>という構成です。</p>
+
+    <p>同じ内容で、長さの違うものが5つあります（<code>experiment3/</code>）。<strong>短いものから順に投げて、どこで決まりが守られなくなるかを見ます。</strong></p>
+
+    <table>
+      <thead><tr><th>ファイル</th><th>文字数</th><th>目安トークン</th></tr></thead>
+      <tbody>
+        <tr><td><code>exp3_short.md</code></td><td>約1,200</td><td>約600</td></tr>
+        <tr><td><code>exp3_medium.md</code></td><td>約2,100</td><td>約1,000</td></tr>
+        <tr><td><code>exp3_long.md</code></td><td>約3,400</td><td>約1,700</td></tr>
+        <tr><td><code>exp3_xlong.md</code></td><td>約6,900</td><td>約5,700</td></tr>
+        <tr><td><code>exp3_xxlong.md</code></td><td>約12,100</td><td>約10,100</td></tr>
+      </tbody>
+    </table>
+
+    <p>冒頭に書かれている決まりは3つです。</p>
+
+<pre><code>1. 回答は箇条書き3点にすること。それ以上でも以下でもいけない。
+2. 各項目は40字以内に収めること。
+3. 前置きと後書きを書かないこと。箇条書きだけを出力すること。</code></pre>
+
+    <p>末尾の質問は「ピーク帯の注文の扱いを説明せよ」です。答えは文書の<strong>中央付近</strong>にあります。</p>
+
+    <h4>やり方</h4>
+
+    <ol>
+      <li>ターミナルで <code>ollama run qwen3.5:4b</code> を起動する</li>
+      <li>VS Codeで <code>experiment3/exp3_short.md</code> を開く</li>
+      <li><code>Ctrl</code> + <code>A</code> で全選択し、<code>Ctrl</code> + <code>C</code> でコピーする</li>
+      <li>ターミナルに貼り付けて、そのまま <code>Enter</code> を押す</li>
+      <li>出力が決まりを守っているか記録する</li>
+      <li>medium、long、xlong、xxlong と順に上げて、同じことを繰り返す</li>
+    </ol>
+
+    <div class="warn">
+      <span class="tag">質問文を自分で足さないこと</span>
+      <span class="mark">ファイルの末尾に、質問はすでに書かれています。</span>貼り付けたら、何も付け足さずにEnterを押してください。<br><br>
+      「この文書について答えて」などを自分で書き足すと、それが末尾に来ます。<strong>冒頭の決まりからの距離が変わってしまい、実験になりません。</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">貼り付けがうまくいかないとき</span>
+      ターミナルによっては、長い文章を貼ると途中で改行が実行されてしまいます。その場合は、貼り付けの前に <code>Shift</code> を押しながら貼るか、<code>ollama run</code> ではなくファイルを渡す形にしてください。<br><br>
+      <code>Get-Content exp3_short.md | ollama run qwen3.5:4b</code>（PowerShell）<br>
+      <code>cat exp3_short.md | ollama run qwen3.5:4b</code>（macOS / Linux）<br><br>
+      <span class="mark">この方法のほうが確実です。</span>1行で済み、貼り付け事故も起きません。
+    </div>
+
+    <p><strong>決まりが守られるかを見てください。</strong>崩れ方には段階があります。「守られた／守られなかった」の2択ではなく、どう崩れたかを記録します。</p>
+
+    <table>
+      <thead><tr><th>段階</th><th>症状</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>3点だが、1項目が40字を超える</td></tr>
+        <tr><td>2</td><td>前置きが付く（「はい、説明します」など）</td></tr>
+        <tr><td>3</td><td>項目数が4つ以上、または2つになる</td></tr>
+        <tr><td>4</td><td>箇条書きですらなくなる</td></tr>
+        <tr><td>5</td><td>質問と関係のない内容を答える</td></tr>
+        <tr><td>6</td><td>中央にある第7章ではなく、文書の冒頭や末尾の内容を答える</td></tr>
+      </tbody>
+    </table>
+
+    <p>6番が出たら、<span class="mark">それがLost in the Middleです。</span>コンテキストの真ん中が落ちています。</p>
+
+    <div class="note">
+      <span class="tag">短い実験で済ませたい場合</span>
+      <code>num_ctx</code> を小さく設定した実験用モデルを使うと、同じことが数往復で起こります。設定は<a href="appendix-a.html">付録A</a>のA.3.2です。<br><br>
+      逆に言えば、<span class="mark">この現象は「モデルが忘れっぽい」のではなく「入る量に限りがある」だけ</span>です。設定次第で起きたり起きなかったりします。
+    </div>
+
+    <p>これが、Coding Agentが長い作業の途中で「最初に決めたルール」を守らなくなる現象と同じものです。</p>
+
+    <h3><span class="n">1.3.4</span>提出物</h3>
+
+    <table>
+      <thead><tr><th>実験</th><th>記録すること</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>モデルは知識の期限を答えたか。そのあとの出来事を作ったか</td></tr>
+        <tr><td>2</td><td>存在しないモジュールに、コード例を書いたか。文章の確信度に差はあったか</td></tr>
+        <tr><td>3</td><td>冒頭の制約は守られたか。守られなかったのは文書のどのくらいの長さからか</td></tr>
+        <tr><td>まとめ</td><td><strong>この3つのうち、テストやCIで防げるのはどれか。</strong>理由も書く</td></tr>
+      </tbody>
+    </table>
+
+    <p>最後の行を考えておいてください。<span class="mark">PART 4と5で、その答え合わせをします。</span></p>
+  </section>
+
+  <section class="sec" id="s1-4">
+    <h2><span class="n">1.4</span>ここまでで分かったこと</h2>
+
+    <p>LLMは、コードも文章も生成できます。学習した膨大なコードから、それらしく動くものを組み立てられます。</p>
+
+    <p>しかし、<span class="mark">生成したコードが動くかどうかを、自分では確かめられません。</span>ファイルを開けず、テストを走らせられず、エラーメッセージを読めないからです。1.1.1で挙げた4つの制約が、そのまま残っています。</p>
+
+    <p>次のPARTでは、まずAIと対話しながらコードを作ります。速さを体験すると同時に、<strong>LLMだけに任せたとき何が足りないか</strong>を見ます。</p>
+  </section>
+
+
+  <nav class="pager">
+    <a class="prev" href="setup.html"><span class="dir">← PREV</span><span class="ttl">セットアップ　道具をそろえる</span></a>
+    <a class="next" href="part2.html"><span class="dir">NEXT →</span><span class="ttl">PART 2　Vibe Codingを試してみよう</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'コピー';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'コピーしました';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'コピー';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

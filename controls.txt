@@ -1,0 +1,75 @@
+/* ============ CONTROL PANEL: START ============
+   The photograph is cut into named parts. Restyle them by name.
+
+   SIGNS AND BANNERS  (these have text you can remove)
+     #sign-kushikatsu  #sign-sumo      #sign-tall-left  #sign-dote
+     #banner-purple    #banner-red-left #banner-right
+     #sign-blue        #sign-tecchiri  #sign-right-green
+     #lantern-top      #lantern-mid    #lantern-low
+
+   OBJECTS
+     #tower  (Tsutenkaku - the landmark, keep it)
+     #statue  #pufferfish  #building-left  #awning
+
+   BACKGROUND AREAS
+     #sky  #far-buildings  #left-shops  #right-shops  #street
+
+   WHAT YOU CAN WRITE
+     #name              { filter: hue-rotate(40deg) saturate(1.6); }
+     #name .board       { fill: #e8a33d; }      recolour the board
+     #name .ink         { display: none; }      remove its Japanese text
+     #name .cover       { display: block; }     blank the sign completely
+     #name              { opacity: .5; }
+     #name              { display: none; }      remove it
+
+   ONE CHANGE PER INSTRUCTION.
+   ============================================= */
+
+.cover { display: none; }
+
+#sky            { }
+#left-shops     { }
+#right-shops    { }
+#street         { }
+#far-buildings  { }
+#tower          { }
+
+
+/* ============ ADD YOUR OWN THINGS BELOW ============
+   Draw new Indian elements here: flags, garlands, a chai
+   stall, an auto-rickshaw, new signboards.
+   The drawing is 1600 wide, 1066 tall. x=0 left, y=0 sky.
+
+   Useful places:
+     sign-kushikatsu    x 0..152   y 0..300
+     sign-sumo          x 72..250   y 470..765
+     sign-tall-left     x 0..78   y 455..1015
+     sign-dote          x 340..408   y 465..625
+     banner-purple      x 278..378   y 345..475
+     banner-red-left    x 640..765   y 265..685
+     banner-right       x 1485..1600   y 0..345
+     sign-blue          x 935..1095   y 685..1055
+     sign-tecchiri      x 1000..1135   y 775..1060
+     sign-right-green   x 1365..1475   y 565..905
+     lantern-top        x 150..255   y 25..235
+     lantern-mid        x 222..335   y 435..645
+     lantern-low        x 240..345   y 775..965
+     tower              x 1015..1315   y 50..735
+     statue             x 425..685   y 420..805
+     pufferfish         x 1115..1335   y 740..905
+     building-left      x 240..645   y 0..700
+     awning             x 225..905   y 695..1015
+
+   Example:
+     <text x="80" y="160" font-size="60" fill="#fff"
+           font-family="Arial" font-weight="bold">CHAI</text>
+   ==================================================== */
+
+/* ============ CONTROL PANEL: END ============ */
+
+
+<!-- ===== ADD LAYER: START ===== -->
+<g id="add">
+
+</g>
+<!-- ===== ADD LAYER: END ===== -->

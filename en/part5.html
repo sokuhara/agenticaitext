@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 5 Turn the check into tests</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#0284c7;
+  --accent-soft:#e0f2fe;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html" aria-current="page">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 5</div>
+    <h1>Turn the check into tests</h1>
+    <p class="lede">In Part 4 you verified every fix by hand. Here you hand part of that to a machine. You move Vibe Chat to Flask, have tests written, and then break the code on purpose to see the tests fail.</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>Previously</dt><dd>In Part 4 you tested the app yourself and had Cline fix what you found. You also felt how long manual checking takes.</dd>
+      <dt>This part</dt><dd>Cline converts the same Vibe Chat into a Flask app and writes tests. You then check whether those tests actually do anything.</dd>
+      <dt>Next</dt><dd>Part 6 adds features to this app. With tests in place, breaking something shows up immediately.</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="Contents of this part">
+    <h2>In this part</h2>
+    <ol>
+      <li><span class="n">5.1</span><a href="#s5-1">What you build in this part</a></li>
+      <li><span class="n">5.2</span><a href="#s5-2">Decide what "done" means, first</a></li>
+      <li><span class="n">5.3</span><a href="#s5-3">Ask Cline to move it to Flask</a></li>
+      <li><span class="n">5.4</span><a href="#s5-4">Run the tests</a></li>
+      <li><span class="n">5.5</span><a href="#s5-5">Break it on purpose</a></li>
+      <li><span class="n">5.6</span><a href="#s5-6">What to hand in</a></li>
+      <li><span class="n">5.7</span><a href="#s5-7">What we know so far</a></li>
+    </ol>
+  </nav>
+
+
+
+  <section class="sec" id="s5-1">
+    <h2><span class="n">5.1</span>What you build in this part</h2>
+
+    <div class="prompt"><span class="tag">MISSION</span>Turn the Vibe Chat from Parts 3 and 4 into a Flask application.
+
+Keep the messages in a Python list.
+Make it possible to verify, with a test, that an empty name
+and an empty message are rejected.</div>
+
+    <h3><span class="n">5.1.1</span>Why move to Flask</h3>
+
+    <p>Right now Vibe Chat lives entirely in the browser. <span class="mark">The messages sit in a JavaScript array, so a reload clears them.</span></p>
+
+    <p>Move the data to the server and a browser reload no longer clears it. <span class="mark">Restarting the server still will, because a Python list lives in memory too.</span></p>
+
+    <p>The real gain is different. <strong>Server-side code can be tested.</strong></p>
+
+    <div class="note">
+      <span class="tag">Being testable is the point</span>
+      In Part 4 you checked every fix by hand. <span class="mark">One fix took about an hour and twenty minutes.</span><br><br>
+      On the server side, "an empty name is rejected" can be checked in code. <span class="mark">One command replaces a sequence of clicks.</span> <strong>It also runs the same way every time, which a person does not.</strong>
+    </div>
+
+    <h3><span class="n">5.1.2</span>The files at the end</h3>
+
+<pre><code>vibe-chat/
+├── app.py                 the Flask app
+├── requirements.txt       the packages you use
+├── templates/
+│   └── index.html         the page (reuse what you have)
+└── tests/
+    └── test_app.py        the tests</code></pre>
+
+    <p><span class="mark">Four files. Keeping it to four is deliberate</span>, because you have to read every one of them. The <code>index.html</code> from Part 3 moves into <code>templates/</code>.</p>
+
+    <h3><span class="n">5.1.3</span>What you use</h3>
+
+    <table>
+      <thead><tr><th></th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Python</strong></td><td>Already installed</td></tr>
+        <tr><td><strong>Flask</strong></td><td>Builds a small web app</td></tr>
+        <tr><td><strong>pytest</strong></td><td>Runs the tests</td></tr>
+        <tr><td><strong>Cline</strong></td><td>Does the implementation</td></tr>
+      </tbody>
+    </table>
+
+    <p>Those four. <span class="mark">No Git, no CI, no linter in this part.</span> Those are in <a href="appendix-c.html">Appendix C</a>.</p>
+
+    <h3><span class="n">5.1.4</span>Setup</h3>
+
+    <p>Two packages, from the Cline terminal.</p>
+
+<pre><code>pip install flask pytest</code></pre>
+
+    <div class="note">
+      <span class="tag">If that errors</span>
+      If <code>pip</code> is not found, try <code>python -m pip install flask pytest</code>.<br><br>
+      If that still fails, paste the error text straight into Cline. <span class="mark">The habit from Part 2 works here too.</span>
+    </div>
+  </section>
+
+  <section class="sec" id="s5-2">
+    <h2><span class="n">5.2</span>Decide what "done" means, first</h2>
+
+    <p>Before you ask for anything, <span class="mark">you decide what finished looks like.</span></p>
+
+    <div class="warn">
+      <span class="tag">Do not ask without deciding this</span>
+      If you do not decide, the agent will work to whatever it assumes you meant. <strong>Then it reports that the work is complete.</strong><br><br>
+      As Part 4 showed, <span class="mark">that report only tells you it stopped.</span> Whether it is done depends on conditions you wrote down first.
+    </div>
+
+    <h3><span class="n">5.2.1</span>Four conditions to start from</h3>
+
+    <table>
+      <thead><tr><th></th><th>Condition</th><th>Who checks</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>The page opens in a browser</td><td>A person looks</td></tr>
+        <tr><td><strong>2</strong></td><td>Sending a message adds it to the list</td><td>A person tries it</td></tr>
+        <tr><td><strong>3</strong></td><td>An empty name is not accepted</td><td><span class="mark">A test decides</span></td></tr>
+        <tr><td><strong>4</strong></td><td>An empty message is not accepted</td><td><span class="mark">A test decides</span></td></tr>
+      </tbody>
+    </table>
+
+    <p>You check 1 and 2. <strong>A machine checks 3 and 4.</strong> That split is what this part is about.</p>
+
+    <h3><span class="n">5.2.2</span>Add one of your own</h3>
+
+    <p>Take the problem you found in Part 4 and make it the fifth condition.</p>
+
+    <blockquote>
+      For example: a 1,000-character message does not overflow the card<br>
+      For example: <code>&lt;h1&gt;Hello&lt;/h1&gt;</code> appears as text, not as a heading
+    </blockquote>
+
+    <p>Then answer one question about it. <span class="mark">Is this something a person has to look at, or something a machine can decide?</span> <strong>That call is yours too, and it decides whether the condition becomes a test.</strong></p>
+  </section>
+
+  <section class="sec" id="s5-3">
+    <h2><span class="n">5.3</span>Ask Cline to move it to Flask</h2>
+
+    <h3><span class="n">5.3.1</span>Ask in Plan mode</h3>
+
+    <p>Switch to <strong>Plan</strong> before sending.</p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Convert the existing Vibe Chat into a Flask application.
+
+Create these files only:
+- app.py
+- requirements.txt
+- templates/index.html
+- tests/test_app.py
+
+Requirements:
+- Move the current index.html into templates/ and keep its design
+- Store messages in a Python list in app.py
+- POST the form to a route, then show the messages below the form
+- Reject an empty user name and an empty message
+- tests/test_app.py must test that an empty name and an empty message are rejected
+- Use Flask and pytest only
+
+Do not use:
+- Database
+- JavaScript frameworks
+- External CSS libraries
+- Any file not listed above
+
+Keep the plan under 10 lines.
+Do not create or edit files yet. Show the plan only.</div>
+
+    <h3><span class="n">5.3.2</span>Judge the plan</h3>
+
+    <table>
+      <thead><tr><th>Check</th><th>If it is there</th></tr></thead>
+      <tbody>
+        <tr><td>Only the four files?</td><td>Ask it to drop anything else</td></tr>
+        <tr><td>No database?</td><td><span class="mark">SQLite or SQLAlchemy: ask for the Python list instead</span></td></tr>
+        <tr><td>Does it keep the current design?</td><td>If it plans a rewrite, ask it to reuse the page</td></tr>
+        <tr><td>Are there at least two tests?</td><td>If there are none, say so</td></tr>
+      </tbody>
+    </table>
+
+    <p>If it looks right, switch to <strong>Act</strong>.</p>
+
+    <div class="warn">
+      <span class="tag">Helpful additions you do not want</span>
+      <code>Blueprint</code>, <code>config.py</code>, <code>models.py</code>, <code>.env</code>, <code>Dockerfile</code>. <span class="mark">None of them are needed here.</span><br><br>
+      Even when told "this is how it is done in production", <strong>hold it to four files.</strong> Every extra one is another file you have to read.
+    </div>
+
+    <h3><span class="n">5.3.3</span>Judge each file</h3>
+
+    <p>In Act mode, Cline offers the files one at a time. <span class="mark">You make four Save-or-Reject decisions.</span></p>
+
+    <table>
+      <thead><tr><th>File</th><th>What to look at</th></tr></thead>
+      <tbody>
+        <tr><td><code>app.py</code></td><td>Are messages in a Python list? Is there a check for empty input?</td></tr>
+        <tr><td><code>requirements.txt</code></td><td><span class="mark">Flask and pytest only? Anything else in there?</span></td></tr>
+        <tr><td><code>templates/index.html</code></td><td>Is the existing design still there?</td></tr>
+        <tr><td><code>tests/test_app.py</code></td><td><strong>Does it check the empty name and the empty message separately?</strong></td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">Read the tests themselves</span>
+      <span class="mark">Having tests and having tests that do something are different.</span><br><br>
+      A test containing only <code>assert True</code> passes every time, and looks exactly as green as a real one. <strong>Read them and decide for yourself what they check.</strong>
+    </div>
+
+    <h3><span class="n">5.3.4</span>Check it in a browser</h3>
+
+    <p>Cline starts the server. Open the address it prints.</p>
+
+<pre><code>http://127.0.0.1:5000</code></pre>
+
+    <p>Check conditions 1 and 2 from 5.2.1. <span class="mark">Does the page open? Does sending add to the list?</span></p>
+
+    <div class="warn">
+      <span class="tag">Do not move on to the tests if this fails</span>
+      Passing tests on a page that does not load tells you nothing. <strong>Confirm it works for a person first.</strong>
+    </div>
+  </section>
+
+  <section class="sec" id="s5-4">
+    <h2><span class="n">5.4</span>Run the tests</h2>
+
+    <p>From the Cline terminal.</p>
+
+<pre><code>pytest</code></pre>
+
+    <p>Success looks like this.</p>
+
+<pre><code>tests/test_app.py ..                    [100%]
+
+2 passed in 0.12s</code></pre>
+
+    <div class="note">
+      <span class="tag">If pytest is not found</span>
+      Try <code>python -m pytest</code>.<br>
+      If that fails too, run <code>pip install pytest</code> again.
+    </div>
+
+    <h3><span class="n">5.4.1</span>Read what they check</h3>
+
+    <p>Open <code>tests/test_app.py</code>. <span class="mark">Can you say what each of the two tests does?</span></p>
+
+    <p>It will look roughly like this.</p>
+
+<pre><code>def test_empty_name_is_rejected(client):
+    r = client.post("/send", data={"name": "", "message": "hello"})
+    # check that nothing was added
+    ...</code></pre>
+
+    <div class="warn">
+      <span class="tag">If you cannot read it, ask Cline</span>
+      <span class="mark">"What does this test check? Answer in one sentence."</span> It will tell you.<br><br>
+      <span class="mark">A test you cannot read is one you cannot trust.</span> <strong>Section 5.5 gives you a way to check it without reading every line.</strong>
+    </div>
+  </section>
+
+  <section class="sec" id="s5-5">
+    <h2><span class="n">5.5</span>Break it on purpose and watch the test fail</h2>
+
+    <p>A passing test is not evidence that the test works. <span class="mark">A test that checks nothing also passes.</span></p>
+
+    <p><strong>There is one way to find out: break the code and see.</strong></p>
+
+    <h3><span class="n">5.5.1</span>Steps</h3>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　Open <code>app.py</code></p>
+      <p><strong>2</strong>　<span class="mark">Comment out the check that rejects an empty name</span></p>
+      <p><strong>3</strong>　Save and run <code>pytest</code></p>
+      <p><strong>4</strong>　<strong>Confirm that it fails</strong></p>
+      <p><strong>5</strong>　Put the check back and run <code>pytest</code> again</p>
+      <p><strong>6</strong>　Confirm that it passes</p>
+    </div>
+
+    <p>If step 4 does not fail, <span class="mark">that test is not checking anything.</span></p>
+
+    <h3><span class="n">5.5.2</span>If it did not fail</h3>
+
+    <p>Have Cline fix it. <strong>Give the symptom and what should happen.</strong></p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>I commented out the empty-name check in app.py, but the tests still pass.
+
+Expected result:
+The test should fail when the empty-name check is removed.
+
+Inspect tests/test_app.py and show a short plan.
+Edit tests/test_app.py only.
+Do not edit the file yet.</div>
+
+    <p>The same shape as Part 4. <span class="mark">Symptom, expected result, constraints.</span></p>
+
+    <div class="note">
+      <span class="tag">This is how you test a test</span>
+      You cannot check a test with another test. <strong>You break the code and see whether the test notices.</strong><br><br>
+      Doing this systematically, with tools that introduce the changes for you, is called <span class="mark">mutation testing</span>. Here you are doing one mutation by hand.
+    </div>
+
+    <h3><span class="n">5.5.3</span>Break the other one</h3>
+
+    <p>Do the same for the empty message. <strong>Confirm that both fail.</strong></p>
+  </section>
+
+  <section class="sec" id="s5-6">
+    <h2><span class="n">5.6</span>What to hand in</h2>
+
+    <table>
+      <thead><tr><th>Item</th><th>What</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Your conditions</strong></td><td>The five from 5.2, split into what a person checks and what a machine decides</td></tr>
+        <tr><td><strong>The plan</strong></td><td>What Cline proposed</td></tr>
+        <tr><td><strong>Your decisions</strong></td><td>Save or Reject for each of the four files, and why</td></tr>
+        <tr><td><strong>Browser</strong></td><td>A screenshot with a message posted</td></tr>
+        <tr><td><strong>Test output</strong></td><td>The output of <code>pytest</code>, passing</td></tr>
+        <tr><td><strong>Broken output</strong></td><td><span class="mark">What you commented out, and the failing test output</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">The last one matters most</span>
+      <span class="mark">Anyone can produce a passing test run.</span> A failing one is evidence that the test does something.<br><br>
+      Which line you commented out, and which test failed. <strong>Getting that pairing right shows you understood the test.</strong>
+    </div>
+
+    <p>Submission is through the same peer evaluation system as Exercise 1. Use the <strong>Assignment 3</strong> card.</p>
+  </section>
+
+  <section class="sec" id="s5-7">
+    <h2><span class="n">5.7</span>What we know so far</h2>
+
+    <p>In Part 4 you checked every fix by hand, and one fix took about an hour and twenty minutes.</p>
+
+    <p>Here you handed part of that over. <span class="mark">"An empty name is rejected" is now one <code>pytest</code> command.</span></p>
+
+    <table>
+      <thead><tr><th></th><th>Who checks it</th></tr></thead>
+      <tbody>
+        <tr><td>The page opens</td><td>You</td></tr>
+        <tr><td>Sending adds to the list</td><td>You</td></tr>
+        <tr><td>Empty name rejected</td><td><strong>A machine</strong></td></tr>
+        <tr><td>Empty message rejected</td><td><strong>A machine</strong></td></tr>
+        <tr><td>Deciding what "done" means</td><td><span class="mark">You</span></td></tr>
+        <tr><td>Accepting a plan</td><td><span class="mark">You</span></td></tr>
+        <tr><td>Approving a diff</td><td><span class="mark">You</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">What cannot be handed over</span>
+      <span class="mark">What counts as correct behaviour.</span> You decide that. Without it, there is nothing to write a test against.<br><br>
+      An agent can write code that satisfies a condition. <strong>It cannot write the condition.</strong>
+    </div>
+
+    <p>In Part 6 you add features to this same app. <span class="mark">The tests are there, so breaking something existing shows up immediately.</span></p>
+
+    <p>Git, linters and CI are in <a href="appendix-c.html">Appendix C</a>. <span class="mark">They matter once more than one person changes the same code.</span> <strong>Working alone, as you are here, they would only add steps.</strong></p>
+  </section>
+
+
+
+  <nav class="pager">
+    <a class="prev" href="part4.html"><span class="dir">← PREV</span><span class="ttl">PART 4　Test it, then have it fixed</span></a>
+    <a class="next" href="part6.html"><span class="dir">NEXT →</span><span class="ttl">PART 6　Add features without breaking things</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

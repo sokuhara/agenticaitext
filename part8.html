@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 8 Agentic AIで動画制作を回す</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#c2410c;
+  --accent-soft:#fdeee4;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="章の一覧">
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html" aria-current="page">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 8</div>
+    <h1>Agentic AIで動画制作を回す</h1>
+    <p class="lede">最終課題です。あなたは小さな制作チームのプロデューサーです。テーマを与えると1分の解説動画を完成させる制作Agentを、Google Colabの上に作ります。作るのは動画ではなく、複数の道具を使い、確認を挟みながら成果物を仕上げるAgentの仕事の流れです。</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>前章まで</dt><dd>PART 7で、Agentの中身を自分で組み立てました。ツール呼び出し、分岐、停止条件、人間の承認、中断と再開です。</dd>
+      <dt>この章</dt><dd>同じ設計を、コーディング以外の仕事に当てはめます。企画、根拠確認、台本、素材、組み立て、評価、修正。人間が承認するのは、企画と事実確認と公開判断です。</dd>
+      <dt>次章へ</dt><dd>Agentのリリースと運用については、付録Cにまとめてあります。</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="この章の目次">
+    <h2>この章の内容</h2>
+    <ol>
+      <li><span class="n">8.1</span><a href="#s8-1">動画制作を「仕事の流れ」に分ける</a></li>
+      <li><span class="n">8.2</span><a href="#s8-2">Colabで状態とツールを用意する</a></li>
+      <li><span class="n">8.3</span><a href="#s8-3">企画から絵コンテまでをAgentに任せる</a></li>
+      <li><span class="n">8.4</span><a href="#s8-4">承認後、動画に組み立てる</a></li>
+      <li><span class="n">8.5</span><a href="#s8-5">評価し、修正ループを回す</a></li>
+      <li><span class="n">8.6</span><a href="#s8-6">公開できない理由を確認する</a></li>
+    </ol>
+  </nav>
+
+
+  <section class="sec" id="s8-0" style="margin-bottom:44px">
+    <h2><span class="n">8.0</span>この章で何をするか</h2>
+
+    <h3>この章で学ぶこと</h3>
+
+    <p>PART 7で作ったAgentには、<strong>状態、ツール、分岐、承認</strong>がありました。<span class="mark">その設計を、コーディング以外の仕事へ移します。</span></p>
+
+    <p><span class="mark">動画制作は題材です。</span>目的は2つあります。複数段階の仕事を分解すること。<strong>機械が判定する部分と、人間が判断する部分を分けること。</strong></p>
+
+    <h3>この章を終えると</h3>
+
+    <p>企画から公開判断までを持つ制作ワークフローを設計できるようになります。<strong>修正ループを含むNotebookを作れるようになります。</strong></p>
+
+    <h3>この章で繰り返す進め方</h3>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　仕事を分解する</p>
+      <p><strong>2</strong>　状態とツールを決める</p>
+      <p><strong>3</strong>　人間の承認位置を決める</p>
+      <p><strong>4</strong>　実行する</p>
+      <p><strong>5</strong>　失敗したら戻す</p>
+    </div>
+
+    <p>PART 7の <code>plan → implement → check → 分岐</code> と同じ形です。<span class="mark">工程の数が増えるだけで、考え方は変わりません。</span></p>
+
+    <h3><span class="n">8.0.1</span>最終課題</h3>
+
+<div class="prompt"><span class="tag">FINAL MISSION</span>「学生が知るべき地域の魅力」「大学生活で本当に役立つこと」「身近な社会課題」からテーマを1つ選び、1分の解説動画を完成させる制作Agentを作りなさい。
+
+Agentは、構成を考え、根拠を確認し、台本を作り、素材の指示を出し、
+動画を組み立て、チェック結果を見て修正する。
+
+人間は、企画の承認、事実確認、公開判断を行う。</div>
+
+<div class="warn">
+      <span class="tag">これは動画コンテストではありません</span>
+      評価するのは映像の見栄えではありません。<span class="mark">仕事をどう分解したか、どこに人間の確認を置いたか、失敗したときにどう戻したか</span>です。凝った映像でも、評価は低くなることがあります。<span class="mark">Agentの流れが1本道で、承認も再試行もない場合です。</span><br><br>
+      逆に、素材が文字と静止画だけでも構いません。<strong>根拠確認のノードがあり、しきい値で人間に渡す設計なら、良い提出物です。</strong>
+    </div>
+
+<h3><span class="n">8.0.2</span>なぜColabなのか</h3>
+
+    <table>
+      <thead><tr><th></th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td><strong>GPUが借りられる</strong></td><td>手元のPCの性能に左右されない。全員が同じ条件で実行できる</td></tr>
+        <tr><td><strong>道具が揃っている</strong></td><td>Python、ffmpeg、画像・音声処理をNotebookにまとめられる</td></tr>
+        <tr><td><strong>工程が見える</strong></td><td>セルごとに「計画 → 実行 → 確認」を分けて示せる</td></tr>
+        <tr><td><strong>提出しやすい</strong></td><td>最後に <code>.mp4</code> とNotebookをそのまま出せる</td></tr>
+      </tbody>
+    </table>
+
+<h3><span class="n">8.0.3</span>VS CodeからColabにつなぐ</h3>
+
+    <p>Colabはブラウザでも使えますが、<span class="mark">VS Codeから接続できます。</span>PART 3以降と同じ環境のまま、GPUだけを借りる形です。</p>
+
+    <table>
+      <thead><tr><th></th><th>ブラウザのColab</th><th>VS Codeから接続</th></tr></thead>
+      <tbody>
+        <tr><td>編集</td><td>Colabのエディタ</td><td><span class="mark">VS Code。Clineも使える</span></td></tr>
+        <tr><td>Git</td><td>やりにくい</td><td>そのまま使える</td></tr>
+        <tr><td>Driveのマウント</td><td>必要</td><td>不要</td></tr>
+        <tr><td>ファイルの受け渡し</td><td>ブラウザ経由</td><td>右クリックで送受信</td></tr>
+      </tbody>
+    </table>
+
+    <h4>接続の手順</h4>
+
+    <ol>
+      <li>拡張機能のパネル（<code>Ctrl</code> + <code>Shift</code> + <code>X</code>）で <strong>Colab</strong> を検索し、<span class="mark">発行元が Google のもの</span>を入れる</li>
+      <li>作業フォルダに <code>.ipynb</code> ファイルを作る</li>
+      <li>右上の <strong>Select Kernel</strong> を押す</li>
+      <li><strong>Colab</strong> を選ぶ</li>
+      <li><strong>New Colab Server (CPU, GPU or TPU)</strong> を選ぶ</li>
+      <li>Googleアカウントへのアクセスを聞かれたら <strong>Allow</strong></li>
+      <li>ブラウザが開いたら、画面の指示に従う</li>
+      <li>VS Codeに戻り、<strong>GPU</strong> を選ぶ</li>
+      <li>アクセラレータの一覧から <strong>T4 GPU</strong> を選ぶ</li>
+    </ol>
+
+    <h4>つながったか確認する</h4>
+
+    <p>セルに次を貼って実行します。</p>
+
+<pre><code>import torch
+
+print("GPU available:", torch.cuda.is_available())
+print("GPU name:", torch.cuda.get_device_name(0)
+      if torch.cuda.is_available() else "No GPU")</code></pre>
+
+    <p>こう出れば成功です。</p>
+
+<pre><code>GPU available: True
+GPU name: Tesla T4</code></pre>
+
+    <h4>ファイルの受け渡し</h4>
+
+    <table>
+      <thead><tr><th>やりたいこと</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td>手元のファイルをColabへ送る</td><td>エクスプローラーで右クリック → <strong>Upload to Colab</strong></td></tr>
+        <tr><td>Colabのファイルを手元へ持ってくる</td><td><strong>Colab</strong> タブを開き、ファイルを右クリック → <strong>download</strong></td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">ランタイムを切ると、中のファイルは消えます</span>
+      Colab側に作った <code>.mp4</code> は、<span class="mark">接続を切ると消えます。</span>Driveには保存されません。<br><br>
+      <strong>作業が終わったら、その場でダウンロードしてください。</strong>提出物を作ってから切る、という順序を守ります。
+    </div>
+
+    <div class="note">
+      <span class="tag">VS Codeから接続できない場合</span>
+      ブラウザでColabを開いても進められます。<span class="mark">その場合はGPUを自分で有効にする必要があります。</span>手順は<a href="appendix-a.html">付録A</a>のA.12にあります。<br><br>
+      <strong>本編はVS Codeからの接続で進めます。</strong>
+    </div>
+
+<div class="note">
+      <span class="tag">ColabではローカルOllamaを前提にしません</span>
+      PART 3以降で使ってきた27Bのモデルは、Colabでは安定して動きません。<span class="mark">実行環境が一時的で、GPUの割り当ても保証されないためです。</span>この章は次の2ルートに分けます。<br><br>
+      <table style="margin:10px 0">
+        <thead><tr><th>ルート</th><th>作るもの</th></tr></thead>
+        <tbody>
+          <tr><td><strong>標準課題</strong></td><td>状態・ツール・分岐・承認を持つ<strong>「制作ワークフロー」</strong>。LLMは使わず、テンプレートとルールで工程を通す</td></tr>
+          <tr><td><strong>発展課題</strong></td><td>企画・台本・絵コンテのノードにLLMを接続した<strong>「制作Agent」</strong></td></tr>
+        </tbody>
+      </table>
+      <span class="mark">標準課題だけでも、この章の目的は達成できます。</span>映像生成APIを使えないことは減点理由になりません。<br><br>
+      なお、LLMを使わない標準課題は、厳密には「AI Agent」ではありません。<strong>Agenticな仕事の流れの骨組みです。</strong><br><br>設計の対象は同じです。判断する部分が、人間とルールに置き換わっているだけです。
+    </div>
+  </section>
+
+  <section class="sec" id="s8-1">
+    <h2><span class="n">8.1</span>動画制作を「仕事の流れ」に分ける</h2>
+
+    <p>まず、動画を作る仕事を工程に割ります。<span class="mark">演習0でやったことと同じです。</span></p>
+
+    <p>繰り返しで、多段階で、いまは人がやっている仕事。それを分解します。</p>
+
+    <div class="flow-steps">
+      <p><strong>企画</strong>　テーマから、伝えたい要点を3つに絞る</p>
+      <p><strong>根拠確認</strong>　その要点が事実か確かめる。出典を残す</p>
+      <p><strong>台本</strong>　1分（およそ300字）に収まる原稿を書く</p>
+      <p><strong>絵コンテ</strong>　各カットに何を映すかを指示する</p>
+      <p><strong>素材</strong>　画像、音声、字幕を用意する</p>
+      <p><strong>組み立て</strong>　ffmpegで1本の動画にする</p>
+      <p><strong>評価</strong>　尺、字幕のズレ、音量、誤りを点検する</p>
+    </div>
+
+    <p>PART 7の <code>plan → implement → check</code> と同じ形です。違うのは工程の数と、<strong>checkが機械的に判定しきれない</strong>ことです。テストは通るか通らないかですが、「この動画はよいか」には自動判定がありません。</p>
+
+    <h3><span class="n">8.1.1</span>だから確認を2種類に分けます</h3>
+
+    <table>
+      <thead><tr><th>機械が判定できること</th><th>人間が判定すること</th></tr></thead>
+      <tbody>
+        <tr><td>尺が55〜65秒に収まっているか</td><td>企画が趣旨に合っているか</td></tr>
+        <tr><td>字幕の総文字数が台本と一致するか</td><td>事実として正しいか</td></tr>
+        <tr><td>音声と字幕のタイムコードがずれていないか</td><td>誤解を招く表現がないか</td></tr>
+        <tr><td>出力ファイルが再生できるか</td><td>公開してよいか</td></tr>
+      </tbody>
+    </table>
+
+    <p><span class="mark">左の列はcheckノードにします。右の列はinterruptにします。</span>この振り分けが、この課題の設計そのものです。</p>
+  </section>
+
+  <section class="sec" id="s8-2">
+    <h2><span class="n">8.2</span>Colabで状態とツールを用意する</h2>
+
+<pre><code>!apt-get -qq install ffmpeg
+!pip -q install langgraph pydantic</code></pre>
+
+<pre><code>from typing import TypedDict
+
+
+class VideoState(TypedDict, total=False):
+    theme: str
+    points: list[str]        # 要点3つ
+    sources: list[str]       # 根拠の出典
+    script: str              # 台本
+    shots: list[dict]        # 絵コンテ
+    caption_only: bool       # 音声なし・字幕のみで作るか
+    audio_path: str
+    subtitle_path: str
+    video_path: str
+    check_report: dict
+    attempts: int
+    approved: bool</code></pre>
+
+    <p>PART 7の <code>State</code> と構造は同じです。<span class="mark">工程が増えただけで、考え方は変わりません。</span></p>
+
+    <div class="note">
+      <span class="tag">スターターNotebookを使ってください</span>
+      ffprobeの呼び出し、字幕の生成、ffmpegの組み立て、グラフの雛形。<span class="mark">これらはスターターNotebook（<a href="part8_starter.ipynb">part8_starter.ipynb</a>）に入っています。</span>ゼロから書くと、動画処理のデバッグに時間を取られて、この章の主題に届きません。<br><br>
+      <strong>あなたが設計して書き換えるのは、次の4つだけです。</strong><br>
+      1. 状態（<code>VideoState</code> に何を持たせるか）<br>
+      2. 承認の位置（どこで <code>interrupt</code> するか）<br>
+      3. 戻り先（落ちたとき、どの工程へ戻すか）<br>
+      4. 検査条件（機械が判定するのは何か）
+    </div>
+
+    <h3><span class="n">8.2.1</span>ツールを用意する</h3>
+
+    <table>
+      <thead><tr><th>ツール</th><th>やること</th></tr></thead>
+      <tbody>
+        <tr><td><code>make_subtitles</code></td><td>台本からSRT字幕を生成する</td></tr>
+        <tr><td><code>make_audio</code></td><td>台本から音声を作る（TTS、または無音＋字幕のみ）</td></tr>
+        <tr><td><code>make_slide</code></td><td>カットごとに静止画を生成する（PILで作図でも可）</td></tr>
+        <tr><td><code>assemble_video</code></td><td>ffmpegで画像・音声・字幕を1本にする</td></tr>
+        <tr><td><code>inspect_video</code></td><td>ffprobeで尺と解像度を取得し、機械的な検査を行う</td></tr>
+      </tbody>
+    </table>
+
+    <p>PART 7の <code>@tool</code> と同じ書き方です。docstringを丁寧に書いてください。</p>
+  </section>
+
+  <section class="sec" id="s8-3">
+    <h2><span class="n">8.3</span>企画から絵コンテまでをAgentに任せる</h2>
+
+    <p>ここは文章を作る工程です。企画、根拠確認、台本、絵コンテを順に通します。まずは「見た人が、誰に、何をしてほしい動画か」を1文で決めてください。これが曖昧だと、Agentはもっともらしい映像を足すだけになります。</p>
+
+    <div class="warn">
+      <span class="tag">根拠確認のノードを飛ばさないこと</span>
+      LLMに台本を書かせると、<strong>それらしい数字と固有名詞が混ざります。</strong><span class="mark">自然に混ざるので、読んでも気づきません。</span>PART 1の1.2.3で見たとおりです。演習0で <code>※推測</code> を付けてもらったのは、まさにこの練習でした。<br><br>
+      <span class="mark">要点ごとに出典を <code>sources</code> に残し、出典のない要点は台本に進ませない。</span>これをノードとして実装してください。「気をつける」では実装になりません。<br><br>
+      <strong>標準課題では、出典は学生が3本入力します。</strong>ワークフローがWeb検索で事実を作ることはしません。<strong>発展課題では</strong>、検索やMCP、外部APIで候補を集めても構いません。<span class="mark">ただし、最後の事実確認は人間が行います。</span>
+    </div>
+
+    <p>絵コンテまで出来たところで、<strong>1回目の人間の承認</strong>を入れます。</p>
+
+<pre><code>def review_plan(state: VideoState) -&gt; VideoState:
+    decision = interrupt({
+        "points": state["points"],
+        "sources": state["sources"],
+        "script": state["script"],
+        "question": "企画と事実確認は妥当ですか？ (approve / revise)",
+    })
+    return {**state, "approved": decision == "approve"}</code></pre>
+
+    <p><span class="mark">ここで止める理由は、この先が取り消しにくいからです。</span>音声合成と動画のエンコードは時間もコストもかかります。台本が間違ったまま先へ進むと、作り直しの範囲が一気に広がります。7.4の「取り消せない操作の前」に該当します。</p>
+  </section>
+
+  <section class="sec" id="s8-4">
+    <h2><span class="n">8.4</span>承認後、動画に組み立てる</h2>
+
+    <p>承認が出てから、素材を作り、1本にまとめます。</p>
+
+<pre><code>ffmpeg -y \
+  -f concat -safe 0 -i shots.txt \
+  -i narration.wav \
+  -vf "subtitles=subtitles.srt" \
+  -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest \
+  output.mp4</code></pre>
+
+    <p>この工程はAgentに書かせて構いませんが、<strong>コマンドは必ず自分で読んでください。</strong>ffmpegのオプションは、間違っていても静かに違う結果を出します。エラーで止まってくれるとは限りません。</p>
+
+    <div class="note">
+      <span class="tag">失敗が多い箇所</span>
+      画像の解像度がカットごとに違う。音声のサンプリングレートが揃っていない。字幕のエンコーディングがUTF-8でない。フレームレートの指定漏れで尺が変わる。<span class="mark">どれもffmpegは動いてしまいます。</span>だから8.5の <code>inspect_video</code> が要ります。
+    </div>
+  </section>
+
+  <section class="sec" id="s8-5">
+    <h2><span class="n">8.5</span>評価し、修正ループを回す</h2>
+
+    <p>出来た動画を検査します。8.1.1の左の列を、そのままコードにします。</p>
+
+<pre><code>def check_video(state: VideoState) -&gt; VideoState:
+    info = ffprobe(state["video_path"])
+    report = {
+        "duration_ok": 55 &lt;= info["duration"] &lt;= 65,
+        "has_audio": info["has_audio"],
+        "subtitle_chars": count_chars(state["subtitle_path"]),
+        "script_chars": len(state["script"]),
+    }
+    report["passed"] = (
+        report["duration_ok"]
+        and (info["has_audio"] or state["caption_only"])
+    )
+    return {**state, "check_report": report}</code></pre>
+
+    <p><code>caption_only</code> は、音声なしで仕上げるルートを通すための項目です。<span class="mark">字幕だけで完成させられます。</span><span class="mark">標準課題でTTSが使えなくても、検査で落ちません。</span></p>
+
+    <p>落ちたら、どの工程へ戻すかを決めます。<span class="mark">全部やり直すのではありません。</span>尺が長ければ台本へ、音がなければ素材へ、字幕がずれていれば組み立てへ戻します。</p>
+
+<pre><code>def route(state: VideoState) -&gt; str:
+    r = state["check_report"]
+    if r["passed"]:
+        return "review_final"
+    if state["attempts"] &gt;= 3:
+        return "give_up"
+    if not r["duration_ok"]:
+        return "script"          # 台本まで戻る
+    return "assemble"            # 組み立てだけやり直す</code></pre>
+
+    <p><strong>提出要件：修正ループを最低1回は回してください。</strong></p>
+
+    <div class="note">
+      <span class="tag">最初の1回は必ず落ちます</span>
+      スターターNotebookは、<span class="mark">初期設定で動画が約70秒になるようにしてあります。</span>55〜65秒の条件を満たさないので、1回目の検査は必ず失敗します。仕込みです。<br><br>
+      落ちてから、どこへ戻すかを設計してください。台本へ戻して要点を短くするのか、絵コンテへ戻して1カットの秒数を詰めるのか。<span class="mark">この課題で見たいのは、失敗したときに何が起きるかです。</span>
+    </div>
+  </section>
+
+  <section class="sec" id="s8-6">
+    <h2><span class="n">8.6</span>公開できない理由を確認する</h2>
+
+    <p>動画が完成しても、それは「公開してよい」を意味しません。最後の承認の前に、次を確認します。</p>
+
+    <table>
+      <thead><tr><th>観点</th><th>確認すること</th></tr></thead>
+      <tbody>
+        <tr><td><strong>誤情報</strong></td><td>要点3つに出典があるか。出典が本当にその内容を述べているか</td></tr>
+        <tr><td><strong>著作権</strong></td><td>画像、音楽、フォントの利用条件。生成物の学習元が問題にならないか</td></tr>
+        <tr><td><strong>肖像</strong></td><td>実在の人物が映っていないか。似せていないか</td></tr>
+        <tr><td><strong>生成物の表示</strong></td><td>AIが作ったことを示す必要がある場面か</td></tr>
+        <tr><td><strong>コスト</strong></td><td>1本あたりいくらかかったか。何回作り直したか</td></tr>
+        <tr><td><strong>ログ</strong></td><td>どの工程で何を実行したか、後から追えるか</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">8.6.1</span>提出物</h3>
+
+    <div class="prompt"><span class="tag">SUBMISSION</span>最終課題は、nmims2026 のシステムへアップロードします。
+
+https://github.com/shunokuhara/nmims/tree/main/nmims2026</div>
+
+    <div class="warn">
+      <span class="tag">アップロードする前に確認すること</span>
+      <span class="mark">APIキー、トークン、個人情報がNotebookに残っていないか。</span>実行結果のセルにも出ていないことを確認してください。<br><br>
+      <strong>公開する場所へ出す前が、最後の確認機会です。</strong>
+    </div>
+
+    <p>出すものは次のとおりです。</p>
+
+    <ol>
+      <li>完成した <code>.mp4</code></li>
+      <li>Colab Notebook（グラフの定義、ノード、ツール、承認の位置が読める状態で）</li>
+      <li>工程のログ。どこで落ち、どこへ戻り、何回で通ったか</li>
+      <li>人間が承認・却下した箇所と、その理由</li>
+      <li>8.6の表について、各行の確認結果</li>
+    </ol>
+
+    <h3><span class="n">8.6.2</span>他の人の作品を評価する</h3>
+
+    <p>提出したら終わりではありません。<span class="mark">割り当てられたクラスメイトの作品を評価します。</span>演習1と同じ形です。</p>
+
+    <table>
+      <thead><tr><th></th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>人数</strong></td><td>7人</td></tr>
+        <tr><td><strong>時間</strong></td><td>40分</td></tr>
+        <tr><td><strong>成績</strong></td><td><span class="mark">評価した内容も成績に入ります</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>評価する観点</h4>
+
+    <p>演習1とは違います。<strong>映像の出来ではありません。</strong></p>
+
+    <table>
+      <thead><tr><th>観点</th><th>見るところ</th></tr></thead>
+      <tbody>
+        <tr><td><strong>工程の分解</strong></td><td>仕事がいくつの段階に分かれているか。分け方に理由があるか</td></tr>
+        <tr><td><strong>承認の位置</strong></td><td>どこで人間に渡しているか。<span class="mark">取り消せない操作の前で止まっているか</span></td></tr>
+        <tr><td><strong>戻り先の設計</strong></td><td>検査に落ちたとき、どこへ戻すか。全部やり直しになっていないか</td></tr>
+        <tr><td><strong>根拠の確認</strong></td><td>出典があるか。事実確認のノードがあるか</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">Notebookを開いてください</span>
+      <span class="mark">動画だけ見て点を付けないでください。</span>4つの観点は、どれもNotebookを読まないと判断できません。<br><br>
+      グラフの定義、ノードの並び、<code>interrupt</code> の位置。<strong>そこにその人の設計が出ています。</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">映像の出来を評価しない理由</span>
+      素材が文字と静止画だけでも、設計が良ければ高く評価されます。<span class="mark">凝った映像でも、流れが1本道なら低くなります。</span><br><br>
+      8.0.1に書いたとおりです。<strong>この課題で見るのは、映像ではなく仕組みです。</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">この教材の終わりに</span>
+      演習0で、AIに任せる価値がある仕事を3か国分探しました。あのとき書いた「人間が残すべき確認」の列を、もう一度見てください。<br><br>
+      <span class="mark">この章でやったことは、その列をコードにしたことです。</span>企画の承認、事実確認、公開判断。どこで止めるかを決めたのは、最後まであなたでした。<br><br>
+      Agentic AIの技術は変わり続けます。ライブラリ名もモデル名も、来年には別のものになっています。<strong>変わらないのは、作業のほうです。<strong>仕事を分解する。任せる範囲を決める。止める場所を設計する。</strong></strong>
+    </div>
+  </section>
+
+
+  
+
+
+  <nav class="pager">
+    <a class="prev" href="part7.html"><span class="dir">← PREV</span><span class="ttl">PART 7　自分でAgentを組み立てる</span></a>
+    <a class="next" href="appendix-a.html"><span class="dir">NEXT →</span><span class="ttl">APPENDIX A　ローカルLLMで進める（Ollama編）</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'コピー';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'コピーしました';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'コピー';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 2 Try Vibe Coding</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#c2410c;
+  --accent-soft:#fdece0;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html" aria-current="page">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 2</div>
+    <h1>Try Vibe Coding</h1>
+    <p class="lede">Turn a street in Osaka into a city of your own, using words alone. You will feel how fast this is, and where a small model stops being able to help.</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>Previously</dt><dd>Part 1 covered what an LLM does and where it fails. It takes text and returns text.</dd>
+      <dt>This part</dt><dd>You rebuild a photograph of a street by talking to a model. You move the code by hand. The model never touches a file.</dd>
+      <dt>Next</dt><dd>Part 3 hands that work to an agent. It reads and writes files itself, and you approve each step.</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="Contents of this part">
+    <h2>In this part</h2>
+    <ol>
+      <li><span class="n">2.0</span><a href="#s2-0">What you do in this part</a></li>
+      <li><span class="n">2.1</span><a href="#s2-1">What Vibe Coding is</a></li>
+      <li><span class="n">2.2</span><a href="#s2-2">The setup for this part</a></li>
+      <li><span class="n">2.3</span><a href="#s2-3">Exercise 1: remix the street</a></li>
+      <li><span class="n">2.4</span><a href="#s2-4">What we know so far</a></li>
+    </ol>
+  </nav>
+
+
+<style>
+  .demo-box{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px;margin:18px 0}
+  .demo-cols{display:flex;gap:20px;flex-wrap:wrap}
+  .demo-cols>*{flex:1 1 280px;min-width:0}
+  .demo-box .hint{font-size:.86rem;color:var(--ink-soft);margin:0 0 10px}
+  .demo-box textarea{width:100%;height:120px;font-family:var(--mono);font-size:.8rem;
+    padding:10px;border:1px solid var(--line);border-radius:6px;resize:vertical;line-height:1.6}
+  .demo-box svg{width:100%;border:1px solid var(--line);border-radius:6px;background:#fff}
+  .btn{font-size:.8rem;padding:6px 11px;border:1px solid var(--accent);color:var(--accent);
+    background:#fff;border-radius:5px;cursor:pointer;margin:0 6px 7px 0;font-family:inherit}
+  .btn:hover{background:var(--accent);color:#fff}
+  .btn:focus-visible{outline:3px solid #f0b429;outline-offset:2px}
+  .demo-box input[type=range]{vertical-align:middle;width:140px}
+  .demo-box .readout{font-family:var(--mono);font-size:.78rem;color:var(--ink-soft)}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:16px 0}
+  .flow .step{flex:1 1 120px;background:var(--accent-soft);border:1px solid var(--line);
+    border-radius:8px;padding:12px 10px;text-align:center;font-size:.85rem;line-height:1.5}
+  .flow .step b{display:block;color:var(--accent);font-size:.78rem;margin-bottom:3px;font-family:var(--mono)}
+</style>
+  <section class="sec" id="s2-0" style="margin-bottom:44px">
+    <h2><span class="n">2.0</span>What you do in this part</h2>
+
+    <p>In this part you <span class="mark">see what happens when you let an AI write the code.</span> The speed and the limits, both at once.</p>
+
+    <h3>By the end</h3>
+    <p>You will be able to take a page showing a street in Osaka and turn it into your own theme. Change colours, replace signs, draw new things. <strong>You will not write code yourself.</strong></p>
+
+    <h3>The loop you repeat</h3>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　Say what you want</p>
+      <p><strong>2</strong>　Take the code the AI produces</p>
+      <p><strong>3</strong>　Paste it, save, look</p>
+      <p><strong>4</strong>　Say what to change</p>
+    </div>
+
+    <p>That is all you do. <span class="mark">Between step 2 and step 3, the one moving the code around is you.</span> That is the difference with Part 3. Keep it in mind.</p>
+  </section>
+
+  <section class="sec" id="s2-1">
+    <h2><span class="n">2.1</span>What Vibe Coding is</h2>
+
+    <p>Vibe Coding is a term proposed by the AI researcher Andrej Karpathy in February 2025.</p>
+
+    <p>You do not follow the implementation details. <span class="mark">You state what you want (the What).</span> How to build it is left to the agent.</p>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　Describe what you want in words</p>
+      <p><strong>2</strong>　The AI writes the code</p>
+      <p><strong>3</strong>　Run it and look</p>
+      <p><strong>4</strong>　Say what to fix</p>
+      <p><strong>5</strong>　Repeat until it is right</p>
+    </div>
+
+    <div class="warn">
+      <span class="tag">An honest caveat</span>
+      "Needs less knowledge" is not "needs no knowledge". <span class="mark">You still have to look at the result and decide whether it is what you asked for.</span><br><br>
+      Nobody else will tell you that the sign is the wrong colour, or that the tower disappeared. <strong>That check is yours, and it is what this course is about.</strong>
+    </div>
+  </section>
+
+  <section class="sec" id="s2-2">
+    <h2><span class="n">2.2</span>The setup for this part</h2>
+
+    <p>Most people do Vibe Coding through a cloud service: ChatGPT, Claude, Gemini, GitHub Copilot, Cursor.</p>
+
+    <p>This course is different. <span class="mark">The model runs on your own machine.</span> No internet connection, no account, no billing.</p>
+
+    <h3><span class="n">2.2.1</span>What you use</h3>
+
+    <table>
+      <thead><tr><th></th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Model</strong></td><td><code>qwen3.5:4b</code>, running under Ollama</td></tr>
+        <tr><td><strong>Editor</strong></td><td>VS Code</td></tr>
+        <tr><td><strong>Where you talk to it</strong></td><td>Continue, inside VS Code</td></tr>
+        <tr><td><strong>Material</strong></td><td>A photograph of a street, converted into about 6,000 named shapes</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">If you want to use a cloud API instead</span>
+      The same steps work with a cloud model. Nothing in this part depends on running locally. <span class="mark">Local is the default so that nobody is blocked by an account or a bill.</span>
+    </div>
+  </section>
+
+  <section class="sec" id="s2-3">
+    <h2><span class="n">2.3</span>Exercise 1: remix the street</h2>
+
+    <h3><span class="n">2.3.1</span>The assignment</h3>
+
+    <div class="prompt"><span class="tag">ASSIGNMENT 1</span>City remix (Osaka → Mumbai)
+
+Turn a street in Shinsekai, Osaka into a different city,
+using instructions in words only.</div>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/shinsekai-original.jpg" alt="A street in Shinsekai, Osaka: Tsutenkaku tower, kushikatsu signs, a Billiken statue and a pufferfish lantern" style="width:100%;max-width:680px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        The original photograph: Shinsekai, Osaka.<br>
+        <span style="color:var(--accent);font-weight:700">This photo has been broken into about 6,000 named shapes.</span>
+      </div>
+    </div>
+
+    <h4>Rules</h4>
+
+    <ol>
+      <li>Look at the original carefully before you change anything</li>
+      <li><strong>Decide what you are making first.</strong> A market, a festival at night, an afternoon in the rainy season. <span class="mark">Decide before you start typing.</span> A decision makes your instructions concrete</li>
+      <li>Go in small steps. Save, reload and look after every one</li>
+      <li>Keep <code>#tower</code>. <strong>It should still be recognisable as the same place</strong></li>
+      <li>Keep every prompt you send. <span class="mark">Including the ones that failed</span></li>
+    </ol>
+
+    <h4>What to hand in</h4>
+
+    <p>Submission goes through the peer evaluation system. Open <strong>Assignment 1: City remix (Osaka → Mumbai)</strong>.</p>
+
+    <div class="prompt"><span class="tag">PEER EVALUATION SYSTEM</span>https://nmims.agewec.com/</div>
+
+    <p>Register once at <code>/register/</code> using an email you can read throughout the course. After that: Sign in → Assignment 1 → Submit → Preview. "Submitted" with a timestamp means it is saved. Submitting again overwrites the previous one. <span class="mark">Keep a copy of what you submit.</span></p>
+
+    <table>
+      <thead><tr><th></th><th>What</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>File</strong></td>
+          <td>Your remixed <code>shinsekai_remix.html</code>, or a screenshot (PNG / JPG)</td>
+          <td><span class="mark">1.5 MB maximum</span></td>
+        </tr>
+        <tr>
+          <td><strong>Title</strong></td>
+          <td>The theme of your work (shown to evaluators)</td>
+          <td>Optional field, but fill it in</td>
+        </tr>
+        <tr>
+          <td><strong>Link</strong></td>
+          <td><strong>Your prompt log</strong>, on OneDrive or Google Drive</td>
+          <td>Optional field. Put it here</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">Watch the file size</span>
+      The original <code>shinsekai_remix.html</code> is around 700 KB. <span class="mark">Adding many shapes can push it past 1.5 MB.</span><br><br>
+      If that happens, submit a PNG instead. <strong>Evaluators will open it more easily anyway.</strong> Share the HTML through the link field.
+    </div>
+
+    <div class="note">
+      <span class="tag">How to hand in the prompt log</span>
+      A single text file is fine. Paste every prompt in the order you sent them, failures included.<br><br>
+      Put it on OneDrive or Google Drive, <span class="mark">set sharing to "anyone with the link can view"</span>, and paste the link. With tighter permissions, evaluators cannot open it.
+    </div>
+
+    <h4>How it is scored</h4>
+
+    <table>
+      <thead><tr><th>Criterion</th><th>What is looked at</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Theme clarity</strong></td><td>Can you tell what city or scene it is?</td></tr>
+        <tr><td><strong>Creativity</strong></td><td>Is there an idea, or only a colour change?</td></tr>
+        <tr><td><strong>Visual quality</strong></td><td>Bad overlaps, shapes off the canvas?</td></tr>
+        <tr><td><strong>Appeal</strong></td><td>Does it hold your attention?</td></tr>
+      </tbody>
+    </table>
+
+    <p>Each is scored 0 to 3 by your classmates, with two short written answers: strongest point, and what could be improved.</p>
+
+    <p>On top of that, <strong>the instructor reads your prompt log.</strong> Where you got stuck, and how you recovered. <span class="mark">A rough result with a record of how you narrowed the problem down still scores well.</span> It says more than a pretty result produced in three prompts.</p>
+
+    <div class="note">
+      <span class="tag">The scoring is done by people</span>
+      Scores and comments come from <span class="mark">the classmates assigned to your work.</span> No AI is involved.<br><br>
+      What appears under "Feedback you received" are their scores and comments, with the names hidden. The aggregate is simply their average.
+    </div>
+
+    <h4>You also evaluate others</h4>
+
+    <p>Submitting is not the end. From <strong>Start evaluating</strong> on the same card, you review the classmates assigned to you. Author names are hidden.</p>
+
+    <table>
+      <thead><tr><th></th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>How many</strong></td><td>7</td></tr>
+        <tr><td><strong>Time</strong></td><td>40 minutes. A few minutes each</td></tr>
+        <tr><td><strong>Grading</strong></td><td><span class="mark">Your evaluations are graded too</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">Read the prompt log as well</span>
+      Do not stop at the image. <span class="mark">Skim the prompt log they shared.</span> Seeing where they got stuck and how they got out is enough.<br><br>
+      <strong>This is where most of the learning is.</strong> Someone else hit the same wall you did. Their record teaches more than an explanation.
+    </div>
+
+    <div class="warn">
+      <span class="tag">"Nice colors" will not pass</span>
+      Written answers that are too short, or identical scores for everyone, <span class="mark">lower your own mark.</span><br><br>
+      Be specific. <strong>Which part was good? What exactly would you change?</strong> Ten to thirty words.
+    </div>
+
+    <div class="note">
+      <span class="tag">A worked example</span>
+      If you want to see an answer first, open <a href="../demo_indian_version.html">demo_indian_version.html</a>. The signs are repainted saffron and green, the Japanese lettering is gone, and there are tricolour garlands, CHAI and SAMOSA boards and an auto-rickshaw. Tsutenkaku is still there.<br><br>
+      The CSS and SVG behind it are in <code><a href="../demo_instructions.txt">demo_instructions.txt</a></code>. Paste them into <code><a href="../controls.txt">controls.txt</a></code> to reproduce it.<br><br>
+      <span class="mark">Do not submit that as your own.</span> The instructor reads the prompt log, and a copied result with an empty log earns nothing. Use it as a sense of how far you may go.
+    </div>
+
+    <h3><span class="n">2.3.2</span>What HTML and CSS are</h3>
+
+    <p>Two things you touch in this exercise, one line each.</p>
+
+    <table>
+      <thead><tr><th></th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td><strong>HTML</strong></td><td><span class="mark">Says what exists.</span> Gives things names</td></tr>
+        <tr><td><strong>CSS</strong></td><td><span class="mark">Says how they look.</span> Names a thing and changes its colour or shape</td></tr>
+      </tbody>
+    </table>
+
+    <p>The street file works the same way. About 6,000 shapes live on the HTML side, each with a name. <strong>What you edit is the CSS side.</strong></p>
+
+<pre><code>#sign-kushikatsu { fill: #e07b17; }
+   ↑name           ↑how it looks</code></pre>
+
+    <p><span class="mark">If you can read that, you can do the exercise.</span> A fuller explanation is in 2.3.10. It takes three minutes, so go there first if the line above means nothing to you.</p>
+
+    <h3><span class="n">2.3.3</span>The three files you use</h3>
+
+    <table>
+      <thead><tr><th>File</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td><code><a href="../shinsekai_remix.html">shinsekai_remix.html</a></code></td><td>The street itself. About 700 KB. <strong>You edit two small regions of it</strong></td></tr>
+        <tr><td><code><a href="../controls.txt">controls.txt</a></code></td><td>Those two regions, extracted into one file. <span class="mark">This is what you give the AI</span></td></tr>
+        <tr><td><code><a href="../demo_indian_version.html">demo_indian_version.html</a></code></td><td>A worked example, for reference</td></tr>
+      </tbody>
+    </table>
+
+    <h4>How the files relate</h4>
+
+    <p>Inside <code>shinsekai_remix.html</code> there are <span class="mark">exactly two places you may edit.</span> The other 700 KB you leave alone.</p>
+
+    <table>
+      <thead><tr><th></th><th>Where</th><th>What for</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>A</strong></td>
+          <td>Inside <code>&lt;style&gt;</code><br><code>CONTROL PANEL: START</code> … <code>END</code></td>
+          <td>Recolour or hide things that already exist</td>
+        </tr>
+        <tr>
+          <td><strong>B</strong></td>
+          <td>End of the file<br><code>ADD LAYER: START</code> … <code>END</code></td>
+          <td>Draw new things</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><code>controls.txt</code> is <strong>those two regions pulled out into one file.</strong> That is what you hand to the AI.</p>
+
+    <div class="warn">
+      <span class="tag">Why they are separate</span>
+      Between A and B sit about 6,000 shapes made from the photograph. <span class="mark">That is 700 KB.</span><br><br>
+      Sending that to a small model does not work: it runs out of context long before it reaches your instruction. <strong>Send only <code>controls.txt</code>.</strong>
+    </div>
+
+    <h3><span class="n">2.3.4</span>The whole loop</h3>
+
+    <p>Every change goes through these nine steps. <span class="mark">Do not try to change everything at once.</span></p>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　Open <code>shinsekai_remix.html</code> in a browser</p>
+      <p><strong>2</strong>　Open <code>controls.txt</code> in VS Code</p>
+      <p><strong>3</strong>　Attach <code>@controls.txt</code> in the Continue chat</p>
+      <p><strong>4</strong>　Ask for <strong>one</strong> change</p>
+      <p><strong>5</strong>　Copy only the CSS the AI returns</p>
+      <p><strong>6</strong>　Paste it into <strong>region A</strong> of <code>shinsekai_remix.html</code></p>
+      <p><strong>7</strong>　Only if there is a new shape, paste the SVG into <strong>region B</strong></p>
+      <p><strong>8</strong>　Save and reload the browser</p>
+      <p><strong>9</strong>　If you like it, record the prompt and the result</p>
+    </div>
+
+    <div class="warn">
+      <span class="tag">You do not edit <code>controls.txt</code></span>
+      <code>controls.txt</code> is <span class="mark">a reference file that shows the AI which names exist.</span> Leave it as it is.<br><br>
+      What you paste into is <strong><code>shinsekai_remix.html</code></strong>. If you overwrite the reference file, you can no longer show the name list on the next request.
+    </div>
+
+    <h3><span class="n">2.3.5</span>Make the first change together</h3>
+
+    <p>Before using the AI, do one change by hand. <span class="mark">That fixes where you paste and how you reload, before anything else can go wrong.</span></p>
+
+    <p>If <code>#name { property: value; }</code> means nothing to you, read 2.3.10 first. Three minutes.</p>
+
+    <h4>1. Find region A</h4>
+
+    <p>Open <code>shinsekai_remix.html</code> in VS Code and search with <code>Ctrl</code> + <code>F</code>.</p>
+
+<pre><code>CONTROL PANEL: START</code></pre>
+
+    <p>A little below it you will see these lines. <strong>That is region A.</strong></p>
+
+<pre><code>#sky            { }
+#left-shops     { }
+#right-shops    { }
+#street         { }
+#far-buildings  { }
+#tower          { }</code></pre>
+
+    <h4>2. Change one line</h4>
+
+<pre><code>#sky            { filter: sepia(.7) saturate(2.4); }</code></pre>
+
+    <h4>3. Save and look</h4>
+
+    <p><code>Ctrl</code> + <code>S</code> to save, then <code>Ctrl</code> + <code>R</code> in the browser. <strong>If the sky changes colour, the mechanism works.</strong></p>
+
+    <p>If nothing changed: did you save? did you reload? did you write it inside <code>&lt;style&gt;</code>? is <code>#sky</code> spelled correctly?</p>
+
+    <h3><span class="n">2.3.6</span>Give controls.txt to Continue</h3>
+
+    <div class="note">
+      <span class="tag">If you did not install Continue</span>
+      You can do the same from a terminal. The steps are in <a href="appendix-a.html">Appendix A</a>, A.10. <span class="mark">This part assumes Continue.</span>
+    </div>
+
+    <h4>How to hand it over</h4>
+
+    <p>Continue has <strong>no file upload.</strong> It does not need one. <span class="mark">It can read the files you have open in VS Code.</span></p>
+
+    <ol>
+      <li>In VS Code, <strong>File → Open Folder</strong></li>
+      <li>Open the folder containing <code>controls.txt</code> and <code>shinsekai_remix.html</code></li>
+      <li>Type <code>@</code> in the Continue chat box</li>
+      <li>Choose <strong>Files</strong>, then <code>controls.txt</code></li>
+      <li>Write your instruction and send</li>
+    </ol>
+
+    <p>There is a second way. Open <code>controls.txt</code>, select all with <code>Ctrl</code> + <code>A</code>, then <code>Ctrl</code> + <code>L</code>. <strong>The selection goes into the chat.</strong></p>
+
+    <div class="note">
+      <span class="tag">Check that it actually attached</span>
+      Typing <code>@</code> does not attach anything on its own. <strong>Pick the file from the list and confirm it.</strong> A badge with the filename appears above the chat box when it worked.<br><br>
+      Without it, the model answers <span class="mark">without ever seeing <code>controls.txt</code>.</span> You still get a confident reply, but every name in it will be invented.
+    </div>
+
+    <div class="warn">
+      <span class="tag">Never attach the 700 KB file</span>
+      <code>shinsekai_remix.html</code> also appears in the <code>@</code> file list. <span class="mark">Do not pick it.</span> All 700 KB goes into the context, which is far more than a 4B model can hold.<br><br>
+      If you really need to show part of the HTML, <strong>select just that region and press <code>Ctrl</code> + <code>L</code>.</strong>
+    </div>
+
+    <div class="warn">
+      <span class="tag">Do not press Apply</span>
+      Continue puts an <strong>Apply</strong> button on code blocks. It can work, but <span class="mark">with a 4B model it often rewrites more than it should.</span> If the START / END markers disappear, you lose your paste target for the next round.<br><br>
+      For this exercise, use the <strong>copy button</strong> at the top right of the block and paste into region A or B yourself. <strong>Deciding what goes where is the point.</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">Keep the mode on Chat</span>
+      Do not switch the dropdown to <strong>Agent</strong>. It will try to edit files on its own. <span class="mark">With a 4B model that mostly fails.</span> Handing file operations to an AI starts in Part 3.
+    </div>
+
+    <h4>Asking a 4B model: leave one blank</h4>
+
+    <p>This is the most important part of this chapter. <span class="mark">The local 4B model is small, and a normally-worded request often comes back unusable.</span></p>
+
+    <p>Ask it to "remove the text and make the sign saffron" and you get something like this.</p>
+
+<pre><code>#sign-kushikatsu {
+  --board-color: SAFFRON;
+}</code></pre>
+
+    <p>That does nothing. <code>SAFFRON</code> is not a CSS colour. Declaring a variable on its own has no effect. The instruction to remove the text was ignored. <strong>It has the shape of an answer with nothing inside it.</strong></p>
+
+    <div class="warn">
+      <span class="tag">Better prompting does not fix this</span>
+      Adding "do not use colour names" or "do not use variables" does not help. <span class="mark">A 4B model will acknowledge the rule and break it in the same reply.</span> It will even write "this violates your rule" and leave the code in.<br><br>
+      Shortening the request does not help either. <strong>The problem is not output length. It is the number of decisions.</strong>
+    </div>
+
+    <h4>Leave exactly one thing to decide</h4>
+
+    <p>This form works. <span class="mark">Leave one blank and ask it to fill that in.</span></p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Fill in the blank. Output one line only.
+
+#sign-kushikatsu .ink { display: ______; }
+
+Replace ______ with the CSS value that hides the element.</div>
+
+    <p>You get one line back.</p>
+
+<pre><code>#sign-kushikatsu .ink { display: none; }</code></pre>
+
+    <p>Colour works the same way. <strong>One blank per prompt.</strong></p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Fill in the blank. Output one line only.
+
+#sign-kushikatsu .board { fill: ______; }
+
+Replace ______ with a hex color for saffron orange.</div>
+
+<pre><code>#sign-kushikatsu .board { fill: #ff9933; }</code></pre>
+
+    <div class="note">
+      <span class="tag">Why this works</span>
+      The model decides one word, <code>none</code>, or one value, <code>#ff9933</code>. <span class="mark">You wrote the structure.</span> The name, the property and the brackets cannot come out wrong.<br><br>
+      <strong>A small model can make a choice. It cannot do the design.</strong> Keep the design and hand over only the choice. That is the principle when working with small models.
+    </div>
+
+    <h4>What region A looks like afterwards</h4>
+
+    <p>Add the two lines just after <code>#tower { }</code> in region A. <span class="mark">The region then reads like this.</span></p>
+
+<pre><code>.cover { display: none; }
+
+#sky            { }
+#left-shops     { }
+#right-shops    { }
+#street         { }
+#far-buildings  { }
+#tower          { }
+
+/* CSS returned by the AI goes here */
+
+#sign-kushikatsu .ink {
+  display: none;
+}
+
+#sign-kushikatsu .board polygon {
+  fill: #FF9933;
+}</code></pre>
+
+    <div class="warn">
+      <span class="tag">Paste in the right place</span>
+      The lines go <span class="mark">immediately after <code>#tower { }</code>, inside region A.</span> Not at the end of the file.<br><br>
+      <strong>Leave the existing lines and the START / END markers alone.</strong> Delete them and you lose your paste target for the next round.
+    </div>
+
+    <p>Save, reload, and the sign at the top left changes.</p>
+
+    <div class="demo-box">
+      <div class="demo-cols">
+        <div>
+          <p class="hint"><strong>Before</strong></p>
+          <img src="../img/remix-before.png" alt="Before: the kushikatsu sign at the top left is dark, with Japanese lettering" style="width:100%;border-radius:6px;border:1px solid var(--line)">
+        </div>
+        <div>
+          <p class="hint"><strong>After</strong></p>
+          <img src="../img/remix-after.png" alt="After: the kushikatsu sign at the top left has turned saffron" style="width:100%;border-radius:6px;border:1px solid var(--line)">
+        </div>
+      </div>
+      <p class="hint" style="margin:10px 0 0">Two lines of CSS changed the colour of the sign. <strong>Not one shape was edited.</strong></p>
+    </div>
+
+    <div class="note">
+      <span class="tag">Why <code>.board polygon</code></span>
+      <code>.board</code> is a group. The thing that actually carries the colour is the <code>&lt;polygon&gt;</code> inside it. <span class="mark">A <code>fill</code> on the group loses to a child that sets its own colour.</span><br><br>
+      When a rule has no effect, try <code>#name .board polygon</code> instead of <code>#name .board</code>.
+    </div>
+
+    <h4>Without the blank</h4>
+
+    <p>If you want the model to write the structure too, <strong>give it the name and the property.</strong></p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Output one line of CSS only, no explanation.
+
+Hide the Japanese text layer of the kushikatsu sign.
+The text layer is #sign-kushikatsu .ink. Use display.</div>
+
+    <p>This sometimes works. <span class="mark">The blank version is more reliable.</span> Start with blanks and try this once you are comfortable.</p>
+
+    <div class="warn">
+      <span class="tag">This is the exercise</span>
+      Do not delete the exchanges that failed. <strong>What you asked, what came back, how you rewrote it.</strong> That is what you hand in.<br><br>
+      Part 3 moves to a much larger model. <span class="mark">You will see how much the way you ask can change.</span> Today's record is what makes that comparison possible.
+    </div>
+
+    <h3><span class="n">2.3.7</span>Now do your own theme</h3>
+
+    <p>From here you build your own street. Run the nine steps from 2.3.4 for every change.</p>
+
+    <p><span class="mark">Decide what you are making first.</span> A market, a festival at night, an afternoon in the rainy season. A decision makes your instructions concrete.</p>
+
+    <table>
+      <thead><tr><th>Goal</th><th>What to use</th></tr></thead>
+      <tbody>
+        <tr><td>Change a colour</td><td><code>#name { filter: ... }</code> or <code>#name .board { fill: ... }</code></td></tr>
+        <tr><td>Remove the Japanese lettering</td><td><code>#name .ink { display: none; }</code></td></tr>
+        <tr><td>Blank a sign entirely</td><td><code>#name .cover { display: block; }</code></td></tr>
+        <tr><td>Draw something new</td><td>Add <code>&lt;text&gt;</code> or <code>&lt;rect&gt;</code> in region B</td></tr>
+      </tbody>
+    </table>
+
+    <p>Keep <code>#tower</code>. <strong>The place should still be recognisable.</strong></p>
+
+    <h4>Finding things in VS Code</h4>
+
+    <p>Do not scroll through 700 KB. Use <code>Ctrl</code> + <code>F</code>.</p>
+
+    <table>
+      <thead><tr><th>Search for</th><th>Takes you to</th></tr></thead>
+      <tbody>
+        <tr><td><code>CONTROL PANEL: START</code></td><td>Start of region A</td></tr>
+        <tr><td><code>CONTROL PANEL: END</code></td><td>End of region A</td></tr>
+        <tr><td><code>ADD LAYER: START</code></td><td>Start of region B</td></tr>
+        <tr><td><code>ADD LAYER: END</code></td><td>End of region B</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">2.3.8</span>When it does not work</h3>
+
+    <table>
+      <thead><tr><th>What you see</th><th>Likely cause</th><th>What to do</th></tr></thead>
+      <tbody>
+        <tr><td>Nothing changes</td><td>Not saved, or not reloaded</td><td><code>Ctrl</code> + <code>S</code>, then <code>Ctrl</code> + <code>R</code></td></tr>
+        <tr><td>The screen goes white</td><td>A tag or bracket was lost</td><td>Undo with <code>Ctrl</code> + <code>Z</code> and go back one step</td></tr>
+        <tr><td>The reply is a placeholder</td><td>You asked for the whole file</td><td>Ask for the changed lines only</td></tr>
+        <tr><td>It never finishes, or repeats</td><td>You pasted too much</td><td>Never paste the 700 KB file. Only <code>controls.txt</code></td></tr>
+        <tr><td>The colour went somewhere odd</td><td><code>hue-rotate</code> moved every colour</td><td>Name one colour with <code>.board { fill: ... }</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">Save often</span>
+      When you like the state you are in, duplicate the file and name the copies <code>work_01.html</code>, <code>work_02.html</code>. <span class="mark">With a backup, going back is instant. Without one, you rebuild by hand.</span>
+    </div>
+
+    <div class="note">
+      <span class="tag">From here on it is reference</span>
+      Sections 2.3.9 onwards are <span class="mark">there when you need them.</span> Come back to whatever you get stuck on. <strong>2.3.10 is worth a look before you start</strong>, because it makes your instructions more concrete.
+    </div>
+
+    <h3><span class="n">2.3.9</span>What you are actually learning</h3>
+
+    <p>The subject is a picture, but the skill is not drawing.</p>
+
+    <table>
+      <thead><tr><th>What you do here</th><th>What it is really</th></tr></thead>
+      <tbody>
+        <tr><td>Name a thing before changing it</td><td>Being precise about what you are pointing at</td></tr>
+        <tr><td>One change per instruction</td><td>Keeping cause and effect visible</td></tr>
+        <tr><td>Show the current code</td><td>Giving the model the context it lacks</td></tr>
+        <tr><td>Go back one step when it fails</td><td>Not letting a small error compound</td></tr>
+        <tr><td>Keep the record</td><td>Being able to say why it looks like this</td></tr>
+      </tbody>
+    </table>
+
+    <p><span class="mark">All five come back in Part 3, with a much larger model and an agent that edits files itself.</span></p>
+
+    <h3><span class="n">2.3.10</span>The minimum you need to read</h3>
+
+    <p>You will not write much code today, but you have to be able to read it. About 15 minutes. <strong>Every demo below is live. Try them.</strong></p>
+
+    <div class="note">
+      <span class="tag">Only these five are required</span>
+      1. <code>id</code> is the name of a part<br>
+      2. CSS is an instruction aimed at a name<br>
+      3. One change at a time<br>
+      4. Show the current code<br>
+      5. Step back when it fails<br><br>
+      <code>rect</code>, <code>circle</code>, <code>polygon</code> and the colour wheel are <span class="mark">a detour for the curious.</span> Skip them and you can still finish the assignment.
+    </div>
+
+    <h4>An HTML file is just text</h4>
+
+    <p>The browser reads it top to bottom and draws what it finds. Nothing to compile, nothing to install. Save it and double-click.</p>
+
+<pre><code>&lt;p&gt;Hello Mumbai&lt;/p&gt;</code></pre>
+
+    <p>Opening tag, content, closing tag. When the screen suddenly goes white, a closing tag has usually gone missing.</p>
+
+    <h4>SVG: shapes made of numbers</h4>
+
+    <div class="demo-box">
+      <div class="demo-cols">
+        <div>
+          <p class="hint"><strong>Move the sliders and watch the code.</strong></p>
+          <p class="readout">
+            x <input type="range" id="p3sx" min="10" max="230" value="60"> <span id="p3vx">60</span><br>
+            y <input type="range" id="p3sy" min="10" max="130" value="40"> <span id="p3vy">40</span><br>
+            width <input type="range" id="p3sw" min="20" max="180" value="120"> <span id="p3vw">120</span>
+          </p>
+<pre style="margin:0"><code id="p3codeout">&lt;rect x="60" y="40" width="120" height="60"/&gt;</code></pre>
+        </div>
+        <div>
+          <svg id="p3demo1" viewBox="0 0 260 160">
+            <line x1="0" y1="0" x2="260" y2="0" stroke="#c3cad8" stroke-width="2"/>
+            <line x1="0" y1="0" x2="0" y2="160" stroke="#c3cad8" stroke-width="2"/>
+            <text x="7" y="17" font-size="11" fill="#8892a4" font-family="Arial">x=0, y=0</text>
+            <rect id="p3r1" x="60" y="40" width="120" height="60" fill="#e11d63"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">y grows downwards</span>
+      The top of the image is <code>y = 0</code>. In the street file the bottom is <code>y = 1066</code>. To move something <em>up</em>, y gets <em>smaller</em>. <span class="mark">This catches almost everyone the first time.</span>
+    </div>
+
+    <table>
+      <thead><tr><th>Element</th><th>Draws</th><th>Numbers it needs</th></tr></thead>
+      <tbody>
+        <tr><td><code>rect</code></td><td>A rectangle</td><td><code>x y width height</code></td></tr>
+        <tr><td><code>circle</code></td><td>A circle</td><td><code>cx cy r</code></td></tr>
+        <tr><td><code>line</code></td><td>A straight line</td><td><code>x1 y1 x2 y2</code></td></tr>
+        <tr><td><code>polygon</code></td><td>Any shape with straight edges</td><td><code>points="10,10 60,10 35,50"</code></td></tr>
+        <tr><td><code>text</code></td><td>Letters</td><td><code>x y</code> and the words between the tags</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Names: id and class</h4>
+
+    <p>You cannot ask an AI to change "that orange thing over there". Things need names.</p>
+
+<pre><code>&lt;g id="lantern"&gt;
+  ... many shapes ...
+&lt;/g&gt;</code></pre>
+
+    <p><code>&lt;g&gt;</code> is a <strong>group</strong>. It gathers many shapes under one name so they can be changed together.</p>
+
+    <p><code>id</code> is a name used once. <code>class</code> is a label you can put on many things. The street file is built entirely out of these.</p>
+
+    <h4>CSS: a rule that reaches a name</h4>
+
+    <p><code>#</code> means "the thing called this". <code>.</code> means "everything labelled this".</p>
+
+    <div class="demo-box">
+      <div class="demo-cols">
+        <div>
+          <p class="hint"><strong>Edit the rules and the picture changes instantly.</strong></p>
+          <textarea id="p3cssbox">#sky   { filter: sepia(0.5) saturate(2); }
+#board { fill: #e07b17; }
+#ink   { display: none; }</textarea>
+          <p style="margin-top:10px">
+            <button class="btn" data-css="#sky { }
+#board { }
+#ink { }">Reset</button>
+            <button class="btn" data-css="#sky { filter: sepia(.7) saturate(2.4); }
+#board { fill: #138808; }
+#ink { display: none; }">Green sign, evening sky</button>
+            <button class="btn" data-css="#ink { opacity: .15; }">Fade the lettering</button>
+            <button class="btn" data-css="#lamp { display: none; }">Remove the lamp</button>
+          </p>
+        </div>
+        <div>
+          <svg id="p3demo2" viewBox="0 0 260 200">
+            <g id="sky"><rect x="0" y="0" width="260" height="200" fill="#9fc4dd"/>
+              <ellipse cx="70" cy="42" rx="42" ry="17" fill="#dfeaf3"/>
+              <ellipse cx="182" cy="30" rx="34" ry="13" fill="#dfeaf3"/></g>
+            <g id="board"><rect x="52" y="66" width="98" height="112" fill="#b03a2e"/></g>
+            <g id="ink" fill="#f7f2e6">
+              <rect x="70" y="82" width="14" height="46"/><rect x="70" y="82" width="46" height="13"/>
+              <rect x="96" y="96" width="13" height="32"/><rect x="70" y="140" width="62" height="12"/>
+              <rect x="118" y="82" width="13" height="58"/>
+            </g>
+            <g id="lamp"><circle cx="198" cy="98" r="21" fill="#f2e3c0" stroke="#7a6a4a" stroke-width="3"/>
+              <rect x="195" y="62" width="6" height="18" fill="#7a6a4a"/></g>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <h4>filter: change thousands of shapes with one line</h4>
+
+    <p>The street is about 6,000 shapes. You never edit them one by one. You shift the colour of a whole named group at once.</p>
+
+    <div class="demo-box">
+      <p class="hint"><strong>Press them and compare.</strong></p>
+      <p>
+        <button class="btn" data-f="none">none</button>
+        <button class="btn" data-f="hue-rotate(-25deg)">hue-rotate(-25deg)</button>
+        <button class="btn" data-f="hue-rotate(90deg)">hue-rotate(90deg)</button>
+        <button class="btn" data-f="saturate(2)">saturate(2)</button>
+        <button class="btn" data-f="saturate(0)">saturate(0)</button>
+        <button class="btn" data-f="sepia(.8) saturate(2.2)">sepia + saturate</button>
+        <button class="btn" data-f="brightness(.6)">brightness(.6)</button>
+      </p>
+      <svg id="p3demo3" viewBox="0 0 400 120" style="max-width:420px">
+        <g id="p3swatch">
+          <rect x="0" y="0" width="400" height="120" fill="#9fc4dd"/>
+          <rect x="12" y="18" width="68" height="84" fill="#b03a2e"/>
+          <rect x="92" y="18" width="68" height="84" fill="#2f6fa8"/>
+          <rect x="172" y="18" width="68" height="84" fill="#e8c33a"/>
+          <rect x="252" y="18" width="68" height="84" fill="#3f6b43"/>
+          <rect x="332" y="18" width="58" height="84" fill="#f2e3c0"/>
+        </g>
+      </svg>
+      <p class="readout" id="p3fnow" style="margin:8px 0 0"><code>filter: none</code></p>
+    </div>
+
+    <p><code>hue-rotate</code> turns colours around the colour wheel without changing their brightness. A negative angle pushes red towards orange. <span class="mark">It is a quick way to move a Japanese shop sign towards an Indian palette.</span></p>
+
+    <h3><span class="n">2.3.11</span>How the street file is built</h3>
+
+    <p>Named groups, from the top of the image down.</p>
+
+    <table>
+      <thead><tr><th>Group</th><th>What it holds</th></tr></thead>
+      <tbody>
+        <tr><td><code>#sky</code></td><td>The sky and clouds</td></tr>
+        <tr><td><code>#far-buildings</code></td><td>Buildings in the distance</td></tr>
+        <tr><td><code>#tower</code></td><td>Tsutenkaku. <span class="mark">Keep this one</span></td></tr>
+        <tr><td><code>#left-shops</code> / <code>#right-shops</code></td><td>Shopfronts on each side</td></tr>
+        <tr><td><code>#sign-*</code></td><td>Individual signs. Each has <code>.board</code>, <code>.ink</code> and <code>.cover</code> inside</td></tr>
+        <tr><td><code>#street</code></td><td>The road surface</td></tr>
+      </tbody>
+    </table>
+
+    <p>Every sign has the same three parts inside it.</p>
+
+    <table>
+      <thead><tr><th>Class</th><th>What it is</th><th>Typical use</th></tr></thead>
+      <tbody>
+        <tr><td><code>.board</code></td><td>The background panel</td><td><code>fill</code> to recolour it</td></tr>
+        <tr><td><code>.ink</code></td><td>The lettering</td><td><code>display: none</code> to remove it</td></tr>
+        <tr><td><code>.cover</code></td><td>A blank panel, hidden by default</td><td><code>display: block</code> to blank the sign completely</td></tr>
+      </tbody>
+    </table>
+
+    <p>Open <code>controls.txt</code> to see the full list of names.</p>
+
+    <h3><span class="n">2.3.12</span>Talking to a 4B model</h3>
+
+    <p>Small models follow narrow instructions well and wide ones badly.</p>
+
+    <h4>The shape of a good instruction</h4>
+
+    <div class="prompt"><span class="tag">PROMPT TEMPLATE</span>Here is my CSS.
+
+Remove the Japanese writing from #sign-kushikatsu and make its
+board saffron orange. Change nothing else.
+
+Output only the CSS lines to add. Do not return the whole file.
+Do not write placeholders. Write real values.
+
+[paste controls.txt here]</div>
+
+    <p>That template does five things. <span class="mark">Gives context. Names one change. Forbids collateral damage. Limits the output. Bans placeholders.</span> Each one is doing work. Remove any of them and the result degrades.</p>
+
+    <div class="note">
+      <span class="tag">The last two lines matter most</span>
+      Asked for long output, a 4B model gives up partway and writes <code>{{ ... }}</code> or <code>... rest of code ...</code>. <span class="mark">Forbid that and the reply comes back short and correct.</span>
+    </div>
+  </section>
+
+  <section class="sec" id="s2-4">
+    <h2><span class="n">2.4</span>What we know so far</h2>
+
+    <p>You changed a street without writing code. <span class="mark">The speed is real.</span></p>
+
+    <p>You may also have seen the limits. A colour name that does not exist. A variable that is declared and never used. A rule acknowledged and then broken in the same reply. <span class="mark">If none of that happened to you, look at your prompt log again and note what did.</span></p>
+
+    <div class="warn">
+      <span class="tag">Notice who did the work</span>
+      Between the model's answer and the picture changing, <strong>you copied, you chose where to paste, you saved, you reloaded.</strong><br><br>
+      <span class="mark">The model never touched a file.</span> That is exactly what Part 1 said: it takes text and returns text.
+    </div>
+
+    <p>In Part 3 that changes. The agent reads files, writes them and runs commands by itself. <strong>You move from doing the work to approving it.</strong></p>
+  </section>
+<script>
+(function () {
+  // --- SVG slider demo ---
+  var sx = document.getElementById('p3sx');
+  if (sx) {
+    var sy = document.getElementById('p3sy');
+    var sw = document.getElementById('p3sw');
+    var vx = document.getElementById('p3vx');
+    var vy = document.getElementById('p3vy');
+    var vw = document.getElementById('p3vw');
+    var rect = document.getElementById('p3r1');
+    var out = document.getElementById('p3codeout');
+
+    function draw() {
+      var x = sx.value, y = sy.value, w = sw.value;
+      vx.textContent = x; vy.textContent = y; vw.textContent = w;
+      rect.setAttribute('x', x);
+      rect.setAttribute('y', y);
+      rect.setAttribute('width', w);
+      out.textContent = '<rect x="' + x + '" y="' + y +
+                        '" width="' + w + '" height="60"/>';
+    }
+    [sx, sy, sw].forEach(function (el) { el.addEventListener('input', draw); });
+    draw();
+  }
+
+  // demo
+  var box = document.getElementById('p3cssbox');
+  if (box) {
+    var style = document.createElement('style');
+    document.head.appendChild(style);
+
+    function apply() {
+      // demo
+      var scoped = box.value.replace(/(^|\})\s*([#.][\w-]+)/g,
+        function (m, brace, sel) { return brace + ' #p3demo2 ' + sel; });
+      style.textContent = scoped;
+    }
+    box.addEventListener('input', apply);
+
+    document.querySelectorAll('[data-css]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var add = btn.getAttribute('data-css');
+        // demo
+        if (add.split('\n').length > 1) { box.value = add; }
+        else { box.value = box.value.replace(/\s*$/, '') + '\n' + add; }
+        apply();
+      });
+    });
+    apply();
+  }
+
+  // demo
+  var swatch = document.getElementById('p3swatch');
+  if (swatch) {
+    var now = document.getElementById('p3fnow');
+    document.querySelectorAll('[data-f]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var f = btn.getAttribute('data-f');
+        swatch.style.filter = f;
+        now.innerHTML = '<code>filter: ' + f + '</code>';
+      });
+    });
+  }
+})();
+</script>
+
+
+  <nav class="pager">
+    <a class="prev" href="part1.html"><span class="dir">← PREV</span><span class="ttl">PART 1　How an LLM works, and where it fails</span></a>
+    <a class="next" href="part3.html"><span class="dir">NEXT →</span><span class="ttl">PART 3　Run a Coding Agent</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

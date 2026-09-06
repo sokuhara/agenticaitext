@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 3 Coding Agentを動かす</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#00a86b;
+  --accent-soft:#e6f8f0;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="章の一覧">
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html" aria-current="page">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 3</div>
+    <h1>Coding Agentを動かす</h1>
+    <p class="lede">Coding Agentは、LLMにファイル操作やコマンド実行という道具を与え、結果を受け取って次の作業を続けられるようにした仕組みです。仕組みを押さえたうえで、Clineに実際のアプリを作らせます。</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>前章まで</dt><dd>PART 2では、AIが出したコードをあなたが受け取り、貼り付け、動かしました。速さと同時に、その受け渡しの手間も体験しました。</dd>
+      <dt>この章</dt><dd>AIに道具を渡すと何が変わるのかを理解し、Clineでアプリを1本作らせます。そのうえで、指示の出し方と、どこまで任せるかを扱います。</dd>
+      <dt>次章へ</dt><dd>PART 4では、出来上がった成果物を、実務で使えるかという観点から点検します。</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="この章の目次">
+    <h2>この章の内容</h2>
+    <ol>
+      <li><span class="n">3.1</span><a href="#s3-1">演習：Clineにアプリを作らせる</a></li>
+      <li><span class="n">3.2</span><a href="#s3-2">なぜ同じ依頼でも結果が変わるか</a></li>
+      <li><span class="n">3.3</span><a href="#s3-3">どこまで任せるか</a></li>
+      <li><span class="n">3.4</span><a href="#s3-4">発展課題：削除機能を追加する</a></li>
+      <li><span class="n">3.5</span><a href="#s3-5">この章で分かったこと</a></li>
+    </ol>
+  </nav>
+
+
+  <section class="sec" id="s3-0" style="margin-bottom:44px">
+    <h2><span class="n">3.0</span>この章で何をするか</h2>
+
+    <p>この章では、<span class="mark">PART 2で人間がしていた「貼る・保存する・実行する」をAgentに渡します。</span></p>
+
+    <h3>この章を終えると</h3>
+    <p>Agentがアプリを1本作り上げます。ファイルを読み、書き、コマンドを実行します。<span class="mark">その過程を観察できるようになります。</span></p>
+
+    <p>あわせて、どこに人間の判断が必要かを言えるようになります。</p>
+
+    <h3>この章で繰り返す進め方</h3>
+
+    <div class="flow-steps">
+      <p><strong>1　動かす（3.1）</strong>　Clineでアプリを1本作らせる</p>
+      <p><strong>2　結果から学ぶ（3.2〜3.3）</strong>　指示の出し方と、任せる範囲</p>
+      <p><strong>3　発展させる（3.4）</strong>　削除機能を追加し、Agentの作業ループを確かめる</p>
+    </div>
+
+    <p><span class="mark">先に手を動かします。</span>用語の説明は後ろに回してあります。3.1を終えてから3.4を読むと、画面で見たものと言葉が結びつきます。</p>
+  </section>
+
+  <section class="sec" id="s3-1">
+    <h2><span class="n">3.1</span>演習：Clineにアプリを作らせる</h2>
+
+    <p>PART 2の演習1は、既にあるものを名前で変える作業でした。手を動かしたのはあなたです。</p>
+
+    <p>ここでは、何もないところからアプリを作らせます。<span class="mark">ただし、作るものは意図的に小さくします。</span></p>
+
+    <div class="warn">
+      <span class="tag">この演習で見たいもの</span>
+      「立派なアプリができたか」ではありません。<strong>Agentがファイルを読み、書き、コマンドを実行する過程を観察できたか</strong>です。<br><br>
+      要求を大きくすると、体験する内容が変わります。「Agentが仕事をした」ではなく、<span class="mark">「環境が壊れ続けた」</span>になります。<br><br>だからデータベース、認証、リアルタイム通信、コンテナは全部外します。
+    </div>
+
+    <div class="note">
+      <span class="tag">この演習の全体像</span>
+      <span class="mark">上から順に、飛ばさずに進めてください。</span><br><br>
+      フォルダを作る → VS Codeで開く → Clineを入れる → サーバに接続 → 接続テスト → <strong>Planモードにする</strong> → 課題を送る → 計画を確認 → <strong>承認方法を先に確認</strong> → <strong>Actへ切り替える</strong> → 1件ずつ承認 → ブラウザで開く → 動作確認 → 記録を残す
+    </div>
+
+    <h3><span class="n">3.1.1</span>作業フォルダをVS Codeで開く</h3>
+
+    <ol>
+      <li>デスクトップに <code>vibe-chat</code> という名前のフォルダを作る</li>
+      <li>VS Codeを起動する</li>
+      <li><strong>File → Open Folder</strong> を選ぶ</li>
+      <li><code>vibe-chat</code> を選んで <strong>Select Folder</strong> を押す</li>
+      <li>信頼の確認が出たら <strong>Yes, I trust the authors</strong> を押す</li>
+      <li>左のExplorerに <code>vibe-chat</code> が表示されたことを確認する</li>
+    </ol>
+
+    <div class="warn">
+      <span class="tag">フォルダを開かずに始めないこと</span>
+      <span class="mark">Clineは、開いているフォルダの中でしか作業しません。</span>フォルダを開いていないと、ファイルをどこに作ればよいか分からず、動きません。
+    </div>
+
+    <h3><span class="n">3.1.2</span>Clineをインストールする</h3>
+
+    <ol>
+      <li>左のアイコン列から <strong>Extensions</strong>（<code>Ctrl</code> + <code>Shift</code> + <code>X</code>）を押す</li>
+      <li>検索欄に <code>Cline</code> と入力する</li>
+      <li><span class="mark">一番上の、発行元が <strong>Cline</strong> のものを選ぶ</span></li>
+      <li><strong>Install</strong> を押す</li>
+      <li>左のアイコン列に追加されたClineのアイコンを押す</li>
+    </ol>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/cline-install.png" alt="VS Codeの拡張機能パネルでClineを検索した結果。一番上に発行元Clineの「Cline - Autonomous coding agent」が表示され、その下に Cline Chinese、DSH Cline、Cline (Nightly)、Cline Pro、Cline Max が並んでいる" style="width:100%;max-width:560px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        一番上の「Cline — Autonomous coding agent」が正解
+      </div>
+    </div>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/cline-installed.png" alt="Clineの拡張機能ページ。発行元がCline、cline.bot、ダウンロード数5,217,516、DisableとUninstallのボタンが表示されている" style="width:100%;max-width:560px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        入ると <strong>Disable</strong> と <strong>Uninstall</strong> が出ます。<span style="color:var(--accent);font-weight:700">発行元が <code>cline.bot</code> であることも確認してください。</span>
+      </div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">似た名前が並びます</span>
+      <span class="mark">Cline Chinese、DSH Cline、Cline (Nightly)、Cline Pro、Cline Max。</span>どれも別の拡張機能です。<br><br>
+      選ぶのは<strong>一番上の、発行元が Cline（青いチェックマーク付き）のもの</strong>です。ダウンロード数も桁が違います。
+    </div>
+
+    <p>入れると、<span class="mark">左のアイコン列の一番下にロボットのアイコンが追加されます。</span>それがClineです。クリックするとパネルが開きます。</p>
+
+    <div class="warn">
+      <span class="tag">歯車は2種類あります。間違えやすいところです</span>
+      <strong>拡張機能一覧の歯車</strong>　Enable / Disable / Uninstall のメニューが出ます。<span class="mark">こちらではありません。</span><br><br>
+      <strong>Clineパネル右上の歯車</strong>　接続の設定はこちらです。左のロボットのアイコンを押してパネルを開いてから、その中の右上を見てください。
+    </div>
+
+    <div class="note">
+      <span class="tag">この2か所を覚えてください</span>
+      <strong>右上の歯車</strong>　次の3.1.3で、接続の設定に使います。<br>
+      <strong>入力欄右下のPlan / Actボタン</strong>　3.1.6でPlanを選び、3.1.8でActへ切り替えます。<br><br>
+      <span class="mark">この2つが分かれば、あとは順に進むだけです。</span>
+    </div>
+
+    <h3><span class="n">3.1.3</span>共有サーバへ接続する</h3>
+
+    <div class="warn">
+      <span class="tag">この演習で使うのは 27B です</span>
+      <span class="mark">PART 2で使った <code>qwen3.5:4b</code> は使いません。</span>共有サーバの27Bモデルに接続します。4Bではツール呼び出しが安定せず、この演習は回りません。
+    </div>
+
+    <h4>初回の画面を通り抜ける</h4>
+
+    <p>Clineを初めて開くと、使い方を選ぶ画面が出ます。</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/cline-howuse.png" alt="How will you use Cline? の画面。Absolutely Free、ClinePass、Frontier Model、Bring my own API key の4択があり、Bring my own API key が選択されている" style="width:100%;max-width:340px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        <span style="color:var(--accent);font-weight:700">Bring my own API key</span> を選んで Continue
+      </div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">4番目を選びます</span>
+      <span class="mark">Absolutely Free、ClinePass、Frontier Model は選びません。</span>どれも外部のサービスに接続し、課金やアカウント作成が必要になります。下の <strong>Login to Cline</strong> も押しません。<br><br>
+      選ぶのは <strong>Bring my own API key</strong> です。
+    </div>
+
+    <div class="note">
+      <span class="tag">この画面を終えるまで設定は開きません</span>
+      右上の <code>…</code> から Settings を選んでも反応しません。<span class="mark">先にこの画面を通り抜けてください。</span>
+    </div>
+
+    <div class="warn">
+      <span class="tag">「Absolutely Free」を選んでしまった場合</span>
+      無料モデルを選ぶ画面が出ます。<span class="mark">何も押さず、下の <strong>Back</strong> で戻ってください。</span>
+
+      <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px;margin-top:12px">
+        <img src="img/cline-select-model.png" alt="Select a free model の画面。無料モデルが並び、下部に Create my Account のボタンがある" style="width:100%;max-width:300px;border-radius:8px;border:1px solid var(--line)">
+      </div>
+
+      <strong>Create my Account は押しません。</strong>Clineのクラウドサービスのアカウント作成です。
+    </div>
+
+    <h4>プロバイダを設定する</h4>
+
+    <p>Continueを押すと <strong>Configure your provider</strong> の画面になります。既定は <code>OpenRouter</code> です。</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/cline-provider.png" alt="Configure your provider の画面。API Provider が OpenRouter になっている" style="width:100%;max-width:340px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        <span style="color:var(--accent);font-weight:700">先に API Provider を変えます</span>
+      </div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">API Provider を変えるのが先です</span>
+      <span class="mark"><code>OpenAI Compatible</code> に変えてください。</span>変えると入力欄が切り替わり、<strong>Base URL</strong> の欄が出てきます。<br><br>
+      OpenRouterのままだと、Base URLを入れる場所がありません。Model の欄に <code>anthropic/claude-sonnet-5</code> などが入っていたら、消して入れ替えます。
+    </div>
+
+    <h4>5項目を入力する</h4>
+
+    <table>
+      <thead><tr><th>項目</th><th>入力内容</th></tr></thead>
+      <tbody>
+        <tr><td>API Provider</td><td><code>OpenAI Compatible</code></td></tr>
+        <tr><td>Base URL</td><td>下の表のURL。<strong>末尾の <code>/v1</code> まで</strong></td></tr>
+        <tr><td>OpenAI Compatible API Key</td><td><code>ollama</code>（何でもよい）</td></tr>
+        <tr><td>Model ID</td><td>講師が指定したモデル名</td></tr>
+        <tr><td>Custom Headers</td><td>2つ追加（下記）</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">Base URL の <code>/v1</code> を忘れないこと</span>
+      <span class="mark">ここが、いちばん多い失敗です。</span><code>https://pc11.okuharalab.com</code> だけでは動きません。<br><br>
+      <code>https://pc11.okuharalab.com<strong>/v1</strong></code> と、末尾まで入れてください。<br><br>
+      忘れると <code>Response stream ended without a finish reason</code> というエラーが出ます。<strong>このエラーを見たら、まず <code>/v1</code> を疑ってください。</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">API Key は何でも構いません</span>
+      接続先のOllamaは、この値を見ません。<span class="mark">空欄だと先へ進めないことがあるので、<code>ollama</code> と入れておきます。</span><br><br>
+      本当の認証は、次のCustom Headersで行います。
+    </div>
+
+    <h4>Custom Headers を2つ追加する</h4>
+
+    <p><strong>Add Header</strong> を押して、2行追加します。</p>
+
+    <table>
+      <thead><tr><th>ヘッダ名</th><th>値</th></tr></thead>
+      <tbody>
+        <tr><td><code>CF-Access-Client-Id</code></td><td>講師が配布したClient ID</td></tr>
+        <tr><td><code>CF-Access-Client-Secret</code></td><td>講師が配布したClient Secret</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">ヘッダ名は全選択してから打つこと</span>
+      <code>Add Header</code> を押すと、名前の欄に <code>header</code> などの文字が入っています。<span class="mark">上書きせずに打つと <code>heaCF-Access-Client-Id</code> のように壊れます。</span><br><br>
+      欄をクリックして <code>Ctrl</code> + <code>A</code> で全選択してから、打ち直してください。<strong>画面では途中までしか見えないので、壊れていても気づきません。</strong>
+    </div>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/cline-settings-done.png" alt="Clineの設定画面。API Provider が OpenAI Compatible、Base URL、Model ID、Custom Headers に CF-Access-Client-Id と CF-Access-Client-Secret が入っている" style="width:100%;max-width:660px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        入力を終えた状態。<span style="color:var(--accent);font-weight:700">この形になっていれば正解です</span>
+      </div>
+    </div>
+
+    <h4>使うサーバを確認する</h4>
+
+    <p>サーバは5台あります。<span class="mark">学籍番号の末尾の数字で、使うサーバが決まります。</span></p>
+
+    <table>
+      <thead><tr><th>学籍番号の末尾</th><th>Base URL</th></tr></thead>
+      <tbody>
+        <tr><td><strong>0, 1</strong></td><td><code>https://pc11.okuharalab.com/v1</code></td></tr>
+        <tr><td><strong>2, 3</strong></td><td><code>https://pc21.okuharalab.com/v1</code></td></tr>
+        <tr><td><strong>4, 5</strong></td><td><code>https://pc31.okuharalab.com/v1</code></td></tr>
+        <tr><td><strong>6, 7</strong></td><td><code>https://pc41.okuharalab.com/v1</code></td></tr>
+        <tr><td><strong>8, 9</strong></td><td><code>https://pc51.okuharalab.com/v1</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>1台に集中すると、全員の応答が遅くなります。<strong>自分の番号のサーバを使ってください。</strong></p>
+
+    <div class="note">
+      <span class="tag">値は授業開始時に配布します</span>
+      Client ID、Client Secret、Model ID。<span class="mark">これらは教材に書かれていません。</span>授業で配布されたものを使ってください。他の場所へ貼ったり共有したりしないでください。
+    </div>
+
+    <h3><span class="n">3.1.4</span>接続を確認する</h3>
+
+    <p>設定を保存したら、Clineのチャット画面を見てください。<span class="mark">選択中のモデル名が、講師の指定したものになっているか目で確かめます。</span></p>
+
+    <p>そのうえで、Chatモードで送ります。</p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Reply only with: Connection successful</div>
+
+    <p>返事が来れば接続できています。<strong>ここで返事が来ないまま先へ進まないでください。</strong></p>
+
+    <h4>つながらないとき</h4>
+
+    <p>エラーの種類で、見るところが変わります。</p>
+
+    <table>
+      <thead><tr><th>症状</th><th>疑うところ</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>Response stream ended without a finish reason</code></td>
+          <td><strong>Base URL の <code>/v1</code> 抜け。</strong>または Custom Headers の名前が壊れている</td>
+        </tr>
+        <tr>
+          <td>認証エラー、302、ログイン画面が返る</td>
+          <td>Custom Headers の値。全選択してから打ち直したか</td>
+        </tr>
+        <tr>
+          <td>モデルが見つからない</td>
+          <td>Model ID。講師の指定と1文字ずつ照合する</td>
+        </tr>
+        <tr>
+          <td>何も起きない、反応しない</td>
+          <td>初回の設定画面が終わっていない。3.1.3の最初へ戻る</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">サーバが悪いのか、設定が悪いのか</span>
+      切り分けの手順が<a href="appendix-a.html">付録A</a>のA.11にあります。<span class="mark">ターミナルから直接サーバを叩いて、どこまで通るかを確かめられます。</span><br><br>
+      サーバ側が正常だと分かれば、あとはClineの設定だけです。講師を呼ぶ前に、自分で判断できます。
+    </div>
+
+    <h3><span class="n">3.1.5</span>承認の範囲を決める</h3>
+
+    <p>チャット入力欄の上に <strong>Auto-approve</strong> の折りたたみがあります。開くと5つのチェックボックスが出ます。</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/cline-autoapprove.png" alt="ClineのAuto-approve設定。Read files、Edit files、Execute commands、Fetch web content、Use MCP servers の5つのチェックボックスがある" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        チェックを入れた操作は、<span style="color:var(--accent);font-weight:700">確認なしで実行されます</span>
+      </div>
+    </div>
+
+    <h4>この演習での設定</h4>
+
+    <table>
+      <thead><tr><th>項目</th><th>設定</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td><code>Read files</code></td><td><strong>ON</strong></td><td>読むだけなら壊れない</td></tr>
+        <tr><td><code>Edit files</code></td><td><strong>OFF</strong></td><td><span class="mark">何が書かれるかを見るため</span></td></tr>
+        <tr><td><code>Execute commands</code></td><td><strong>OFF</strong></td><td><span class="mark">何が走るかを見るため</span></td></tr>
+        <tr><td><code>Fetch web content</code></td><td><strong>OFF</strong></td><td>この演習では使わない</td></tr>
+        <tr><td><code>Use MCP servers</code></td><td><strong>OFF</strong></td><td>PART 7で扱う</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">既定のままにしないこと</span>
+      入れた直後は <code>Read, Edit, Web Fetch, MCP</code> がONになっています。<span class="mark">この状態では、ファイルの書き換えが確認なしで進みます。</span><br><br>
+      <strong>ONのままにしてよいのは <code>Read files</code> だけです。</strong>残り4つのチェックを外してください。
+    </div>
+
+    <h3><span class="n">3.1.6</span>Planモードにしてから課題を送る</h3>
+
+    <div class="warn">
+      <span class="tag">送る前にモードを変えます</span>
+      Clineの入力欄の<strong>右下</strong>に <strong>Plan / Act</strong> の切り替えボタンがあります。<span class="mark">先に左側の <strong>Plan</strong> を押してください。</span>Actが青く選択されたまま送ると、計画を見る前に実装が始まります。
+    </div>
+
+    <h4>Planモードへの切り替え方</h4>
+
+    <ol>
+      <li>VS Code左側の<strong>Clineアイコン</strong>を押し、Clineのチャット画面を開く</li>
+      <li>画面下部のメッセージ入力欄を見る</li>
+      <li>入力欄の右下に並んでいる <strong>Plan</strong> と <strong>Act</strong> を見つける</li>
+      <li>左側の<strong>Plan</strong>を1回押す</li>
+      <li><strong>Plan側に色が付き、Act側の色が消えたこと</strong>を確認する</li>
+    </ol>
+
+    <div class="note">
+      <span class="tag">Planモードでは何をさせるのか</span>
+      Planモードは、実装前に<strong>何を作るか、どのファイルを作るか、何を実行して確かめるか</strong>を相談するために使います。<span class="mark">この段階では、ファイルを作らせることが目的ではありません。</span><br><br>
+      Clineがフォルダの中を読んだり、質問を返したりすることはあります。これは計画に必要な情報を集めている動作です。
+    </div>
+
+    <h4>作るもの</h4>
+
+    <p>1画面だけの投稿フォームです。<strong>AIチャットではありません。</strong></p>
+
+<pre><code>User name: [ Asha              ]
+Status:    [ Present         v ]
+Message:   [ Hello everyone!   ]
+           [ Send ]
+
+Messages
+Asha — Present
+Hello everyone!</code></pre>
+
+    <h4>送るプロンプト</h4>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Create a simple one-page message board in one file named index.html.
+
+Requirements:
+- User name input
+- Status select: Present, Away, Focus
+- Message input
+- Send button
+- Submitted messages appear below the form
+- Keep messages only in a JavaScript array
+- Reject empty user names and messages
+- Use textContent to display user input
+- Put HTML, CSS, and JavaScript in index.html
+
+Do not use:
+- Python
+- Node.js
+- React
+- Database
+- WebSocket
+- Fetch
+- Polling
+- External libraries
+- Multiple files
+
+The workspace is empty. Do not inspect it.
+Keep the plan under 10 lines.
+Do not create or edit files yet.
+Show the plan only.</div>
+
+    <p>この章では、Coding Agentの基本操作に集中するため、<span class="mark"><code>index.html</code>だけを作ります。</span>PythonとFlaskを使うWebアプリは、次の独立課題で扱います。</p>
+
+    <p>禁止事項が重要です。書かないとAgentは親切にサーバ、データベース、リアルタイム通信、複数ファイルを追加し、演習が長くなります。</p>
+
+    <h4>計画を読む</h4>
+
+    <p>プロンプトを送ると、Clineが内容を整理して実装計画を返します。<strong>ここではまだActへ切り替えず、一度止めて計画を読んでください。</strong></p>
+
+    <ul>
+      <li>作るファイルが <code>index.html</code> の1つだけか</li>
+      <li>HTML、CSS、JavaScriptをその1ファイルに入れる計画か</li>
+      <li>メッセージをJavaScriptの配列だけに保存するか</li>
+      <li>ユーザー入力の表示に <code>textContent</code> を使うか</li>
+      <li>Python、Node.js、外部ライブラリなどが入っていないか</li>
+    </ul>
+
+    <p>計画に余計なものが入っている、または必要な確認が抜けている場合は、<strong>Planモードのまま</strong>修正を頼みます。</p>
+
+    <div class="prompt"><span class="tag">計画を直すときの例</span>Revise the plan to follow the requirements exactly.
+Use only one file: index.html.
+Do not add any unrequested features.
+Show the revised plan only.</div>
+
+    <p><span class="mark">すぐにActへ移らず、修正後の計画をもう一度読みます。</span>計画に納得できるまで、このやり取りを繰り返してください。</p>
+
+    <div class="note">
+      <span class="tag">Plan完了の判断</span>
+      次の4点を自分の言葉で答えられたらPlanは完了です。<strong>①何を作るか、②作るファイルは何か、③データをどこに置くか、④何をもって完成と判断するか。</strong>
+    </div>
+
+    <h4>Planモードで実際に起こりやすい失敗</h4>
+
+    <p>Planモードにしただけで、必ず正しい計画が出るわけではありません。次の2つは、今回の演習でも起こりやすい失敗です。</p>
+
+    <div class="warn">
+      <span class="tag">失敗1　同じフォルダ確認を繰り返す</span>
+      Clineが <code>Get-ChildItem</code> などの一覧取得コマンドを、書き方を変えながら何度も提案することがあります。作業フォルダが空だと既に分かっており、新しい情報が得られないなら、<strong>回数ではなく目的の重複を理由にRejectし、人間が停止条件を伝えます。</strong>
+    </div>
+
+    <div class="prompt"><span class="tag">調査を止める指示</span>The workspace is empty, and directory inspection is complete.
+Do not run any more directory-listing commands.
+Now show the implementation plan only. Do not create or edit files yet.</div>
+
+    <p>日本語で伝える場合は、次を送ります。</p>
+
+    <div class="prompt"><span class="tag">調査を止める指示（日本語）</span>作業フォルダは空で、フォルダの確認は完了しています。
+これ以上、一覧取得コマンドを実行しないでください。
+まだファイルを作成・編集せず、実装計画だけを示してください。</div>
+
+    <div class="warn">
+      <span class="tag">失敗2　1ファイルの依頼を大きなシステムへ変える</span>
+      <code>index.html</code>だけと指定しても、Clineが <code>package.json</code>、<code>server.js</code>、Express、React、WebSocket、Pythonサーバなどを含む計画を出すことがあります。<span class="mark">もっともらしく詳しい計画でも、依頼に従っているとは限りません。</span><br><br>
+      この場合はActへ進まず、Planモードのまま計画を小さく戻します。
+    </div>
+
+    <div class="prompt"><span class="tag">技術構成を直す指示</span>This plan does not follow the requirements.
+
+Use only one file: index.html.
+Put the HTML, CSS, and JavaScript in that file.
+Store messages only in a JavaScript array.
+Do not use Python, Node.js, Express, React, Vite, WebSocket, fetch, polling, a database, or external libraries.
+
+Keep the revised plan under 10 lines.
+Do not create or edit files yet. Show the revised plan only.</div>
+
+    <div class="note">
+      <span class="tag">ここがPlanモードを使う理由です</span>
+      誤った計画をActモードで実行すると、不要なファイルやパッケージが作られます。Planモードなら、<strong>ファイルを変更する前に、人間が逸脱を発見して修正できます。</strong>
+    </div>
+
+    <h3><span class="n">3.1.7</span>Actを押す前に、承認方法を確認する</h3>
+
+    <p>次の3.1.8でActを押すと、すぐに実装が始まります。<strong>先にこの節を最後まで読み、どの操作を許可し、どの操作を拒否するか確認してください。</strong></p>
+
+    <p>3.1.5で <code>Edit files</code> と <code>Execute commands</code> をOFFにしました。そのため、Act開始後はAgentが操作の許可を求めてきます。</p>
+
+    <h4>判断の基準</h4>
+
+    <table>
+      <thead><tr><th>Clineが求めてくるもの</th><th>どうするか</th></tr></thead>
+      <tbody>
+        <tr><td><code>index.html</code>の新規作成</td><td>右側の差分を確認して<strong>Save</strong></td></tr>
+        <tr><td><code>index.html</code>への必要な追記</td><td>差分を見てから<strong>Save</strong></td></tr>
+        <tr><td>別ファイルの作成</td><td><strong>Reject</strong></td></tr>
+        <tr><td>フォルダやファイルの一覧表示</td><td>空だと伝えてあるため<strong>Reject</strong></td></tr>
+        <tr><td><code>pip install</code> / <code>npm install</code></td><td>この演習では不要なので<strong>Reject</strong></td></tr>
+        <tr><td>ファイルの削除</td><td><strong>Reject</strong></td></tr>
+        <tr><td>成果物や情報を外部へ送信する操作</td><td><strong>Reject</strong></td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">ボタン名は操作によって変わります</span>
+      ファイルの作成・編集は<strong>Save</strong>、コマンドは<strong>Run Command</strong>、拒否は<strong>Reject</strong>と表示されます。すべてを機械的に許可せず、<span class="mark">何を、どこに対して行う操作なのか</span>を先に確認してください。
+    </div>
+
+    <div class="note">
+      <span class="tag">この演習に実行コマンドは不要です</span>
+      <code>index.html</code>はブラウザで直接開きます。<code>Get-ChildItem</code>は一覧表示であり、アプリを動かすコマンドではありません。<code>pip install</code>、<code>npm install</code>、サーバ起動も必要ありません。Clineがコマンドを提案したら、目的を確認し、この演習に不要ならRejectします。
+    </div>
+
+    <h3><span class="n">3.1.8</span>Actモードへ切り替え、1件ずつ承認する</h3>
+
+    <p>計画と承認方法を確認したら、入力欄の右下にある<strong>Act</strong>を1回押します。<span class="mark">切り替えた瞬間に、Planモードで作った計画を引き継いで実装が始まります。</span></p>
+
+    <div class="warn">
+      <span class="tag">Actを押す前が最後の確認です</span>
+      Actへ切り替えた後に、改めて「実装を開始してください」と送る必要はありません。<strong>Actを押す操作そのものが、計画を実行させる合図です。</strong><br><br>
+      計画に間違いが残っている場合は、Actを押さず、Planモードのまま修正させてください。
+    </div>
+
+    <p>画面から目を離さず、Clineが求める操作を1件ずつ確認します。<span class="mark">上の表を基準に、必要な操作だけを許可してください。</span>3.5で説明するAgentのループが、そのまま画面に流れます。</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/cline-create-index.png" alt="Clineがindex.htmlの新規作成についてSaveまたはRejectを求めている画面" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        対象が <code>index.html</code> だけで、差分が計画どおりなら<strong>Save</strong>
+      </div>
+    </div>
+
+    <div class="note">
+      <span class="tag">1ファイルでも複数回のSaveが出ることがあります</span>
+      長いファイルでは、Clineが最初にHTMLとCSSを作り、次にJavaScriptを追記することがあります。<strong>回数だけでRejectしません。</strong>毎回差分を開き、まだない必要な部分を追加しているならSave、同じ内容の重複や計画外の変更ならRejectします。
+    </div>
+
+    <div class="warn">
+      <span class="tag">見た目が完成していても、ボタンが動くとは限りません</span>
+      JavaScriptの追記をRejectすると、画面はきれいに表示されてもSendが動きません。ブラウザで試して動かなければ、Clineへ次の指示を送り、欠けているJavaScriptだけを追加させます。
+    </div>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/cline-vibe-chat-before-fix.png" alt="Vibe Chatの画面は表示されているが、Sendを押してもMessagesが0のままの未完成例" style="width:100%;max-width:620px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        画面が表示されたことと、機能が動くことは別
+      </div>
+    </div>
+
+    <div class="prompt"><span class="tag">Sendが動かない場合</span>The Send button does not work because the JavaScript is missing.
+
+Edit index.html only.
+Add only the missing JavaScript immediately before &lt;/body&gt;.
+
+Requirements:
+- Handle the form submit event
+- Prevent the default page reload
+- Validate that user name and message are not empty
+- Push { name, status, message } into the existing messages array
+- Display messages below the form
+- Update the message count
+- Create DOM elements and use textContent for all user input
+- Do not use innerHTML
+- Do not change the existing HTML or CSS
+- Do not create another file</div>
+
+    <div class="note">
+      <span class="tag">画面右上の $0.0000 と 6.1k / 128.0k</span>
+      <code>$0.0000</code> はClineが表示している利用料金です。今回の共有Qwenサーバでは0ドルと表示されます。<code>6.1k / 128.0k</code> は料金ではなく、会話履歴として使っているトークン量です。<br><br>
+      会話が長くなるほど応答が遅くなり、古い指示を見失いやすくなります。<span class="mark">同じ確認を繰り返し始めたら、人間が止めて次の作業を明示します。</span>
+    </div>
+
+    <h4>通信が途中で切れたら</h4>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/cline-socket-error.png" alt="ClineでUND_ERR_SOCKETが発生し、RetryとStart New Taskが表示された画面" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        通信切断後は、<strong>Retry</strong>と<strong>Start New Task</strong>のどちらかを選ぶ
+      </div>
+    </div>
+
+<pre><code>terminated: SocketError: other side closed (UND_ERR_SOCKET)</code></pre>
+
+    <p>これは作成中のアプリのエラーではありません。<strong>ClineとLLMサーバの通信が途中で切れた</strong>という意味です。共有サーバの混雑、応答時間の超過、長すぎる出力などで発生します。</p>
+
+    <table>
+      <thead><tr><th>状況</th><th>選ぶもの</th></tr></thead>
+      <tbody>
+        <tr><td>計画が正しく、通信だけが一時的に切れた</td><td><strong>Retry</strong></td></tr>
+        <tr><td>誤った計画、長い思考、同じ確認の繰り返しが履歴に残っている</td><td><strong>Start New Task</strong></td></tr>
+        <tr><td>どこまでファイルを作ったか分からない</td><td><strong>Start New Task</strong>後、<code>index.html</code>だけを確認させる</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">今回の例ではStart New Task</span>
+      大きすぎる誤った計画、複数回のフォルダ確認、長い修正履歴が残っている場合、Retryすると同じ履歴を使って再開します。再び切断したり、古い誤案へ戻ったりする可能性があるため、<strong>上部の＋またはStart New Taskで新しいタスクを開始します。</strong>
+    </div>
+
+    <div class="prompt"><span class="tag">新しいタスクで最初に送る指示</span>Create a simple one-page message board in one file named index.html.
+
+Use HTML, CSS, and vanilla JavaScript in that one file.
+Use a JavaScript array for messages and textContent for user input.
+Do not use Python, Node.js, React, fetch, polling, WebSocket, a database, or external libraries.
+The workspace is empty. Do not inspect it.
+Keep the plan under 10 lines.
+Do not create files yet. Show the plan only.</div>
+
+    <div class="note">
+      <span class="tag">面倒ですが、それが目的です</span>
+      何度も確認を求められます。<span class="mark">Agentが何を実行しようとしているかを、画面で見ることが演習の中身です。</span><br><br>
+      全部を自動承認にすると速く終わりますが、<strong>何が起きたか分からないまま終わります。</strong>あとで作業ログを読むときに、何も語れません。
+    </div>
+
+    <div class="note">
+      <span class="tag">エラーが出たら</span>
+      画面のエラー文や、実際に操作して起きたことを<strong>そのままClineへ渡します。</strong>PART 2で身につけた「1回1変更・現状を伝える」は、ここでもそのまま効きます。
+    </div>
+
+    <h3><span class="n">3.1.9</span>ブラウザで開く</h3>
+
+    <p>この演習ではサーバを使いません。VS Code左側のExplorerで <code>index.html</code> を右クリックし、<strong>Reveal in File Explorer</strong>を選びます。表示された <code>index.html</code> をダブルクリックすると、既定のブラウザで開きます。</p>
+
+    <p>ファイルを編集した後は、ブラウザで <code>Ctrl</code> + <code>R</code> を押して再読み込みしてください。</p>
+
+    <h3><span class="n">3.1.10</span>動作を確認する</h3>
+
+    <p>次の順で操作してください。</p>
+
+    <ol>
+      <li>User name に <code>Asha</code> と入力する</li>
+      <li>Status を <code>Present</code> にする</li>
+      <li>Message に <code>Hello everyone!</code> と入力する</li>
+      <li><strong>Send</strong> を押す</li>
+      <li>Messagesが <code>0</code> から <code>1</code> になり、「Asha」「Present」「Hello everyone!」が表示されることを確認する</li>
+      <li>ブラウザを再読み込みして、<span class="mark">投稿が消えることを確認する</span></li>
+    </ol>
+
+    <p>6番目が消えるのは正常です。<strong>データを保存しない設計にしたからです。</strong>これはPART 4で「足りないもの」として数えます。</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/cline-vibe-chat-complete.png" alt="Vibe ChatでAshaのHello everyoneメッセージが表示され、Messagesが1になった完成画面" style="width:100%;max-width:620px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        Agentの完了報告ではなく、<strong>人間がSendを押して確認した結果</strong>が完成の根拠
+      </div>
+    </div>
+
+    <h4>追加の2テスト</h4>
+
+    <ol>
+      <li>名前またはMessageを空にしてSendを押し、投稿されずエラーが出ることを確認する</li>
+      <li>Messageに <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> と入力し、警告が実行されず文字として表示されることを確認する</li>
+    </ol>
+
+    <div class="note">
+      <span class="tag">不要な最終検査はRejectできる</span>
+      Clineがファイルを再度読み、文字列検索や行数確認、一覧表示だけを行うコマンドを提案することがあります。それではSendの動作を確認できません。<span class="mark">既に読んだ内容の確認を繰り返すだけならRejectし、ブラウザを自分で操作します。</span><br><br>安全なコマンドでも、<strong>目的に不要ならRejectできます。</strong>承認は「危険かどうか」だけでなく、「必要かどうか」でも判断します。
+    </div>
+
+
+    <h4>完成の目安</h4>
+
+    <table>
+      <thead><tr><th>できていること</th><th>できていなくてよいこと</th></tr></thead>
+      <tbody>
+        <tr><td>ブラウザで画面が表示される</td><td>ログイン</td></tr>
+        <tr><td>送信すると一覧に増える</td><td>再読み込み後もデータが残ること</td></tr>
+        <tr><td>名前と状態が表示される</td><td>複数人での同時利用</td></tr>
+        <tr><td>手でコードを書いていない</td><td>見た目の作り込み</td></tr>
+      </tbody>
+    </table>
+
+    <p>右の列は、<span class="mark">PART 4で「足りないもの」として数える対象です。</span>いま作らなくて構いません。</p>
+
+    <h3><span class="n">3.1.11</span>作業ログを読む</h3>
+
+    <p>いま動かしたばかりのCline画面が、そのまま教材です。作業ログを上までさかのぼって、次の4点を記録してください。</p>
+
+    <ol>
+      <li><strong>Agentが最初に行った操作は何か。</strong>フォルダの確認、ファイル作成、コマンド実行のどれだったか。</li>
+      <li><strong>変更したファイルはどれか。</strong>いくつあるか。</li>
+      <li><strong>Save、Run Command、Rejectをどう判断したか。</strong>最低1件について理由を書く。</li>
+      <li><strong>「完了」と判断した根拠は何か。</strong>Clineの報告ではなく、自分で行った操作を書く。</li>
+    </ol>
+
+    <p>そのうえで、<span class="mark">この作業のどこで人間の確認が必要だったかを1つ挙げてください。</span></p>
+
+    <div class="note">
+      <span class="tag">4番目が肝心です</span>
+      Agentはファイルを読み、文字列を検索しただけで「確認しました」と報告することがあります。しかし、Sendが実際に動くこととは別です。<span class="mark">完成の根拠は、人間がブラウザで送信を試し、表示結果を確認したことです。</span>
+    </div>
+
+    <h3><span class="n">3.1.12</span>提出物</h3>
+
+    <table>
+      <thead><tr><th></th><th>出すもの</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>できたアプリの画面（1枚でよい）</td></tr>
+        <tr><td><strong>2</strong></td><td>3.1.11の4点の記録。最初の操作、変更したファイル、承認判断、完了と判断した根拠</td></tr>
+        <tr><td><strong>3</strong></td><td>人間の確認が必要だった箇所を1つと、その理由</td></tr>
+        <tr><td><strong>4</strong></td><td>Agentが失敗・反復・逸脱した場面を1つ。なければ、Rejectを検討した場面と判断を書く</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">失敗を無理に作らない</span>
+      問題なく完成した場合、余計な機能を追加して失敗を起こす必要はありません。別ファイルの作成、不要な一覧確認、依存関係の追加など、<strong>Rejectを検討した場面と、その判断理由</strong>を記録してください。
+    </div>
+  </section>
+
+  <section class="sec" id="s3-2">
+    <h2><span class="n">3.2</span>なぜ同じ依頼でも結果が変わるか</h2>
+
+    <p>いま演習で、指示の出し方によって結果が変わるのを見たはずです。Agentの失敗は、能力不足だけで起こるわけではありません。<span class="mark">必要な情報が渡っていないときにも起こります。</span></p>
+
+    <p>たとえば「ログイン画面を修正して」とだけ頼んでも、Agentには次のことが分かりません。</p>
+
+    <ul>
+      <li>どの画面が対象か</li>
+      <li>何を変更してよいか</li>
+      <li>既存の設計ルールは何か</li>
+      <li>実装後に何を確認すべきか</li>
+    </ul>
+
+    <p>分からないまま進めば、それらしい何かが出来上がります。PART 1の1.2.3で見た「もっともらしい誤り」が、そのままコードとして現れる形です。</p>
+
+    <p><strong>Context Engineering</strong>とは、<span class="mark">必要な情報を、必要な時点で渡すこと</span>です。Agentが判断できるようにするために行います。</p>
+
+    <p>長い説明文を一度に渡すことではありません。</p>
+
+    <h3><span class="n">3.2.1</span>4種類のコンテキスト</h3>
+
+    <table>
+      <thead><tr><th>種類</th><th>例</th></tr></thead>
+      <tbody>
+        <tr><td><strong>作業の目的</strong></td><td>「メールアドレス形式を検証する」</td></tr>
+        <tr><td><strong>制約</strong></td><td>「既存APIは変更しない」「変更は最小限にする」</td></tr>
+        <tr><td><strong>プロジェクトのルール</strong></td><td>コーディング規約、使用ライブラリ、テストの実行方法</td></tr>
+        <tr><td><strong>現在の状態</strong></td><td>対象ファイル、エラーログ、テスト結果、未解決の課題</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">3.2.2</span>渡し方で結果が変わる</h3>
+
+    <p>次の指示は、作業の目的しか伝えていません。</p>
+
+    <div class="prompt"><span class="tag">POOR</span>バリデーションを直して。</div>
+
+    <p>4種類を揃えると、Agentが判断できるようになります。</p>
+
+    <div class="prompt"><span class="tag">BETTER</span>src/user.py のメールアドレス検証を修正してください。
+APIの戻り値は変更しないでください。
+tests/test_user.py の失敗しているテストを通し、既存テストも実行してください。
+修正前に、原因と変更予定を簡潔に説明してください。</div>
+
+    <p>1行目が対象、2行目が制約、3行目が確認方法、4行目が進め方の指定です。<span class="mark">同じ依頼でも、渡し方を変えれば結果が変わります。</span></p>
+
+    <div class="warn">
+      <span class="tag">情報は多ければよいわけではありません</span>
+      古い仕様、大量の無関係なファイル、矛盾した指示。<strong>どれもAgentの判断を悪くします。</strong>PART 1の1.2.1で見たとおり、コンテキストは有限で、真ん中の情報は取りこぼされます。<br><br>
+      <span class="mark">必要な情報を、必要な範囲で、矛盾なく渡す。</span>これがContext Engineeringの基本です。
+    </div>
+  </section>
+
+  <section class="sec" id="s3-3">
+    <h2><span class="n">3.3</span>どこまで任せるか</h2>
+
+    <p>Coding Agentが向いているのは、<span class="mark">条件が明確で、実行結果を確認できる作業</span>です。</p>
+
+    <p>逆は向きません。条件が曖昧で、結果を機械的に確かめられない作業です。</p>
+
+    <table>
+      <thead><tr><th>任せやすい作業</th><th>人間の判断が必要な作業</th></tr></thead>
+      <tbody>
+        <tr><td>関連ファイルを探す</td><td>何を作るべきかを決める</td></tr>
+        <tr><td>既存コードの構造を調べる</td><td>要件の優先順位を決める</td></tr>
+        <tr><td>小さな機能を実装する</td><td>設計方針を決める</td></tr>
+        <tr><td>テストを追加・実行する</td><td>変更範囲を決める</td></tr>
+        <tr><td>エラーを読んで修正を試す</td><td>本番環境への反映を承認する</td></tr>
+        <tr><td>定型的なリファクタリングを行う</td><td>セキュリティ・法務・利用者への影響を判断する</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">3.3.1</span>「任せる」の意味</h3>
+
+    <p><span class="mark">「任せる」は、確認なしで自由に実行させることではありません。</span></p>
+
+    <p>Agentには、最初は狭い範囲だけを任せます。たとえば次のような制約を置きます。</p>
+
+    <ul>
+      <li>このフォルダの中だけを変更してよい</li>
+      <li>テストの実行は許可するが、外部へ送信する操作は許可しない</li>
+      <li>設定ファイルや認証情報には触れさせない</li>
+      <li>変更はプルリクエスト経由にし、直接反映はさせない</li>
+    </ul>
+
+    <p>PART 4以降では、<strong>任せられる範囲を安全に広げます。</strong>使うのはテスト、Linter、CI、承認手順です。</p>
+
+    <p>ただし、範囲を広げる判断そのものは、最後まで人間の仕事です。</p>
+
+    <h3><span class="n">3.3.2</span>自律性の段階</h3>
+
+    <p>自律性は0か1かではなく、段階です。<span class="mark">演習0で挙げた3つの仕事が、それぞれどの段階を必要とするかを考えながら読んでください。</span></p>
+
+    <table>
+      <thead><tr><th>段階</th><th>機械がやること</th><th>人がやること</th><th>この教材での位置</th></tr></thead>
+      <tbody>
+        <tr><td><strong>補完</strong></td><td>次の数行を予測する</td><td>常時。1行ずつ受け入れる</td><td>―</td></tr>
+        <tr><td><strong>チャット</strong></td><td>質問に答え、コード例を出す</td><td>コピーして貼り、実行する</td><td>PART 2の演習1</td></tr>
+        <tr><td><strong>副操縦士</strong></td><td>具体的な変更を提案する</td><td>1件ずつ承認する</td><td>―</td></tr>
+        <tr><td><strong>エージェント</strong></td><td>計画し、ツールを使い、実行し、自分で結果を確かめ、繰り返す</td><td>目標を与え、要所で承認する</td><td>3.1の演習2、PART 5以降</td></tr>
+        <tr><td><strong>自律</strong></td><td>依頼を受け取り、完了まで走る</td><td>結果だけを見る</td><td>扱わない</td></tr>
+      </tbody>
+    </table>
+
+    <p><span class="mark">下へ行くほど速く、下へ行くほど間違いに気づくのが遅れます。</span>PART 2とこの章で速さを体験します。PART 4でその代償を数えます。PART 5以降で承認とテストとCIを挟み直します。<br><br>この教材の構成そのものが、この表を上下する運動です。</p>
+
+
+    <h3><span class="n">3.3.3</span>Agentを使うときの基本手順</h3>
+
+    <p>いま演習で通った流れを、手順として名前を付けておきます。</p>
+
+    <div class="flow-steps">
+      <p><strong>Plan</strong>　目的、変更範囲、確認方法を整理する。すぐに編集させない。</p>
+      <p><strong>Act</strong>　Agentにファイル探索、実装、テスト実行を任せる。</p>
+      <p><strong>Review</strong>　変更差分、テスト結果、意図しない変更の有無を確認する。</p>
+      <p><strong>Accept or Reject</strong>　変更を採用するか、修正を続けるか、人間が決める。</p>
+    </div>
+
+    <p>この4段階は、特定のツールの機能ではありません。<span class="mark">基本的な作業手順です。</span></p>
+
+    <p>Clineでも、CLI型のAgentでも同じです。将来まったく別のAgentを使うときも、この4段階は要ります。</p>
+
+    <div class="note">
+      <span class="tag">Agentの提供形態</span>
+      Coding Agentには3つの形があります。エディタに統合されるもの（Cline、Cursorなど）。ターミナルから使うもの（Claude Codeなど）。クラウド上で独立して動くもの（Devin、Julesなど）。<br><br><span class="mark">見た目と操作方法は違います。しかし3.4のループと、この4段階は共通です。</span>この教材ではClineを使います。
+    </div>
+
+    
+  </section>
+
+  <section class="sec" id="s3-4">
+    <h2><span class="n">3.4</span>発展課題：削除機能を追加する</h2>
+
+    <div class="note">
+      <span class="tag">課題</span>
+      3.1で作成したVibe Chatに、次の機能を追加してください。<br><br>
+      <strong>各メッセージにDeleteボタンを付けます。ボタンを押すと、そのメッセージだけが消え、Messagesの件数も変わるようにしてください。</strong><br><br>
+      編集するファイルは <code>index.html</code> だけです。現在のデザインとSend機能は残してください。
+    </div>
+
+    <div class="note">
+      <span class="tag">この課題で新しく体験すること</span>
+      Agentは既存ファイルを読みます。Agentは変更を提案します。人間は差分を確認して承認します。人間はブラウザで結果を確認します。問題があれば、Agentが再度修正します。この一連の処理をAgentの作業ループと呼びます。
+    </div>
+
+    <h3><span class="n">3.4.1</span>ヒント</h3>
+
+    <p>まず、自分でClineへの指示を考えてください。困った場合は、次のプロンプトを参考にしてください。最初はPlanモードを使います。</p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Improve the existing Vibe Chat in index.html.
+
+Add one Delete button to each displayed message.
+When clicked, delete only that message and update the message count.
+
+Requirements:
+- Edit index.html only
+- Preserve the current design and existing Send behavior
+- Keep messages only in the existing JavaScript array
+- Use textContent for user-provided text
+- Do not use external libraries, storage, fetch, or additional files
+- Keep the plan under 8 lines
+
+Do not edit the file yet. Show the plan only.</div>
+
+    <h4>Planを確認するヒント</h4>
+
+    <ul>
+      <li>変更するファイルは <code>index.html</code> だけですか。</li>
+      <li>現在の送信機能とデザインを残しますか。</li>
+      <li>削除後にMessagesの件数を更新しますか。</li>
+      <li>外部ライブラリや別ファイルを追加していませんか。</li>
+    </ul>
+
+    <p>Planに問題がなければ、Actへ切り替えます。差分を確認し、SaveまたはRejectを判断してください。</p>
+
+    <h3><span class="n">3.4.2</span>完成条件</h3>
+
+    <p>次のすべてを満たせば完成です。ブラウザで確認してください。</p>
+
+    <ol>
+      <li><code>Ctrl</code> + <code>R</code> を押して、ブラウザを再読み込みします。</li>
+      <li>メッセージを2件送ります。</li>
+      <li>1件目のDeleteを押します。</li>
+      <li>1件目だけが消えることを確認します。</li>
+      <li>2件目が残ることを確認します。</li>
+      <li>Messagesの件数が <code>2</code> から <code>1</code> になることを確認します。</li>
+      <li>新しいメッセージを送信できることを確認します。</li>
+    </ol>
+
+    <div class="warn">
+      <span class="tag">Deleteが動いても、Sendを壊していたら不合格</span>
+      Deleteだけを確認してはいけません。Sendも確認してください。Agentは、変更を依頼していない機能を壊すことがあります。
+    </div>
+
+    <h3><span class="n">3.4.3</span>うまく動かない場合のヒント</h3>
+
+    <p>問題があれば、実際に起きたことをClineへ伝えます。例えば、Deleteを押しても消えない、別のメッセージが消える、件数が変わらない、などです。</p>
+
+    <div class="prompt"><span class="tag">修正依頼の例</span>I created two messages and clicked Delete on the first message.
+The first message did not disappear, and the count stayed at 2.
+
+Inspect index.html and fix only this problem.
+Do not redesign the page or add files.
+After editing, tell me exactly what changed.</div>
+
+    <p>差分を確認してSaveします。その後、同じテストをもう一度行います。<span class="mark">テスト結果を次の修正に使います。これがAgentの作業ループです。</span></p>
+
+    <div class="flow-steps">
+      <p><strong>1　読む</strong>　Agentが既存の <code>index.html</code> を読む</p>
+      <p><strong>2　判断する</strong>　メッセージ配列と表示処理の変更箇所を決める</p>
+      <p><strong>3　提案する</strong>　Clineが変更差分とSave / Rejectを表示する</p>
+      <p><strong>4　実行する</strong>　人間がSaveすると、Clineがファイルへ書き込む</p>
+      <p><strong>5　観察する</strong>　人間がブラウザでDeleteとSendを試す</p>
+      <p><strong>6　修正する</strong>　失敗した結果をAgentへ戻し、必要なら2へ戻る</p>
+    </div>
+
+    <h3><span class="n">3.4.4</span>その間、誰が何をしたか</h3>
+
+    <table>
+      <thead><tr><th>担当</th><th>この課題で行ったこと</th></tr></thead>
+      <tbody>
+        <tr><td><strong>LLM</strong></td><td>ファイルを読むことや、削除機能の変更内容を提案した</td></tr>
+        <tr><td><strong>Cline</strong></td><td>ファイル内容をLLMへ渡し、差分を表示し、承認後に書き込んだ</td></tr>
+        <tr><td><strong>人間</strong></td><td>目標を決め、Planと差分を確認し、Save / Rejectを判断し、ブラウザで検証した</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">モデル自身がファイルを書いたわけではありません</span>
+      LLMは操作を提案します。Clineがファイルを操作します。Auto-approveがOFFの場合、人間が承認するまで操作は実行されません。
+    </div>
+
+    <h3><span class="n">3.4.5</span>提出物</h3>
+
+    <table>
+      <thead><tr><th></th><th>出すもの</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>Deleteボタンと2件のメッセージが見える画面</td></tr>
+        <tr><td><strong>2</strong></td><td>1件を削除し、Messagesが1になった変更後の画面</td></tr>
+        <tr><td><strong>3</strong></td><td>Planの内容と、SaveまたはRejectを1回判断した理由</td></tr>
+        <tr><td><strong>4</strong></td><td>LLM、Cline、人間がそれぞれ何をしたかを1文ずつ</td></tr>
+        <tr><td><strong>5</strong></td><td>問題が起きた場合は、現象、修正指示、再確認の結果</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">27Bモデルを使う理由</span>
+      Clineで使うモデルは、ファイル操作を正しい形式で提案する必要があります。この章では、講師が指定した27Bモデルを使います。MCPはPART 7で学びます。
+    </div>
+  </section>
+
+  <section class="sec" id="s3-5">
+    <h2><span class="n">3.5</span>この章で分かったこと</h2>
+
+    <p>Clineは目標を受け取ります。Clineはファイルを読み、変更を提案します。人間が承認すると、Clineはコードを書きます。人間がコードをコピーして貼り付ける必要はありません。</p>
+
+    <p><span class="mark">今回のアプリは練習用です。</span>ページを再読み込みすると、データは消えます。複数の利用者はデータを共有できません。自動テストもありません。アプリが動くことと、実際の仕事で使えることは同じではありません。</p>
+
+    <p>次のPARTでは、AIが作った成果物を、実務で使えるかという観点から点検します。</p>
+  </section>
+
+
+  
+
+
+  <nav class="pager">
+    <a class="prev" href="part2.html"><span class="dir">← PREV</span><span class="ttl">PART 2　Vibe Codingを試してみよう</span></a>
+    <a class="next" href="part4.html"><span class="dir">NEXT →</span><span class="ttl">PART 4　このアプリ、本当に提出できる？</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'コピー';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'コピーしました';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'コピー';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

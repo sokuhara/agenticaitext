@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>付録B Node.js／TypeScript版（原構成）</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#2c5f9e;
+  --accent-soft:#e6eefa;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="章の一覧">
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html" aria-current="page">付B</a><a href="appendix-c.html">付C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">APPENDIX B</div>
+    <h1>Node.js／TypeScript版（原構成）</h1>
+    <p class="lede">本編PART 5〜7はPythonで書かれていますが、もとになった開発はNode.js、TypeScript、Hono、React、AWS CDKという構成でした。ここに原構成の記録を残します。既存のTypeScriptプロジェクトで進める場合は、こちらを参照してください。</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>前章まで</dt><dd>付録Aで、ローカルモデルの環境を整えました。</dd>
+      <dt>この章</dt><dd>本編がPythonへ移る前の、原構成の記録です。対応表と、TypeScript固有の要点をまとめます。</dd>
+      <dt>次章へ</dt><dd>どちらの構成でも、PART 4で定めた作法は共通です。</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="この章の目次">
+    <h2>この章の内容</h2>
+    <ol>
+      <li><span class="n">B.1</span><a href="#sb-1">この付録の位置づけ</a></li>
+      <li><span class="n">B.2</span><a href="#sb-2">対応表</a></li>
+      <li><span class="n">B.3</span><a href="#sb-3">PART 5相当：モノレポ環境の強化</a></li>
+      <li><span class="n">B.4</span><a href="#sb-4">PART 6相当：実装</a></li>
+      <li><span class="n">B.5</span><a href="#sb-5">PART 7相当：リリース</a></li>
+      <li><span class="n">B.6</span><a href="#sb-6">どちらを選ぶか</a></li>
+    </ol>
+  </nav>
+
+
+  <section class="sec" id="sb-1">
+    <h2><span class="n">B.1</span>この付録の位置づけ</h2>
+
+    <p>本教材のPART 5〜7は、もともとNode.jsとTypeScriptで書かれた開発の記録でした。本編をPythonに移したのは、次の2つの理由によります。</p>
+
+    <ul>
+      <li><strong>読めないコードはレビューできない。</strong>PART 2で「出力をまったく読めないなら、正しい答えと自信満々の誤答を区別できない」と書きました。TypeScriptとReactが初見の読者にとって、この前提は成立しません。</li>
+      <li><strong>言語が混ざるほどローカルモデルの失敗が増える。</strong>フロントとバックで言語が違うと、モデルは常に切り替えを強いられます。単一言語のほうが破綻しにくくなります。</li>
+    </ul>
+
+    <p>とはいえ、既存のTypeScriptプロジェクトに導入する場合や、フロントエンドにReactが必要な場合は、原構成のほうが実態に合います。<span class="mark">章の骨格、プロンプトの出し方、イテレーションの切り方、<code>/selfcheck.md</code> の使い方は、どちらの構成でも共通です。</span></p>
+  </section>
+
+  <section class="sec" id="sb-2">
+    <h2><span class="n">B.2</span>対応表</h2>
+
+    <table>
+      <thead><tr><th>役割</th><th>本編（Python）</th><th>原構成（Node.js / TS）</th></tr></thead>
+      <tbody>
+        <tr><td>パッケージ管理・モノレポ</td><td><code>uv</code>（workspace）</td><td>npm workspaces</td></tr>
+        <tr><td>言語・型</td><td>Python + 型ヒント</td><td>TypeScript</td></tr>
+        <tr><td>型チェック</td><td><code>mypy</code></td><td><code>tsc --noEmit</code></td></tr>
+        <tr><td>Lint</td><td><code>ruff check</code></td><td>ESLint / Biome</td></tr>
+        <tr><td>Format</td><td><code>ruff format</code></td><td>Prettier / Biome</td></tr>
+        <tr><td>テスト</td><td><code>pytest</code></td><td>Vitest / Jest</td></tr>
+        <tr><td>バックエンド</td><td>FastAPI</td><td>Hono</td></tr>
+        <tr><td>バリデーション</td><td>Pydantic</td><td>Zod</td></tr>
+        <tr><td>フロントエンド</td><td>Jinja2 + HTMX</td><td>React + Vite + Tailwind CSS</td></tr>
+        <tr><td>コミット前フック</td><td><code>pre-commit</code></td><td>Husky + lint-staged</td></tr>
+        <tr><td>脆弱性監査</td><td><code>pip-audit</code></td><td><code>npm audit</code></td></tr>
+        <tr><td>タスクランナー</td><td>Makefile</td><td><code>npm scripts</code></td></tr>
+        <tr><td>IaC</td><td>AWS CDK (Python)</td><td>AWS CDK (TS) + cdk-nag</td></tr>
+        <tr><td>依存更新</td><td colspan="2">Renovate（変更なし）</td></tr>
+        <tr><td>シークレット検出</td><td colspan="2">gitleaks（変更なし）</td></tr>
+        <tr><td>ワークフロー検査</td><td colspan="2">actionlint / zizmor（変更なし）</td></tr>
+        <tr><td>E2Eテスト</td><td colspan="2">Playwright（言語バインディングが違うだけ）</td></tr>
+        <tr><td>CI/CD</td><td colspan="2">GitHub Actions（変更なし）</td></tr>
+      </tbody>
+    </table>
+
+    <p>下5行が示すとおり、<span class="mark">CI/CD、シークレット検出、依存更新、E2Eの枠組みは言語の話ではありません。</span>実際に置き換わるのは言語とフレームワークの層だけです。</p>
+  </section>
+
+  <section class="sec" id="sb-3">
+    <h2><span class="n">B.3</span>PART 5相当：モノレポ環境の強化</h2>
+
+    <p>構成は <code>frontend/</code>（React, Vite, Tailwind CSS, Playwright）、<code>backend/</code>（Hono）、<code>aws/</code>（AWS CDK, cdk-nag）の3パッケージです。</p>
+
+    <div class="prompt"><span class="tag">PROMPT（/deep-planning）</span>npm workspacesのセキュリティを強化したい。
+
+- 以下のフォルダ構成を確認し、セキュリティで不足する点の改善プランを出す。
+  - frontend/ (React, Vite, Tailwind CSS, Playwright)
+  - backend/ (Hono)
+  - aws/ (AWS CDK, cdk-nag)
+- 以下の基本的な技術スタックを追加し、開発環境を強化する
+  - GitHub Actions
+  - actionlint / zizmor
+  - Renovate (minimumReleaseAgeを必須とする)
+  - Husky + lint-staged
+  - gitleaks</div>
+
+    <p>プランを実行すると、Renovate、gitleaks、Husky、lint-stagedの設定ファイルが作成され、既存のGitHub Actionsワークフローも更新されます。完了後は <code>/selfcheck.md</code> で検証します。原構成で実際に必要になった修正は次のとおりでした。</p>
+
+    <ul>
+      <li>CI/CDに脆弱性チェックのコマンドが漏れていた</li>
+      <li>huskyの古い文法によるWarning出力</li>
+      <li><code>npm audit</code> が報告した脆弱性の解決</li>
+      <li>各種CLIツールのDev Containerでのセットアップ追加</li>
+    </ul>
+
+    <p>確認観点は本編5.3.3と同じです。ローカルとCIで同じコマンド体系になっているか（<code>npm scripts</code> に統一されているか）、Lint / Format / Test / Typecheck がCIで実行されているか、失敗時にどのコマンドが落ちたかログで追えるか。</p>
+
+    <h3><span class="n">B.3.1</span>動作確認</h3>
+    <p>Reactアプリケーションが起動してブラウザに表示されること、白い画面やコンソールエラーがないことを点検します。続いて <code>curl</code> でbackendのエンドポイントが期待通りに応答するかを検証します。</p>
+  </section>
+
+  <section class="sec" id="sb-4">
+    <h2><span class="n">B.4</span>PART 6相当：実装</h2>
+
+    <h3><span class="n">B.4.1</span>共通部分（shared）</h3>
+
+    <p>原構成の <code>shared/</code> は、TypeScriptの型定義とZodスキーマをフロントとバックで共有するためのものでした。<span class="mark">両側が同じ言語だから成立した構成です。</span>本編のPython版では、この役割をPydanticモデルが単独で担い、フロント側へはOpenAPIスキーマ経由で渡すという形に組み替えています。</p>
+
+    <p>実装後は <code>/selfcheck.md</code> で品質を確認します。原構成では、型定義とZodスキーマの一式について、テスト品質とコード品質の両面で高い評価が得られました。</p>
+
+    <h3><span class="n">B.4.2</span>バックエンド（Hono）</h3>
+
+    <p>Honoは軽量かつ高速なWebフレームワークで、Cloudflare WorkersやAWS Lambdaへのホスティングが容易です。ミドルウェアによりOpenAPI規格との連携もしやすくなっています。</p>
+
+    <p>実装前に、Honoの公式サイトが公開している <code>llms.txt</code> をローカルに置いてエージェントに参照させます。</p>
+
+<pre><code>mkdir -p docs/ref/hono
+curl -o docs/ref/hono/llms.txt https://hono.dev/llms.txt</code></pre>
+
+    <div class="prompt"><span class="tag">PROMPT</span>@/docs/design/implementation_plan_vibe_order.md と @/packages/backend/docs/design.md を元に、backend/部分の実装計画を検討してください。各イテレーションで細かく品質確認をしながら着実に進めるプランを取ってください。honoの扱い方が分からない部分は @/docs/ref/hono/llms.txt を参照してください。</div>
+
+    <p>原構成では、エージェントが最初に出した計画を「10点満点中何点か」と問うたところ7.5点と自己評価し、WebSocket統合の再検討などの改善点を提示しました。それを踏まえて詰め直し、9イテレーションからなる計画が確定しています。</p>
+
+    <p>実装中、コンテキスト使用率が約70%に達した時点で、残りのイテレーションを <code>/docs/prompt/backend_continuation_iterations5-9.md</code> としてドキュメント化し、新しいセッションへ引き継ぎました。この引き継ぎの作法は本編と共通です。</p>
+
+    <h3><span class="n">B.4.3</span>フロントエンド（React + Vite）</h3>
+
+    <p>ViteにもHono同様に <code>llms.txt</code> があります。</p>
+
+<pre><code>mkdir -p docs/ref/vite
+curl -o docs/ref/vite/llms.txt https://vite.dev/llms.txt</code></pre>
+
+    <p>原構成では10回のイテレーションに分ける計画が提案され、Phase単位でセッションを切り替えながら進めました。最終的に173個のテストがすべてパスしています。実装中に <code>.clineignore</code> が <code>.env</code> の作成を防いでいることも確認できました。</p>
+
+    <div class="note">
+      <span class="tag">SPA構成でのコンテキスト消費</span>
+      React + Vite + Tailwindの構成は、1つの画面を作るのに複数のファイルを同時に触ります。<span class="mark">クラウドの大型モデルなら問題になりませんが、ローカルの27Bクラスではコンテキストを急速に消費し、差分編集の失敗も増えます。</span>本編がサーバ側HTMLを採用したのはこのためです。原構成で進める場合は、セッションの切り替え回数が増えることを見込んでください。
+    </div>
+  </section>
+
+  <section class="sec" id="sb-5">
+    <h2><span class="n">B.5</span>PART 7相当：リリース</h2>
+
+    <p>AWS CDKをTypeScriptで書き、cdk-nagでルールチェックを行います。デプロイ前の確認は <code>cdk synth</code>、CI/CDはGitHub Actionsです。</p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>npm run test -w @myapp/aws を実行してください。deprecatedが発生する箇所については、MCPで調べてください。</div>
+
+    <p>E2EテストはPlaywrightのJavaScript版を使います。テストの内容も、失敗時にターミナルのログをそのまま渡してデバッグさせる進め方も、本編7.5と同じです。</p>
+
+    <p>MCPについては本編7.3の説明がそのまま当てはまります。MCPはモデルとも言語とも独立した層なので、原構成でも本編でも扱いは変わりません。</p>
+  </section>
+
+  <section class="sec" id="sb-6">
+    <h2><span class="n">B.6</span>どちらを選ぶか</h2>
+
+    <table>
+      <thead><tr><th>状況</th><th>推奨</th></tr></thead>
+      <tbody>
+        <tr><td>受講者や読者がPython中心</td><td>本編（Python）</td></tr>
+        <tr><td>ローカルの中型モデルで回す</td><td>本編（Python）。単一言語のほうが破綻しにくい</td></tr>
+        <tr><td>既存のTypeScriptプロジェクトに導入する</td><td>原構成</td></tr>
+        <tr><td>リッチなSPAが要件に含まれる</td><td>原構成</td></tr>
+        <tr><td>クラウドの大型モデルを使える</td><td>どちらでも。構成の制約は緩む</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">言語を変えても作法は変わりません</span>
+      PART 4で挙げた作法、要件定義の具体化、自動テストの採用、規約の維持、ガードレール、CIの整備。これらはNode.jsだから必要だったのでも、Pythonだから必要なのでもありません。<span class="mark">LLMが確率的にコードを生成するから必要なのです。</span>構成を選び直しても、1つも減りません。
+    </div>
+  </section>
+
+
+  <nav class="pager">
+    <a class="prev" href="appendix-a.html"><span class="dir">← PREV</span><span class="ttl">APPENDIX A　ローカルLLMで進める（Ollama編）</span></a>
+    <a class="next" href="appendix-c.html"><span class="dir">NEXT →</span><span class="ttl">APPENDIX C　Agentのリリースと運用</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'コピー';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'コピーしました';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'コピー';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

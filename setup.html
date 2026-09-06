@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>セットアップ｜道具をそろえる</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#5b6470;
+  --accent-soft:#eef0f3;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="章の一覧">
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html" aria-current="page">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">セットアップ</div>
+    <h1>道具をそろえる</h1>
+    <p class="lede">PART 1から先で使う道具を、先に入れておきます。VS Code、ターミナル、Ollama、モデル。所要20分ほどです。切り方も最後に扱います。うまくいかない箇所は必ず出るので、演習の途中ではなく、いま済ませます。</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>前章まで</dt><dd>演習0で、AIに任せる価値がある仕事の条件を考えました。</dd>
+      <dt>この章</dt><dd>ここから先はコマンドを打ちます。VS Codeを入れ、ターミナルを開き、Ollamaとモデルを用意します。</dd>
+      <dt>次章へ</dt><dd>PART 1で、いま入れたモデルの限界を自分で確かめます。</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="この章の目次">
+    <h2>この章の内容</h2>
+    <ol>
+      <li><span class="n">01</span><a href="#ss-01">VS Codeを用意する</a></li>
+      <li><span class="n">02</span><a href="#ss-02">Ollamaを入れる</a></li>
+      <li><span class="n">03</span><a href="#ss-03">モデルが入っているか確認する</a></li>
+      <li><span class="n">04</span><a href="#ss-04">一度話しかけてみる</a></li>
+      <li><span class="n">05</span><a href="#ss-05">Ollamaを切る</a></li>
+      <li><span class="n">06</span><a href="#ss-06">発展：エディタの中でチャットする</a></li>
+      <li><span class="n">07</span><a href="#ss-07">GitHubアカウントを作る</a></li>
+    </ol>
+  </nav>
+
+
+  <section class="sec" id="ss-01">
+    <h2><span class="n">01</span>VS Codeを用意する</h2>
+
+    <p>この演習ではファイルを開いて書き換えます。テキストエディタなら何でも構いませんが、<span class="mark">PART 3でCline（VS Codeの拡張機能）を使うので、いま入れておくと後が楽です。</span></p>
+
+    <p><a href="https://code.visualstudio.com/" target="_blank" rel="noopener">https://code.visualstudio.com/</a> からダウンロードして、インストーラを実行します。設定はすべて既定のままで構いません。</p>
+
+    <h4>作業フォルダを開く</h4>
+
+    <p>最初に <strong>File → Open Folder</strong> で、作業用のフォルダを開いてください。<span class="mark">これを先にやらないと、ターミナルを開いても意図しない場所にいます。</span></p>
+
+    <h4>ターミナルを開く</h4>
+
+    <p>3つの方法があります。どれでも同じものが開きます。</p>
+
+    <table>
+      <thead><tr><th>方法</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td><strong>メニュー</strong></td><td>Terminal → New Terminal</td></tr>
+        <tr><td><strong>ショートカット</strong></td><td>Windows / Linux：<code>Ctrl</code> + <code>Shift</code> + <code>`</code><br>macOS：<code>Control</code> + <code>Shift</code> + <code>`</code></td></tr>
+        <tr><td><strong>コマンドパレット</strong></td><td><code>Ctrl</code>（macOSは <code>Cmd</code>）+ <code>Shift</code> + <code>P</code> → 「terminal」と打つ</td></tr>
+      </tbody>
+    </table>
+
+    <p><code>`</code> はバッククォートです。<strong>数字の1の左隣、または Shift + @ の位置</strong>にあります。シングルクォート（<code>'</code>）ではありません。</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/vscode-new-terminal.png" alt="VS Codeのメニューから Terminal → New Terminal を選んでいるところ" style="width:100%;max-width:640px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        Terminal → New Terminal を選んだところ
+      </div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">メニューに Terminal が見当たらない場合</span>
+      ウィンドウの幅が狭いと、<span class="mark">メニューが <code>…</code> に畳まれます。</span>上の画像も、その状態から開いています。File / Edit / Selection / View / Go / Run の右にある <code>…</code> を押してください。その中に Terminal があります。<br><br>
+      ウィンドウを広げれば、メニューバーに直接出てきます。
+    </div>
+
+    <h4>シェルを確かめる</h4>
+
+    <p>Windowsでは、開いたターミナルが <strong>PowerShell</strong> であることを確認してください。次の節のインストールコマンドは、PowerShell以外では動きません。</p>
+
+    <table>
+      <thead><tr><th>見分け方</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>ターミナルの右上</td><td><code>powershell</code> と表示されている</td></tr>
+        <tr><td>入力欄の先頭</td><td><code>PS C:\...&gt;</code> で始まっている</td></tr>
+      </tbody>
+    </table>
+
+    <p><code>cmd</code> や <code>Git Bash</code> になっている場合は、ターミナル右上の <code>+</code> の隣にある <code>v</code> を押して、<strong>PowerShell</strong> を選び直します。</p>
+
+    <h4>いる場所を確認する</h4>
+
+<pre><code>pwd</code></pre>
+
+    <p>開いたフォルダのパスが表示されれば準備完了です。<span class="mark">違う場所にいたら、File → Open Folder からやり直してください。</span>ここを間違えると、このあとファイルが見つからない原因になります。</p>
+
+    </section>
+
+  <section class="sec" id="ss-02">
+    <h2><span class="n">02</span>Ollamaを入れる</h2>
+
+    <p>まだ入っていない場合は、公式サイトから入れます。<a href="https://ollama.com/download" target="_blank" rel="noopener">https://ollama.com/download</a> を開いて、自分のOSを選んでください。</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/ollama-download-page.png" alt="Ollamaのダウンロードページ。macOS / Linux / Windows を選ぶ画面" style="width:100%;max-width:520px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        <a href="https://ollama.com/download/windows" target="_blank" rel="noopener">https://ollama.com/download/windows</a> を開いたところ
+      </div>
+    </div>
+
+    <h4>Windowsの場合</h4>
+
+    <p>方法は2つあります。<span class="mark">どちらか片方でかまいません。</span></p>
+
+    <p><strong>A. コマンドで入れる。</strong>上のページに表示されているコマンドをコピーして、PowerShellに貼り付けます。</p>
+
+<pre><code>irm https://ollama.com/install.ps1 | iex</code></pre>
+
+    <p>ターミナルの開き方は2.3.1のとおりです。<strong>PowerShellであることを確認してから</strong>貼り付けてください。</p>
+
+    <p>実行すると、ダウンロードが始まります。</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/ollama-install-progress.png" alt="PowerShellでインストールコマンドを実行し、ダウンロードが93.5%まで進んでいるところ" style="width:100%;max-width:560px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        Downloading Ollama for Windows... と出れば成功
+      </div>
+    </div>
+
+    <p><strong>B. インストーラで入れる。</strong>同じページの「Download for Windows」ボタンを押し、ダウンロードした <code>OllamaSetup.exe</code> を実行します。コマンドに慣れていない場合はこちらのほうが確実です。</p>
+
+    <div class="warn">
+      <span class="tag">うまくいかないとき</span>
+      <strong><code>CommandNotFoundException</code> と出る。</strong>PowerShell以外のターミナルで実行しています。2.3.1の「シェルを確かめる」に戻ってください。<br><br>
+      <strong>コマンドを打ち間違えた。</strong>手で入力せず、ページの右側にあるコピーボタンを使ってください。<code>irm</code> と <code>iex</code> は打ち間違えやすい部分です。<br><br>
+      <strong>Windows 10より古い。</strong>対応していません。インストーラのページに要件が書かれています。
+    </div>
+
+    <h4>macOS / Linuxの場合</h4>
+
+    <p>macOSは同じページからアプリをダウンロードして開くだけです。Linuxは次の1行で入ります。</p>
+
+<pre><code>curl -fsSL https://ollama.com/install.sh | sh</code></pre>
+
+    <h4>入ったことを確認する</h4>
+
+<pre><code>ollama --version</code></pre>
+
+    <p>バージョンが表示されれば成功です。<span class="mark">表示されない場合は、ターミナルを一度閉じて開き直してください。</span>インストール直後は、PATHが反映されていないことがあります。</p>
+
+    </section>
+
+  <section class="sec" id="ss-03">
+    <h2><span class="n">03</span>モデルが入っているか確認する</h2>
+    <p>ターミナル（WindowsならコマンドプロンプトかPowerShell）を開いて実行します。</p>
+<pre><code>ollama --version
+ollama list</code></pre>
+    <p>一覧に <code>qwen3.5:4b</code> が出てくれば準備できています。出てこない場合は取得します。</p>
+<pre><code>ollama pull qwen3.5:4b</code></pre>
+
+    <div class="warn">
+      <span class="tag">27Bは手元に入れません</span>
+      PART 3以降で使う <code>qwen3.8:27b</code> は、<span class="mark">研究室の共有サーバにあります。</span>各自のPCには入れません。18GBあり、全員が落とすと回線も容量も持ちません。<br><br>
+      <code>ollama list</code> に <code>qwen3.5:4b</code> しか出なくても正常です。サーバへの接続方法は<a href="appendix-a.html">付録A</a>のA.3.4にあります。
+    </div>
+
+    </section>
+
+  <section class="sec" id="ss-04">
+    <h2><span class="n">04</span>一度話しかけてみる</h2>
+<pre><code>ollama run qwen3.5:4b</code></pre>
+    <p>短い質問を打ってEnter。抜けるときは <code>/bye</code> と入力します。</p>
+
+    <div class="warn">
+      <span class="tag">答える前に止まったように見えます</span>
+      このモデルは答える前に考えます。先に <code>&lt;think&gt;</code> タグの中に推論過程を出力してから、本当の答えが出ます。ノートPCでは、本文が出てくるまでに30秒以上かかることがあります。<strong>フリーズではありません。</strong>待ってください。
+    </div>
+
+
+  </section>
+
+  <section class="sec" id="ss-05">
+    <h2><span class="n">05</span>Ollamaを切る</h2>
+
+    <p>入れ方と同じくらい、<span class="mark">切り方も先に知っておいてください。</span>モデルはメモリを占有し続けます。27Bなら20GB近くです。切らないまま他の作業をすると、PCが重くなります。</p>
+
+    <h3>対話から抜ける</h3>
+
+    <p><code>ollama run</code> のプロンプトが出ている状態から戻ります。</p>
+
+<pre><code>/bye</code></pre>
+
+    <p><code>Ctrl</code> + <code>D</code> でも同じです。<span class="mark">ただし、これはターミナルの画面が戻るだけで、モデルはメモリに残っています。</span></p>
+
+    <h3>モデルをメモリから降ろす</h3>
+
+    <p>いま何が載っているかを見ます。</p>
+
+<pre><code>ollama ps</code></pre>
+
+    <p>一覧に出たものを降ろします。</p>
+
+<pre><code>ollama stop qwen3.5:4b</code></pre>
+
+    <p>もう一度 <code>ollama ps</code> を実行して、消えていれば成功です。</p>
+
+    <div class="note">
+      <span class="tag">放っておいても降ります</span>
+      Ollamaは、最後に使ってから<strong>5分ほどで自動的にモデルを降ろします。</strong>急いでいなければ待つだけで構いません。<br><br>
+      すぐにメモリを空けたいとき、または <code>ollama ps</code> に <code>100% CPU</code> と出て動作が遅いときは、明示的に <code>ollama stop</code> してから入れ直すと直ることがあります。
+    </div>
+
+    <h3>Ollama自体を終了する</h3>
+
+    <p>モデルを降ろしても、Ollamaのサーバは動き続けています。授業が終わったら、こちらも止めてください。</p>
+
+    <table>
+      <thead><tr><th>OS</th><th>止め方</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Windows</strong></td>
+          <td>画面右下のタスクトレイ（隠れているインジケーターの <code>^</code> の中）にあるOllamaのアイコンを右クリック → <strong>Quit Ollama</strong></td>
+        </tr>
+        <tr>
+          <td><strong>macOS</strong></td>
+          <td>画面右上のメニューバーにあるOllamaのアイコンをクリック → <strong>Quit Ollama</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Linux</strong></td>
+          <td><code>sudo systemctl stop ollama</code>（サービスとして入れた場合）<br>
+              手で <code>ollama serve</code> を起動していたなら、その画面で <code>Ctrl</code> + <code>C</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">切ったあとに動かなくなったら</span>
+      Ollamaを終了すると、<code>ollama run</code> も、ClineからのAPI呼び出しも通らなくなります。<span class="mark">「昨日は動いたのに」の原因の多くはこれです。</span><br><br>
+      Windowsとmacでは、アプリを起動し直せばサーバも復帰します。Linuxは <code>sudo systemctl start ollama</code> です。<br><br>
+      迷ったら <code>ollama ps</code> を打ってください。<strong>エラーが返ればサーバが止まっています。</strong>空の一覧が返れば、サーバは動いていてモデルが載っていないだけです。
+    </div>
+
+    <h3>まとめ</h3>
+
+    <table>
+      <thead><tr><th>やりたいこと</th><th>コマンド</th></tr></thead>
+      <tbody>
+        <tr><td>対話をやめる</td><td><code>/bye</code></td></tr>
+        <tr><td>いま載っているモデルを見る</td><td><code>ollama ps</code></td></tr>
+        <tr><td>モデルを降ろす</td><td><code>ollama stop &lt;モデル名&gt;</code></td></tr>
+        <tr><td>サーバごと止める</td><td>タスクトレイ / メニューバー から Quit</td></tr>
+        <tr><td>入れたモデルを消す</td><td><code>ollama rm &lt;モデル名&gt;</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>最後の <code>ollama rm</code> は、ダウンロードしたモデルのファイルごと削除します。<span class="mark">27Bなら18GB空きます。</span>使わなくなったモデルは消してください。消しても <code>ollama pull</code> で入れ直せます。</p>
+  </section>
+
+
+  <section class="sec" id="ss-06">
+    <h2><span class="n">06</span>発展：エディタの中でチャットする</h2>
+
+    <p>ここまでで、ターミナルからモデルを使えるようになりました。<span class="mark">この節は必修ではありません。</span>ただ、GitHub Copilotのようにエディタの横にチャットを出したい場合は、拡張機能をもう1つ入れます。</p>
+
+    <div class="note">
+      <span class="tag">やらなくても本編は進みます</span>
+      PART 3以降で使うのは<strong>Cline</strong>です。この節で入れる<strong>Continue</strong>は別物で、役割が違います。<br>
+      両方サイドバーに出ますが、アイコンが2つ並ぶだけで、同時に使えます。
+    </div>
+
+    <table>
+      <thead><tr><th></th><th>Continue（この節）</th><th>Cline（PART 3で必修）</th></tr></thead>
+      <tbody>
+        <tr><td><strong>やること</strong></td><td>質問に答える、選択範囲を書き換える、タブ補完</td><td>自分でファイルを読み書きし、コマンドを実行する</td></tr>
+        <tr><td><strong>人の作業</strong></td><td>差分を見て、適用するか決める</td><td>実行のたびに承認する</td></tr>
+        <tr><td><strong>近いもの</strong></td><td>GitHub Copilot</td><td>自律的に作業するエージェント</td></tr>
+      </tbody>
+    </table>
+
+    <h3>入れる</h3>
+
+    <p><code>Ctrl</code> + <code>Shift</code> + <code>X</code>（macOSは <code>Cmd</code> + <code>Shift</code> + <code>X</code>）で拡張機能のパネルを開きます。検索欄に <strong>Continue</strong> と入れて、<strong>Install</strong> を押します。</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/vscode-install-continue.png" alt="VS Codeの拡張機能パネルでContinueを検索した結果。一番上に発行元Continueの「Continue - open-source AI code agent」が表示されている" style="width:100%;max-width:660px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        一番上の「Continue - open-source AI code agent」が正解
+      </div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">発行元を確認してください</span>
+      検索すると、名前に Continue を含む別の拡張機能がいくつも並びます。<span class="mark">選ぶのは、発行元が <strong>Continue</strong>（青いチェックマーク付き）のものです。</span><br><br>
+      上の画像でいうと、<strong>一番上の「Continue - open-source AI code agent」</strong>です。Vibrancy Continued、Markdown Continue、Cursor Auto Continue などは、まったく別の拡張機能です。
+    </div>
+
+    <p>入れると、<strong>画面左端のアイコンの列</strong>にContinueのアイコンが追加されます。ファイルのアイコンや虫眼鏡が縦に並んでいる、あの列です。</p>
+
+    <h4>アイコンが見当たらない場合</h4>
+
+    <p>順に確かめてください。</p>
+
+    <table>
+      <thead><tr><th>状態</th><th>やること</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>左端のアイコン列そのものが見えない</td>
+          <td><code>Ctrl</code> + <code>B</code>（macOSは <code>Cmd</code> + <code>B</code>）でサイドバーを開く。<br>メニューからなら View → Appearance → Primary Side Bar</td>
+        </tr>
+        <tr>
+          <td>アイコン列はあるが、Continueが無い</td>
+          <td>列の下に <code>…</code> が出ていれば、そこに畳まれています。押して開くか、ウィンドウを縦に広げる</td>
+        </tr>
+        <tr>
+          <td>それでも無い</td>
+          <td><code>Ctrl</code> + <code>Shift</code> + <code>P</code> でコマンドパレットを開き、<code>Continue</code> と打つ。<br><code>Continue: Focus on Continue View</code> が出れば入っています。選べば開きます</td>
+        </tr>
+        <tr>
+          <td>コマンドパレットにも出ない</td>
+          <td><strong>入っていません。</strong>拡張機能のパネルに戻って、Installを押したか確認してください</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">画面下のパネルではありません</span>
+      Continueは、ターミナルと同じ<strong>下のパネルには出ません。</strong>左右のサイドバーに出ます。下に並んでいるのは Problems / Output / Terminal などです。<span class="mark">「ターミナルしか見当たらない」場合は、見る場所が違います。</span>
+    </div>
+
+    <h4>右側に置く</h4>
+
+    <p>GitHub Copilotと同じ配置にしたい場合は、パネルを右へ移せます。3通りあります。</p>
+
+    <table>
+      <thead><tr><th>方法</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td><strong>ドラッグ</strong></td><td>Continueのアイコンを右端へドラッグする。落とし先の枠が青く出たら離す</td></tr>
+        <tr><td><strong>右クリック</strong></td><td>アイコンを右クリック → <strong>Move To → Secondary Side Bar</strong></td></tr>
+        <tr><td><strong>先に領域を出す</strong></td><td>右側の領域が無い場合は <code>Ctrl</code> + <code>Alt</code> + <code>B</code>（macOSは <code>Cmd</code> + <code>Option</code> + <code>B</code>）で開く</td></tr>
+      </tbody>
+    </table>
+
+    <p>左に戻すときは、右クリック → <strong>Move To → Primary Side Bar</strong> です。</p>
+
+    <p><span class="mark">PART 3で入れるClineも、まったく同じ手順で右に置けます。</span>左にファイル、中央にコード、右にAgent、という配置になります。</p>
+
+    <h3>モデルをつなぐ</h3>
+
+    <p>パネルを開くと、初回はモデルの設定画面が出ます。<span class="mark">タブが2つあります。</span></p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/continue-local-tab.png" alt="Continueの初回画面。API KeyタブとLocalタブが並び、API Key側にはOpenAI・Anthropic・Google Geminiの入力欄が表示されている" style="width:100%;max-width:600px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        初回の設定画面。押すのは右の「Local」
+      </div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">API Key ではなく Local です</span>
+      左の <strong>API Key</strong> は、OpenAIやAnthropicのクラウドサービス用です。<span class="mark">鍵の入力が必要で、課金もかかります。この教材では使いません。</span><br><br>
+      押すのは、ラマのアイコンが付いた右の <strong>Local</strong> です。<br><br>
+      上部の青いバナー「Extension configuration is local only as of v2.0.0」は、設定がローカル保存になったという案内です。<code>×</code> で閉じて構いません。
+    </div>
+
+    <p>Localを押すと、Ollamaが検出されます。<strong>Ollama is running at http://localhost:11434</strong> と緑のチェックが出れば、接続できています。</p>
+
+    <h4>Add Chat model</h4>
+
+    <p>続けて、使うモデルを登録します。次の画面が出ます。</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/continue-add-chat-model.png" alt="Add Chat modelのダイアログ。ProviderがOllama、ModelがAutodetect、下にConnectボタン" style="width:100%;max-width:620px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        このまま Connect を押せば設定ファイルが更新される
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>項目</th><th>どうするか</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Provider</strong></td><td><code>Ollama</code> のまま</td></tr>
+        <tr><td><strong>Install provider</strong></td><td><span class="mark">押さなくてよい。</span>Ollamaが未インストールの人向けの案内です</td></tr>
+        <tr><td><strong>Model</strong></td><td><code>Autodetect</code> のままでよい。入っているモデルを自動で拾います</td></tr>
+        <tr><td><strong>Connect</strong></td><td>押す。<code>config.yaml</code> が自動で更新されます</td></tr>
+      </tbody>
+    </table>
+
+    <p>手で設定を書く必要はありません。書く場合はこうなります。</p>
+
+<pre><code>models:
+  - name: Chat
+    provider: ollama
+    model: qwen3.5:4b
+    roles: [chat]</code></pre>
+
+    <h4>この状態になれば完了</h4>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/continue-connected.png" alt="接続後のContinueパネル。入力欄の下にChatとqwen3.5:4bが表示され、下部にOllama is running at http://localhost:11434 と緑のチェックが出ている" style="width:100%;max-width:620px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        入力欄の下が「Chat」と「qwen3.5:4b」になっていれば準備完了
+      </div>
+    </div>
+
+    <p>入力欄の下に、2つのドロップダウンが並びます。</p>
+
+    <table>
+      <thead><tr><th>左のドロップダウン</th><th>やること</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Chat</strong></td><td>質問に答える。ファイルは触らない。<strong>これを選びます</strong></td></tr>
+        <tr><td>Agent</td><td>ファイルを書き換え、コマンドを実行する</td></tr>
+        <tr><td>Plan</td><td>変更計画を立てる</td></tr>
+      </tbody>
+    </table>
+
+    <p>既定では <strong>Agent</strong> になっていることがあります。押して <strong>Chat</strong> に変えてください。</p>
+
+    <div class="note">
+      <span class="tag">なぜAgentにしないのか</span>
+      ファイル操作とコマンド実行は、PART 3以降でClineが担当します。役割が重なると混乱します。<br><br>
+      それに、<span class="mark">4Bモデルはツール呼び出しが安定しません。</span>PART 1で見たとおり、エージェントとして動かすには小さすぎます。Agentモードにすると失敗が増えるだけです。
+    </div>
+
+    <p>右のドロップダウンが <code>qwen3.5:4b</code> になっていることも確認してください。</p>
+
+    <h3>使ってみる</h3>
+
+    <p>チャット欄に「こんにちは」と打ってください。返れば完了です。</p>
+
+    <p>コードを選択して <code>Ctrl</code> + <code>L</code>（macOSは <code>Cmd</code> + <code>L</code>）を押すと、選択範囲がチャットに入ります。「この関数は何をしている？」「テストを書いて」といったやり取りを、エディタを離れずにできます。</p>
+
+    <div class="warn">
+      <span class="tag">応答が遅く感じます</span>
+      <code>qwen3.5:4b</code> は答える前に <code>&lt;think&gt;</code> を出すモデルです。04で見たとおりです。<span class="mark">チャットなら待てますが、タブ補完には使えません。</span>
+    </div>
+
+    <h3>タブ補完も使いたい場合</h3>
+
+    <p>灰色の候補が出るタブ補完は、チャットとは別のモデルが要ります。<strong>カーソルの前だけでなく、後ろのコードも見て間を埋める</strong>形式（fill-in-the-middle）に対応している必要があるためです。チャット用のモデルは、これを想定して作られていません。</p>
+
+    <p>補完は0.2秒で返らないと使いません。<span class="mark">速さが正義です。</span>小さいモデルを別に入れます。Continueの画面にも、この <code>-base</code> 付きのモデルが案内として出ます。</p>
+
+<pre><code>ollama pull qwen2.5-coder:1.5b-base</code></pre>
+
+<pre><code>models:
+  - name: Chat
+    provider: ollama
+    model: qwen3.5:4b
+    roles: [chat]
+  - name: Autocomplete
+    provider: ollama
+    model: qwen2.5-coder:1.5b-base
+    roles: [autocomplete]</code></pre>
+
+    <p>役割（<code>roles</code>）で使い分けます。VRAMに余裕があれば補完用を7Bに上げられますが、<strong>遅くなると使わなくなります。</strong>1.5Bから始めてください。</p>
+
+    <div class="warn">
+      <span class="tag">補完が出ないとき</span>
+      <span class="mark">GitHub Copilotなど、他の補完機能を無効にしてください。</span>同時に有効だと干渉します。補完が出ないという相談の原因は、たいていこれです。<br><br>
+      切り方と、それでも出ない場合の確認手順は<a href="appendix-a.html">付録A</a>のA.9にまとめてあります。
+    </div>
+
+    <div class="note">
+      <span class="tag">2段階で試すのが楽です</span>
+      <strong>1.</strong> まずContinueを入れて、サイドバーのチャットだけ使う。モデルの追加は不要<br>
+      <strong>2.</strong> 遅さが気になったら、補完用の <code>qwen2.5-coder:1.5b</code> を足す<br><br>
+      最初から2モデル構成にすると、設定が増えて詰まりやすくなります。
+    </div>
+  </section>
+
+
+  <section class="sec" id="ss-07">
+    <h2><span class="n">07</span>GitHubアカウントを作る</h2>
+
+    <div class="warn">
+      <span class="tag">初日のうちに作ってください</span>
+      PART 5で使います。<span class="mark">当日に作ろうとすると、その日の演習に入れません。</span>メール確認と2要素認証で30分以上かかることがあります。<br><br>
+      すでに持っている人は、この節を飛ばして構いません。<strong>ログインできることだけ確認してください。</strong>
+    </div>
+
+    <h3>手順</h3>
+
+    <ol>
+      <li><a href="https://github.com/signup" target="_blank" rel="noopener">https://github.com/signup</a> を開く</li>
+      <li>メールアドレスを入力する。<span class="mark">授業中ずっと受信できるものにしてください</span></li>
+      <li>パスワードとユーザー名を決める</li>
+      <li>メールに届いた確認コードを入力する</li>
+      <li>2要素認証を設定する（アプリまたはSMS）</li>
+      <li>ログインできることを確認する</li>
+    </ol>
+
+    <div class="warn">
+      <span class="tag">2要素認証の設定を飛ばさないこと</span>
+      GitHubは2要素認証を必須にしています。<span class="mark">後回しにすると、期限が来た時点でログインできなくなります。</span><br><br>
+      スマートフォンの認証アプリ（Google Authenticator、Microsoft Authenticator など）を使うのが確実です。<strong>復旧コードは必ず保存してください。</strong>スマートフォンを失くすと入れなくなります。
+    </div>
+
+    <h3>作れたら報告してください</h3>
+
+    <p>ユーザー名を講師に伝えてください。<span class="mark">誰が完了したかを確認します。</span></p>
+
+    <div class="note">
+      <span class="tag">どうしても作れない場合</span>
+      会社のメールしか使えない、電話番号での認証が通らない、といった理由で作れないことがあります。<br><br>
+      <strong>その場合でもPART 5は進められます。</strong>5.6の破壊テストのうち3つはローカルで完結します。残り1つ（プルリクエスト）だけができません。<span class="mark">章の目的は達成できます。</span><br><br>
+      作れなかった場合は、初日のうちに講師へ知らせてください。
+    </div>
+  </section>
+
+
+
+  <nav class="pager">
+    <a class="prev" href="exercise0.html"><span class="dir">← PREV</span><span class="ttl">演習 0　AIエージェントに任せる価値がある仕事を探す</span></a>
+    <a class="next" href="part1.html"><span class="dir">NEXT →</span><span class="ttl">PART 1　LLMの仕組みと限界</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'コピー';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'コピーしました';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'コピー';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

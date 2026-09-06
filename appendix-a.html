@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>付録A ローカルLLMで進める（Ollama編）</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#0d7a70;
+  --accent-soft:#e0f4f1;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="章の一覧">
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html" aria-current="page">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">APPENDIX A</div>
+    <h1>ローカルLLMで進める（Ollama編）</h1>
+    <p class="lede">本編PART 2以降で使うローカルモデル環境の設定を、ここに一箇所へまとめます。Ollamaの導入、コンテキスト長の設定、Clineの接続、章ごとの注意点。クラウドAPIに切り替えたい場合の対応も最後に触れます。</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>前章まで</dt><dd>本編PART 2と3で、Ollamaのモデルを使って2つの演習を行いました。</dd>
+      <dt>この章</dt><dd>そこで使ったローカル環境の設定を、まとめて説明します。27Bモデルの導入、コンテキスト長の管理、Clineの接続、そして章ごとの注意点です。</dd>
+      <dt>次章へ</dt><dd>付録Bでは、本編のNode.js／TypeScript構成をPythonに置き換える方法を扱います。</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="この章の目次">
+    <h2>この章の内容</h2>
+    <ol>
+      <li><span class="n">A.1</span><a href="#sa-1">この付録の位置づけ</a></li>
+      <li><span class="n">A.2</span><a href="#sa-2">前提環境と2モデル構成</a></li>
+      <li><span class="n">A.3</span><a href="#sa-3">Ollamaのセットアップ</a></li>
+      <li><span class="n">A.4</span><a href="#sa-4">Clineの設定</a></li>
+      <li><span class="n">A.5</span><a href="#sa-5">章ごとの読み替え</a></li>
+      <li><span class="n">A.6</span><a href="#sa-6">ローカルで詰まるところ</a></li>
+      <li><span class="n">A.7</span><a href="#sa-7">参考：モデルとプロバイダの選び方</a></li>
+      <li><span class="n">A.8</span><a href="#sa-8">Dev Containerで環境を揃える</a></li>
+      <li><span class="n">A.9</span><a href="#sa-9">補完が出ない・二重に出るとき</a></li>
+      <li><span class="n">A.10</span><a href="#sa-10">Continueを使えない場合：ターミナルから渡す</a></li>
+      <li><span class="n">A.11</span><a href="#sa-11">共有サーバにつながらないときの切り分け</a></li>
+      <li><span class="n">A.12</span><a href="#sa-12">ブラウザのColabでGPUを有効にする</a></li>
+    </ol>
+  </nav>
+
+
+  <section class="sec" id="sa-1">
+    <h2><span class="n">A.1</span>この付録の位置づけ</h2>
+
+    <p>本教材のハンズオンは、モデルを手元で動かす前提で書かれています。クラウドAPIを使う構成（Amazon BedrockのClaudeなど）でも同じ手順で実装できますが、有料であり、アカウントとモデルアクセスの申請が必要になります。授業や研究室でまとめて環境を配る場合は、課金経路の用意そのものが壁になります。そこで本教材はローカルを既定にしています。</p>
+
+    <p>実際に変わるのは<span class="mark">モデルとプロバイダの部分だけ</span>です。エージェントはCline、リポジトリ構成もプロンプトもコマンドも共通です。PART 1で見た「モデルとプロバイダは別の層である」という整理が、そのまま効いてきます。</p>
+
+    <div class="note">
+      <span class="tag">ローカルとクラウドで変わるもの／変わらないもの</span>
+      <strong>変わる</strong>：API Provider、モデル名、費用の考え方（自前の計算資源 ↔ 従量課金）、1セッションで任せられる作業量<br>
+      <strong>変わらない</strong>：Cline、モノレポ構成、<code>.clinerules</code>、<code>/deep-planning</code> や <code>/selfcheck.md</code> といったコマンド、CIの組み方
+    </div>
+  </section>
+
+  <section class="sec" id="sa-2">
+    <h2><span class="n">A.2</span>前提環境と2モデル構成</h2>
+
+    <p>1つのモデルで全部やろうとすると、軽い作業に大きなモデルを占有してしまい、逆に軽いモデルで長い実装ループを回すと途中で壊れます。用途で2つに分けるのが扱いやすい構成です。</p>
+
+    <table>
+      <thead>
+        <tr><th>役割</th><th>モデル</th><th>Ollamaタグ</th><th>置き場所</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>エージェント本体<br>（実装・計画・selfcheck）</td>
+          <td>Qwen3.8 27B</td>
+          <td><code>qwen3.8:27b</code></td>
+          <td>研究室の共有サーバ（A.3.4）</td>
+        </tr>
+        <tr>
+          <td>PART 2の演習1<br>軽作業・要約・下書き</td>
+          <td>Qwen3.5 4B</td>
+          <td><code>qwen3.5:4b</code></td>
+          <td>各自のノートPC</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="caption">▲用途で分ける2モデル構成</div>
+
+    <p>Qwen3.8 27Bは、Ollamaライブラリのデフォルトビルドが約18GBのQ4_K_M量子化で、tool calling（ツール呼び出し）とthinkingに対応しています。Coding Agentが必要とするのはまさにこのtool callingなので、ここが対応しているかどうかがモデル選びの分かれ目になります。24GB程度のVRAMがあれば、実用的なコンテキスト長で載ります。</p>
+
+    <p>Qwen3.5 4Bも同様にツール呼び出しに対応しています。PART 2の演習1のように、対象が明確で1回の変更が小さい作業には十分です。ただしPART 6のような長い実装イテレーションを任せるには小さすぎます。<span class="mark">4Bは小さく正確な依頼まで</span>と割り切り、PART 5以降は27Bで進めてください。</p>
+
+    <div class="note">
+      <span class="tag">確認しておくこと</span>
+      Ollamaのモデルライブラリはタグの構成が頻繁に変わります。実際に使う前に <code>ollama list</code> と公式ライブラリページで、タグ名と量子化、対応機能（tools / thinking）を確認してください。本教材の記載は執筆時点のものです。
+    </div>
+  </section>
+
+  <section class="sec" id="sa-3">
+    <h2><span class="n">A.3</span>Ollamaのセットアップ</h2>
+
+    <h3><span class="n">A.3.1</span>バージョンの確認とモデルの取得</h3>
+    <p>本付録ではOllama 0.32.15を前提とします。<span class="mark">Ollama自体の入れ方（Windows / macOS / Linux）は、<a href="part2.html">PART 2</a>の2.3.1にあります。</span>ここでは入っている前提で進めます。</p>
+
+    <p>まずバージョンを確認し、2つのモデルを取得します。</p>
+<pre><code>ollama --version
+# ollama version is 0.32.15
+
+# エージェント本体（約18GB）
+ollama pull qwen3.8:27b
+
+# 軽作業用（各自のPC）
+ollama pull qwen3.5:4b
+
+# GPUが認識されているか
+nvidia-smi
+ollama ps</code></pre>
+
+    <h3><span class="n">A.3.2</span>コンテキスト長を明示的に伸ばす</h3>
+    <p><span class="mark">ここが一番の落とし穴です。</span>Ollamaのデフォルトのコンテキスト長は、Coding Agentの用途には短すぎます。気づかないうちに会話履歴が切り詰められ、エージェントが「さっき作ったファイル」を忘れて破綻します。モデル自体が長いコンテキストに対応していても、<code>num_ctx</code> を明示しなければ意味がありません。</p>
+
+    <p>Modelfileで、用途に合わせた設定を焼いた派生モデルを作っておくのが確実です。<span class="mark">PART 7で自作Agentを動かすときも、この設定が効きます。</span>コード側で <code>num_ctx</code> を指定して回るのは1回の呼び出しだけで、モデル側の既定を変えておくほうが確実です。</p>
+
+<pre><code># Modelfile.agent
+FROM qwen3.8:27b
+PARAMETER num_ctx 131072</code></pre>
+
+<pre><code>ollama create qwen38-agent -f Modelfile.agent
+ollama show qwen38-agent   # num_ctx が反映されているか確認</code></pre>
+
+    <p>コンテキストを伸ばすとKVキャッシュがVRAMを食います。<code>ollama ps</code> で <code>CPU</code> への退避が起きていたら、<code>num_ctx</code> を下げるか、KVキャッシュの量子化を検討してください。CPUに落ちた瞬間に、体感速度は実用外まで落ちます。</p>
+
+    <h3><span class="n">A.3.3</span>サーバとして公開する（研究室・教室で共有する場合）</h3>
+    <p>各自のPCに27Bを配るより、GPUのある1台に立てて共有するほうが管理も配布も楽です。</p>
+<pre><code># サーバ側（LANに公開）
+OLLAMA_HOST=0.0.0.0:11434 ollama serve
+
+# クライアント側から疎通確認
+curl http://&lt;server&gt;:11434/api/tags</code></pre>
+    <div class="note">
+      <span class="tag">注意</span>
+      Ollamaのエンドポイントは認証を持ちません。学内LANの外へ出す場合は、リバースプロキシやSSHトンネルを必ず挟んでください。PART 4の4.4.3で決めた「守る対象」は、モデルをローカルに置いても消えません。
+    </div>
+
+    <h3><span class="n">A.3.4</span>共有サーバへ接続する（Cloudflare Access経由）</h3>
+
+    <p>研究室のサーバを学外からも使う場合、認証を前に置きます。ここでは<strong>Cloudflare Access</strong>で保護した例を示します。</p>
+
+    <p>Ollamaは<span class="mark">OpenAI互換のエンドポイントを持っています。</span><code>/v1</code> を付けるだけです。既存のクライアントがそのまま使えます。</p>
+
+    <table>
+      <thead><tr><th></th><th>接続先</th><th>使うモデル</th></tr></thead>
+      <tbody>
+        <tr><td><strong>各自のPC</strong></td><td><code>http://localhost:11434</code></td><td><code>qwen3.5:4b</code></td></tr>
+        <tr><td><strong>研究室のサーバ</strong></td><td><code>https://&lt;サーバのホスト名&gt;/v1</code></td><td><code>qwen3.8:27b</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">27Bは各自のPCには入っていません</span>
+      <span class="mark">手元にあるのは <code>qwen3.5:4b</code> だけです。</span>PART 3以降で使う <code>qwen3.8:27b</code> は、サーバ側にあります。<br><br>
+      <code>ollama list</code> を手元で打っても27Bは出てきません。それが正常です。18GBを全員が落とすと回線も容量も持ちません。
+    </div>
+
+    <h4>まず疎通を確認する</h4>
+
+<pre><code>import os
+
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://&lt;サーバのホスト名&gt;/v1",
+    api_key="ollama",                       # Ollamaは鍵を見ない。何でもよい
+    default_headers={
+        "CF-Access-Client-Id": os.environ["CF_ACCESS_CLIENT_ID"],
+        "CF-Access-Client-Secret": os.environ["CF_ACCESS_CLIENT_SECRET"],
+    },
+)
+
+for m in client.models.list().data:
+    print(m.id)</code></pre>
+
+    <p>一覧に <code>qwen3.8:27b</code> が出れば接続できています。</p>
+
+    <div class="warn">
+      <span class="tag">認証情報をコードに書かないこと</span>
+      <span class="mark">サービストークンをソースへ直接書くと、そのままGitに入ります。</span>PART 5の5.5で扱う話が、ここで先に出てきます。<br><br>
+      環境変数に置いてください。<code>.env</code> を使う場合は、<code>.gitignore</code> に入っていることを必ず確認します。<br><br>
+      うっかりコミットしたら、<strong>削除では済みません。</strong>Cloudflareのダッシュボードでトークンを失効させ、作り直してください。履歴からの削除より、失効のほうが確実です。
+    </div>
+
+<pre><code># PowerShell（その場限り）
+$env:CF_ACCESS_CLIENT_ID="&lt;発行されたID&gt;"
+$env:CF_ACCESS_CLIENT_SECRET="&lt;発行されたSecret&gt;"
+
+# macOS / Linux
+export CF_ACCESS_CLIENT_ID="&lt;発行されたID&gt;"
+export CF_ACCESS_CLIENT_SECRET="&lt;発行されたSecret&gt;"</code></pre>
+
+    <h4>Cline / Continue から使う</h4>
+
+    <p>プロバイダは <strong>OpenAI Compatible</strong> を選びます。Ollamaプロバイダではありません。</p>
+
+    <table>
+      <thead><tr><th>設定項目</th><th>値</th></tr></thead>
+      <tbody>
+        <tr><td>Provider</td><td>OpenAI Compatible</td></tr>
+        <tr><td>Base URL</td><td><code>https://&lt;サーバのホスト名&gt;/v1</code></td></tr>
+        <tr><td>API Key</td><td>任意の文字列（Ollamaは見ません）</td></tr>
+        <tr><td>Model</td><td><code>qwen3.8:27b</code></td></tr>
+        <tr><td>Custom headers</td><td><code>CF-Access-Client-Id</code> と <code>CF-Access-Client-Secret</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>Continueの場合は、設定ファイルに書きます。</p>
+
+<pre><code>models:
+  - name: Lab 27B
+    provider: openai
+    model: qwen3.8:27b
+    apiBase: https://&lt;サーバのホスト名&gt;/v1
+    apiKey: ollama
+    roles: [chat]
+    requestOptions:
+      headers:
+        CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+        CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}</code></pre>
+
+    <div class="warn">
+      <span class="tag">この値はOSの環境変数からは読まれません</span>
+      <code>${{ secrets.X }}</code> と書いても、<span class="mark">VS Codeの拡張機能は <code>export</code> したOS環境変数を見ません。</span><code>.env</code> ファイルに書く必要があります。<br><br>
+      探しに行く順序は次のとおりです。
+    </div>
+
+    <table>
+      <thead><tr><th>順</th><th>場所</th><th>使いどころ</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>作業フォルダの <code>.env</code></td><td>そのプロジェクトだけで使う</td></tr>
+        <tr><td>2</td><td>作業フォルダの <code>.continue/.env</code></td><td>同上。Continue専用にしたいとき</td></tr>
+        <tr><td>3</td><td><code>~/.continue/.env</code></td><td><strong>全プロジェクト共通。授業ではこれが楽です</strong></td></tr>
+        <tr><td>4</td><td>OSの環境変数</td><td><span class="mark">Continue CLI のみ。VS Code拡張では効きません</span></td></tr>
+      </tbody>
+    </table>
+
+    <p>授業では3番を勧めます。1か所書けば、どのフォルダを開いても効きます。</p>
+
+<pre><code># ~/.continue/.env
+CF_ACCESS_CLIENT_ID=&lt;発行されたID&gt;
+CF_ACCESS_CLIENT_SECRET=&lt;発行されたSecret&gt;</code></pre>
+
+    <p>値を引用符で囲まないでください。dotenv形式です。</p>
+
+    <h4>Windowsでの作り方</h4>
+
+    <p><code>~</code> は <code>C:\Users\&lt;ユーザー名&gt;</code> です。作るのは <code>C:\Users\&lt;ユーザー名&gt;\.continue\.env</code> になります。</p>
+
+    <div class="warn">
+      <span class="tag">エクスプローラーとメモ帳では作れません</span>
+      理由が2つあります。<br><br>
+      <strong>1. 拡張子が隠れている。</strong>メモ帳で保存すると <code>.env.txt</code> になります。見た目は <code>.env</code> なので、間違いに気づけません。<br><br>
+      <strong>2. 先頭がドットのファイルを作りにくい。</strong>エクスプローラーの「新規作成」では名前を受け付けないことがあります。<br><br>
+      <span class="mark">PowerShellで作ってください。</span>
+    </div>
+
+<pre><code># 1. 自分のホームがどこか確認する
+echo $HOME
+
+# 2. フォルダを作る（すでにあれば何も起きない）
+New-Item -ItemType Directory -Force -Path "$HOME\.continue" | Out-Null
+
+# 3. 中身を書く
+[System.IO.File]::WriteAllText(
+  "$HOME\.continue\.env",
+  "CF_ACCESS_CLIENT_ID=&lt;発行されたID&gt;`nCF_ACCESS_CLIENT_SECRET=&lt;発行されたSecret&gt;`n"
+)
+
+# 4. 確認する
+Get-Content "$HOME\.continue\.env"</code></pre>
+
+    <div class="warn">
+      <span class="tag">Set-Content を使わない理由</span>
+      <code>Set-Content -Encoding utf8</code> は、PowerShell 5.1 だとファイルの先頭に<strong>BOM</strong>という見えない印を付けます。<span class="mark">その結果、1行目のキー名が <code>﻿CF_ACCESS_CLIENT_ID</code> のように読まれ、値が見つかりません。</span><br><br>
+      画面上は正しく見えるので、原因にたどり着くのに時間がかかります。上の <code>WriteAllText</code> はBOMを付けません。
+    </div>
+
+    <h4>VS Codeで作る場合</h4>
+
+    <p>コマンドが苦手なら、こちらでも作れます。</p>
+
+    <ol>
+      <li>PowerShellで <code>New-Item -ItemType Directory -Force -Path "$HOME\.continue"</code> を実行してフォルダだけ作る</li>
+      <li>VS Codeで <strong>File → Open Folder</strong>、アドレス欄に <code>%USERPROFILE%\.continue</code> と入力して開く</li>
+      <li>新規ファイルを作り、名前を <code>.env</code> にする</li>
+      <li>2行書いて保存する</li>
+    </ol>
+
+    <p>VS Codeなら拡張子が勝手に付きません。右下のエンコーディング表示が <code>UTF-8</code> であることも確認できます。</p>
+
+    <div class="note">
+      <span class="tag">仮想環境でWindowsを使っている場合</span>
+      Parallels などでmacOS上のWindowsを動かしていると、<code>C:\Mac\Home</code> のようにMac側のフォルダが見えていることがあります。<span class="mark">そこはWindowsのホームではありません。</span><br><br>
+      必ず <code>echo $HOME</code> で確認してから作ってください。
+    </div>
+
+    <h4>macOS / Linux の場合</h4>
+
+<pre><code>mkdir -p ~/.continue
+cat > ~/.continue/.env &lt;&lt;'EOF'
+CF_ACCESS_CLIENT_ID=&lt;発行されたID&gt;
+CF_ACCESS_CLIENT_SECRET=&lt;発行されたSecret&gt;
+EOF
+cat ~/.continue/.env</code></pre>
+
+    <p><span class="mark">書いたら、VS Codeを再読み込みしてください。</span>（<code>Ctrl</code> + <code>Shift</code> + <code>P</code> → <code>Reload Window</code>）読み込みは起動時に行われるので、開いたままだと反映されません。</p>
+
+    <div class="warn">
+      <span class="tag">作業フォルダに置く場合</span>
+      1番か2番を選んだときは、<span class="mark"><code>.gitignore</code> に <code>.env</code> が入っていることを必ず確認してください。</span>PART 5のテンプレートには最初から入っています。<br><br>
+      3番（<code>~/.continue/.env</code>）なら、リポジトリの外にあるのでコミットの心配はありません。授業で勧める理由のひとつです。
+    </div>
+
+    <div class="note">
+      <span class="tag">カスタムヘッダに対応していない場合</span>
+      拡張機能のバージョンによっては、ヘッダを追加する欄がないことがあります。その場合の逃げ道は2つです。<br><br>
+      <strong>1. トンネルを掘る。</strong><code>cloudflared access tcp</code> でローカルのポートへ転送し、Base URLを <code>http://localhost:&lt;ポート&gt;/v1</code> にします。認証はトンネル側が処理するので、拡張機能はヘッダを知らずに済みます。<br><br>
+      <strong>2. 手元にプロキシを立てる。</strong>ヘッダを足して転送するだけの小さなサーバを書きます。PART 7を終えていれば、数十行で書けます。
+    </div>
+
+    <div class="warn">
+      <span class="tag">共有サーバは同時に使われます</span>
+      1台のGPUを全員で使うので、<span class="mark">誰かが長い作業を回していると、応答が遅くなります。</span>これは故障ではありません。<br><br>
+      待ち時間が長いときは <code>qwen3.5:4b</code> を手元で使ってください。PART 1と2の演習は、それで足ります。<br><br>
+      サーバ側で <code>ollama ps</code> を見れば、いま何が載っているか分かります。
+    </div>
+  </section>
+
+  <section class="sec" id="sa-4">
+    <h2><span class="n">A.4</span>Clineの設定</h2>
+
+    <p>PART 3の「3.3.1 初期セットアップ」で触れたCline側の設定を、ここで詳しく見ます。参考として、クラウドAPIを使う場合の設定も並べておきます。</p>
+
+    <table>
+      <thead><tr><th>設定項目</th><th>本教材（Ollama）</th><th>参考：クラウドAPI</th></tr></thead>
+      <tbody>
+        <tr><td>API Provider</td><td>Ollama<br>（または OpenAI Compatible）</td><td>Amazon Bedrock など</td></tr>
+        <tr><td>Base URL</td><td><code>http://localhost:11434</code><br>共有サーバなら <code>http://&lt;server&gt;:11434</code></td><td>—</td></tr>
+        <tr><td>Model ID</td><td><code>qwen38-agent</code>（A.3.2で作成）</td><td>Claude Sonnet 4 など</td></tr>
+        <tr><td>認証</td><td>不要</td><td><code>aws configure sso</code> など</td></tr>
+        <tr><td>費用</td><td>自前の計算資源のみ</td><td>トークン従量課金</td></tr>
+        <tr><td>Preferred Language</td><td colspan="2">Japanese</td></tr>
+      </tbody>
+    </table>
+
+    <p>OpenAI互換エンドポイントとして設定する場合は、Base URLの末尾に <code>/v1</code> を付けます。APIキーは不要ですが、入力必須の欄がある場合は任意の文字列で構いません。</p>
+
+    <p>設定できたら、Clineに一言投げて往復を確認します。ここで応答が返らない場合、原因はほぼ疎通かモデル名の綴りです。</p>
+  </section>
+
+  <section class="sec" id="sa-5">
+    <h2><span class="n">A.5</span>章ごとの読み替え</h2>
+
+    <table>
+      <thead><tr><th>章</th><th>読み替え</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><a href="part2.html">PART 2</a>／<a href="part3.html">PART 3</a></td>
+          <td>本編がすでにローカル前提で書かれています。PART 2の演習1は <code>qwen3.5:4b</code> のみで完結し、Clineも不要です。PART 3へ進む前に、A.3.2の <code>num_ctx</code> 設定を必ず済ませてください。</td>
+        </tr>
+        <tr>
+          <td><a href="part4.html">PART 4</a><br>レビューと設計</td>
+          <td>変更なし。むしろローカルモデルのほうが失敗率が高いぶん、Linter・テスト・CIというガードレールの価値が上がります。この章は読み飛ばさないでください。</td>
+        </tr>
+        <tr>
+          <td><a href="part5.html">PART 5</a><br>開発基盤構築</td>
+          <td>クラウドを使わない場合は <code>packages/infra/</code> をDocker Compose構成に置き換えます。GitHub Actions、gitleaks、Renovate、pre-commitはそのまま使えます。</td>
+        </tr>
+        <tr>
+          <td><a href="part6.html">PART 6</a><br>コーディング</td>
+          <td>本編がローカル前提で書かれているため読み替えは不要です。コンテキスト使用率70%での引き継ぎ、参照資料を短く保つ方針は、いずれもローカルモデルを想定した記述です。</td>
+        </tr>
+        <tr>
+          <td><a href="part7.html">PART 7</a><br>リリース</td>
+          <td>本編がすでにデプロイ先を選べる形になっています（7.2.1）。MCPの節（7.3）も、モデルとも言語とも独立した層として書かれているため読み替えは不要です。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="sec" id="sa-6">
+    <h2><span class="n">A.6</span>ローカルで詰まるところ</h2>
+
+    <h3><span class="n">A.6.1</span>コンテキストが静かに切れる</h3>
+    <p>症状としては、エージェントが直前に作ったファイルを忘れる、同じ修正を何度も提案する、計画の途中から辻褄が合わなくなる、といった形で出ます。エラーが出ないので気づきにくいのが厄介です。A.3.2の <code>num_ctx</code> 設定を最初に済ませておいてください。</p>
+
+    <h3><span class="n">A.6.2</span>差分編集の失敗</h3>
+    <p>Clineのファイル書き換えは、置換対象の文字列が厳密に一致することを要求します。ローカルモデルはここでリトライが増えがちです。対策は、1回の依頼で触るファイル数と変更量を小さくすること。PART 6の「イテレーションを細かく切る」という方針を、より細かく適用してください。</p>
+
+    <h3><span class="n">A.6.3</span>ツール呼び出しが本文として出力される</h3>
+    <p>ツール呼び出しを実行せず、呼び出しの内容をそのままテキストとして書き出してしまうことがあります。この種の不具合はランタイム側の更新で直ることが多いので、同じ症状が続く場合はOllamaのバージョンとモデルタグの組み合わせを変えて試してください。</p>
+
+    <h3><span class="n">A.6.4</span>自動承認を長く回さない</h3>
+    <p>PART 3の演習ではAuto-approveを設定して一気に走らせましたが、ローカルモデルでこれをやると、壊れた状態のまま長時間進んでしまいます。<span class="mark">承認を挟む回数を増やすほうが、結果的に速く終わります。</span>PART 5で整えるブランチ保護とCIが、ここでの最後の砦になります。</p>
+  </section>
+
+  <section class="sec" id="sa-7">
+    <h2><span class="n">A.7</span>参考：モデルとプロバイダの選び方</h2>
+
+    <p>ここはPART 1から移した参考情報です。<span class="mark">教材を進めるだけなら読む必要はありません。</span>手元の環境を自分で選ぶ段階になったら読んでください。</p>
+
+    <h3><span class="n">A.7.1</span>プロバイダの4形態</h3>
+
+    <div class="cards">
+      <div class="card"><h4>モデル開発元</h4><p>先端機能へ最初にアクセスできる。OpenAI、Anthropic、Googleなど。</p></div>
+      <div class="card"><h4>ホスティングプラットフォーム</h4><p>多数のモデルへ統一APIでアクセスできる。OpenRouterなど。</p></div>
+      <div class="card"><h4>マネージドサービス</h4><p>クラウドの認証やネットワークと統合され、ガバナンス面で優位。Amazon Bedrock、Azure AI Foundry、Vertex AIなど。</p></div>
+      <div class="card"><h4>自前で動かす</h4><p>オープンウェイトのモデルを自分の機材で動かす。Ollama、vLLM、llama.cppなど。<strong>本教材はこれです。</strong></p></div>
+    </div>
+
+    <h3><span class="n">A.7.2</span>プロプライエタリとオープンウェイト</h3>
+
+    <p>2026年のモデル選びで最初に来る分岐は、性能でも価格でもなく<span class="mark">「重み（weights）が公開されているかどうか」</span>です。</p>
+
+    <table>
+      <thead><tr><th></th><th>プロプライエタリ</th><th>オープンウェイト</th></tr></thead>
+      <tbody>
+        <tr><td><strong>入手方法</strong></td><td>APIを呼ぶ。中身は見えない</td><td>重みファイルをダウンロードする</td></tr>
+        <tr><td><strong>動かす場所</strong></td><td>提供元のデータセンター</td><td>どこでも。自分のPCでも可</td></tr>
+        <tr><td><strong>費用</strong></td><td>トークン従量課金</td><td>電気代と機材のみ</td></tr>
+        <tr><td><strong>止まるリスク</strong></td><td>提供終了・値上げ・規約変更がありうる</td><td>手元にある限り動く</td></tr>
+        <tr><td><strong>改造</strong></td><td>不可</td><td>ファインチューニング、量子化、蒸留が可能</td></tr>
+        <tr><td><strong>代表例</strong></td><td>Claude、GPT、Gemini、Grok</td><td>Qwen、DeepSeek、Kimi、GLM、Llama、Gemma、gpt-oss</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">「オープンソース」ではなく「オープンウェイト」</span>
+      重みが公開されていても、学習データや学習コードまで公開されているとは限りません。ライセンスも一律ではなく、Apache-2.0やMITのように自由なものもあれば、独自ライセンスで用途に条件が付くものもあります。<span class="mark">研究や授業で使う前に、必ずライセンスを確認してください。</span>
+    </div>
+
+    <h3><span class="n">A.7.3</span>2026年のモデル地図</h3>
+
+    <p><strong>ここはいちばん早く古くなる節です。</strong>名前を覚えることに意味はありません。どんな系列があり、どの軸で分かれているかという構図だけ見てください。</p>
+
+    <table>
+      <thead><tr><th>系列</th><th>開発元</th><th>位置づけ</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Qwen</strong></td><td>Alibaba</td><td>Apache-2.0。サイズの選択肢が広く、小型でも強い。<strong>本教材が使う系列</strong></td></tr>
+        <tr><td><strong>DeepSeek</strong></td><td>DeepSeek</td><td>MITライセンス。推論モデルも公開できることを示し、業界の前提を変えた</td></tr>
+        <tr><td><strong>Kimi</strong></td><td>Moonshot AI</td><td>超巨大MoE。エージェント用途とターミナル操作の評価が高い</td></tr>
+        <tr><td><strong>GLM</strong></td><td>Z.ai</td><td>MITライセンス。コーディングとエージェント方面に注力</td></tr>
+        <tr><td><strong>Llama / Gemma</strong></td><td>Meta / Google</td><td>オープンウェイトの流れを作った系列と、その小型版</td></tr>
+        <tr><td><strong>gpt-oss</strong></td><td>OpenAI</td><td>OpenAIが公開したオープンウェイトモデル。Apache-2.0</td></tr>
+        <tr><td><strong>Claude / GPT / Gemini</strong></td><td>Anthropic / OpenAI / Google</td><td>プロプライエタリ。APIで使う</td></tr>
+      </tbody>
+    </table>
+
+    <p>2024年頃まで、オープンウェイトのモデルは「プロプライエタリの数世代遅れ」というのが常識でした。2025年から2026年にかけて、その差は急速に縮みました。<span class="mark">本教材が「自分のPCの中でCoding Agentを回す」という構成を取れるのは、この変化があったからです。</span></p>
+
+    <h3><span class="n">A.7.4</span>規模、MoE、量子化</h3>
+
+    <p>ローカルで動かすとき、性能スコアより先に効いてくる要素です。</p>
+
+    <ul>
+      <li><strong>パラメータ数。</strong>モデル名末尾の <code>4b</code>、<code>27b</code> がこれです。大きいほど賢く、大きいほどメモリを食い、大きいほど遅くなります。</li>
+      <li><strong>dense と MoE。</strong>denseは全パラメータを毎回使います。MoE（Mixture of Experts）は内部を多数の専門家に分け、入力ごとに一部だけを動かします。「総1.6兆／アクティブ49億」という表記は、置いておくメモリは総パラメータ分必要だが、計算は一部だけ、という意味です。<span class="mark">1枚のGPUで動かしたいなら、denseの中型モデルのほうが現実的です。</span></li>
+      <li><strong>量子化。</strong>重みを4bitや8bitに落として容量を削ります。<code>Q4_K_M</code> のような表記がそれです。品質はわずかに落ちますが、容量はおおよそ4分の1になります。</li>
+    </ul>
+
+    <table>
+      <thead><tr><th>規模</th><th>4bit量子化での目安</th><th>動く環境</th><th>向いている作業</th></tr></thead>
+      <tbody>
+        <tr><td>3B〜8B</td><td>2〜6GB</td><td>ノートPC（GPUなしでも可）</td><td>要約、整形、小さく正確な依頼</td></tr>
+        <tr><td>14B〜32B</td><td>8〜20GB</td><td>GPU 1枚（24GBクラス）</td><td>エージェントとしての実務。本教材の中心</td></tr>
+        <tr><td>70B以上・大型MoE</td><td>40GB〜数百GB</td><td>複数GPU、サーバ</td><td>研究室・組織で共有</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">A.7.5</span>ベンチマークの読み方</h3>
+
+    <table>
+      <thead><tr><th>ベンチマーク</th><th>測っているもの</th></tr></thead>
+      <tbody>
+        <tr><td>SWE-bench Verified</td><td>GitHubの実Issueに基づくバグ修正。上位モデルが飽和に近づき、識別力は下がってきた</td></tr>
+        <tr><td>SWE-bench Pro</td><td>複数言語・複数ファイルにまたがる修正</td></tr>
+        <tr><td>Terminal-Bench</td><td>ターミナル上でタスクを完遂できるか。<strong>エージェント用途ではこれを見る</strong></td></tr>
+        <tr><td>LiveCodeBench</td><td>学習カットオフ以降の問題だけで評価でき、汚染耐性が高い</td></tr>
+        <tr><td>Aider Polyglot</td><td>エラーを受けて再試行する形式。Agentの基本動作に近い</td></tr>
+      </tbody>
+    </table>
+
+    <p><span class="mark">1つのスコアで優劣は決まりません。</span>ベンダーが自社で測った数値は有利な条件で取られている可能性があります。自分たちの開発スタイルに近いベンチマークを見たうえで、実際のコードベースで小さく試して判断してください。</p>
+
+    <h3><span class="n">A.7.6</span>データの取り扱い</h3>
+
+    <p>クラウド経由のマネージドサービスでは「送信データは学習に利用しない」と規約に明記されているのが一般的です。ホスティングプラットフォームでは、学習可否やログ保持が下流プロバイダや設定によって異なります。機密性の高いコードを扱う際は、学習フラグの有無だけでなく、保持期間やZero Data Retentionの可否まで確認してください。</p>
+
+    <div class="warn">
+      <span class="tag">「ローカルなら外に出ない」は条件付きです</span>
+      モデルを手元で動かすこと自体は、外部送信を伴いません。ただし<span class="mark">ネットワークを使う機能を足せば、そこから出ていきます。</span>ウェブ検索、外部APIを叩くMCPサーバ、クラウド同期のかかったフォルダ、テレメトリ。構成全体で確認してください。手元で動かすことは前提条件であって、それだけで完結する保証ではありません。
+    </div>
+  </section>
+
+  <section class="sec" id="sa-8">
+    <h2><span class="n">A.8</span>Dev Containerで環境を揃える</h2>
+
+    <p>授業や研究室でPCの状態がまちまちなとき、Dev Containerを使うと同じ環境を再現できます。PART 5の必修ではありませんが、「私の環境では動きません」の対応に時間を取られるくらいなら、最初に配ってしまうほうが早い場面はあります。</p>
+
+    <p>Agentにコマンド実行を任せる以上、ローカルマシンそのものを作業場にしないという意味もあります。壊れても捨てて作り直せます。</p>
+
+<pre><code>// .devcontainer/devcontainer.json
+{
+  "name": "vibe-order",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "features": {
+    "ghcr.io/va-h/devcontainers-features/uv:1": {},
+    "ghcr.io/devcontainers/features/node:1": {}
+  },
+  "postCreateCommand": "uv sync",
+  "customizations": {
+    "vscode": { "extensions": ["saoudrizwan.claude-dev", "charliermarsh.ruff"] }
+  }
+}</code></pre>
+
+    <div class="warn">
+      <span class="tag">インストーラをpostCreateCommandに書かないこと</span>
+      <code>curl -LsSf https://astral.sh/uv/install.sh | sh &amp;&amp; uv sync</code> のような書き方をよく見かけますが、<span class="mark">インストール直後の <code>uv</code> がそのコマンド内のPATHで解決される保証はありません。</span>同じシェルの中で続けて呼ぶと失敗することがあります。<br><br>
+      Featureとして入れるか、uvが同梱されたイメージを使ってください。<code>postCreateCommand</code> には <code>uv sync</code> のような、すでにPATHにあるものだけを書きます。
+    </div>
+
+    <p>Node.jsのFeatureを入れているのは、MCPサーバの多くがnpx経由で配布されているためです。アプリケーション側でJavaScriptを書くわけではありません（PART 7）。</p>
+
+    <p>GitHub Codespacesを使う場合も、同じ <code>devcontainer.json</code> がそのまま効きます。手元にDockerがない受講者がいるなら、そちらのほうが確実です。</p>
+  </section>
+
+  <section class="sec" id="sa-9">
+    <h2><span class="n">A.9</span>補完が出ない・二重に出るとき</h2>
+
+    <p>セットアップの06でContinueのタブ補完を入れた場合の話です。<span class="mark">補完が出ないという相談の原因は、ほとんどが他の補完機能との干渉です。</span></p>
+
+    <h3><span class="n">A.9.1</span>まず、どちらの症状か切り分ける</h3>
+
+    <table>
+      <thead><tr><th>症状</th><th>原因</th></tr></thead>
+      <tbody>
+        <tr><td>灰色の候補がまったく出ない</td><td>他の拡張機能が先に応答している。またはContinue側が無効</td></tr>
+        <tr><td>候補が出るが、明らかに速い／英語のコメントばかり</td><td>それはCopilotの候補です。Continueではありません</td></tr>
+        <tr><td>候補がちらつく、二重に見える</td><td>2つの補完が同時に動いています</td></tr>
+      </tbody>
+    </table>
+
+    <p>2番目が厄介です。<strong>動いていると思っていたものが、実は別の拡張機能だった</strong>という状態になります。ローカルで動かしているつもりが、クラウドに送っていることになります。</p>
+
+    <h3><span class="n">A.9.2</span>GitHub Copilotを切る</h3>
+
+    <p>3段階あります。<span class="mark">下へ行くほど強く切れます。</span></p>
+
+    <h4>1. インライン補完だけ止める</h4>
+
+    <p>画面右下のステータスバーにあるCopilotのアイコンをクリックし、<strong>Disable Completions</strong> を選びます。チャット機能は残ります。</p>
+
+    <p>設定から行う場合は、<code>Ctrl</code>（macOSは <code>Cmd</code>）+ <code>,</code> で設定を開き、検索欄に次を入れます。</p>
+
+<pre><code>github.copilot.enable</code></pre>
+
+    <p><code>Edit in settings.json</code> を開いて、次のように書きます。</p>
+
+<pre><code>"github.copilot.enable": {
+  "*": false
+}</code></pre>
+
+    <h4>2. このプロジェクトでだけ無効にする</h4>
+
+    <p>拡張機能のパネル（<code>Ctrl</code> + <code>Shift</code> + <code>X</code>）でGitHub Copilotを探し、歯車から <strong>Disable (Workspace)</strong> を選びます。</p>
+
+    <p><span class="mark">授業ではこれを勧めます。</span>他のプロジェクトでは今までどおりCopilotが使えて、この教材のフォルダでだけ切れます。</p>
+
+    <h4>3. 完全に無効にする</h4>
+
+    <p>同じ歯車から <strong>Disable</strong> を選びます。VS Codeの再読み込みを求められたら従ってください。</p>
+
+    <div class="note">
+      <span class="tag">Copilot以外にも補完を出す拡張機能があります</span>
+      Tabnine、Codeium、Amazon Qなど、入れた覚えがなくても学校や会社の初期設定で入っていることがあります。<br>
+      拡張機能パネルの検索欄を空にして<strong>一覧を上から見てください。</strong>「completion」「AI」「assistant」を名前に含むものが該当します。
+    </div>
+
+    <h3><span class="n">A.9.3</span>Continue側を確認する</h3>
+
+    <p>他を切っても出ない場合は、Continue自体が止まっている可能性があります。</p>
+
+    <ul>
+      <li>画面右下のステータスバーにあるContinueの表示をクリックし、<strong>Enable Tab Autocomplete</strong> が有効か確認する</li>
+      <li>設定に書いたモデル名が、<code>ollama list</code> の表示と<strong>1文字も違わないか</strong>確認する（<code>qwen2.5-coder:1.5b</code> のタグまで含めて）</li>
+      <li><code>roles</code> に <code>autocomplete</code> が入っているか確認する。チャット用の設定だけでは補完は動きません</li>
+      <li>ターミナルで <code>ollama ps</code> を実行し、補完用モデルが載るか見る。何も載らないなら、Continueから呼べていません</li>
+    </ul>
+
+    <h3><span class="n">A.9.4</span>それでも分からないとき</h3>
+
+    <p>VS Codeのログを見ます。<code>Ctrl</code>（macOSは <code>Cmd</code>）+ <code>Shift</code> + <code>P</code> でコマンドパレットを開き、<code>Toggle Developer Tools</code> を実行して <code>Console</code> タブを見てください。</p>
+
+    <p>モデル名の誤りや接続エラーは、ここに出ます。<span class="mark">出ているエラーをそのままAgentに貼れば、原因の見当は付きます。</span>PART 2で身につけた方法が、そのまま使えます。</p>
+  </section>
+
+  <section class="sec" id="sa-10">
+    <h2><span class="n">A.10</span>Continueを使えない場合：ターミナルから渡す</h2>
+
+    <p>PART 2の演習1は、ContinueでAIにファイルを渡す前提で書いてあります。<span class="mark">Continueを入れられない場合は、ターミナルから同じことができます。</span></p>
+
+    <p>ただし、本編では扱いません。<strong>操作の経路が2つあると、どちらを使うべきか迷うからです。</strong></p>
+
+    <h3><span class="n">A.10.1</span>ファイルを渡す</h3>
+
+    <p><code>ollama run</code> に長い文章を貼ると、途中で改行が実行されることがあります。<span class="mark">貼り付けず、ファイルをそのまま渡してください。</span></p>
+
+<pre><code># PowerShell
+Get-Content controls.txt | ollama run qwen3.5:4b
+
+# macOS / Linux
+cat controls.txt | ollama run qwen3.5:4b</code></pre>
+
+    <p>この方法だと1行で済み、貼り付け事故も起きません。</p>
+
+    <h3><span class="n">A.10.2</span>指示を一緒に渡す</h3>
+
+    <p>ファイルだけ渡しても、何をしてほしいか伝わりません。指示を先に書いたファイルを作ります。</p>
+
+<pre><code># PowerShell
+"Fill in the blank. Output one line only.`n" +
+"#sign-kushikatsu .board { fill: ______; }`n" +
+"Replace ______ with a hex color for saffron orange." |
+  ollama run qwen3.5:4b</code></pre>
+
+    <p>穴埋めの形にする理由は、PART 2の2.3.5と同じです。<span class="mark">4Bに考えさせる場所は、1回に1か所だけにします。</span></p>
+
+    <h3><span class="n">A.10.3</span>返ってきたものの扱い</h3>
+
+    <p>ここから先はContinueの場合と変わりません。返ってきたCSSを <code>shinsekai_remix.html</code> のA区間へ貼り、保存して再読み込みします。</p>
+
+    <div class="note">
+      <span class="tag">できれば Continue を使ってください</span>
+      ターミナルでも進められますが、<strong>ファイルを開いたまま渡せるContinueのほうが確実です。</strong>貼り付けの事故が起きず、返答のコピーもボタン1つで済みます。<br><br>
+      導入手順は<a href="setup.html">セットアップ</a>の06にあります。
+    </div>
+  </section>
+
+  <section class="sec" id="sa-11">
+    <h2><span class="n">A.11</span>共有サーバにつながらないときの切り分け</h2>
+
+    <p>Clineが動かないとき、原因は<span class="mark">サーバ側かCline側のどちらか</span>です。ターミナルから直接叩けば、どちらかが分かります。</p>
+
+    <p>PowerShellで実行します。<strong>すべて1行で打ってください。</strong>折り返すと、後半が別のコマンドとして実行されます。</p>
+
+    <div class="warn">
+      <span class="tag">curl ではなく curl.exe</span>
+      PowerShellの <code>curl</code> は別のコマンドの別名です。<span class="mark">必ず <code>curl.exe</code> と書いてください。</span><code>-H</code> の書き方が違って失敗します。
+    </div>
+
+    <h3><span class="n">A.11.1</span>段階1：認証とモデル一覧</h3>
+
+<pre><code>curl.exe "https://&lt;サーバ&gt;/api/tags" -H "CF-Access-Client-Id:&lt;ID&gt;" -H "CF-Access-Client-Secret:&lt;Secret&gt;"</code></pre>
+
+    <table>
+      <thead><tr><th>返ってきたもの</th><th>意味</th></tr></thead>
+      <tbody>
+        <tr><td>JSON（<code>{"models":[...]}</code>）</td><td><strong>認証は通っている。</strong>段階2へ</td></tr>
+        <tr><td><code>302 Found</code> のHTML</td><td>認証情報が届いていない。ヘッダの綴りと値を確認</td></tr>
+        <tr><td>何も返らない</td><td>URLの綴り、またはサーバが落ちている</td></tr>
+      </tbody>
+    </table>
+
+    <p>JSONが返ったら、<span class="mark">その中の <code>name</code> がモデル名です。</span>ClineのModel IDと一致しているか確認してください。</p>
+
+    <div class="note">
+      <span class="tag">capabilities は当てになりません</span>
+      <code>/api/tags</code> の <code>capabilities</code> には <code>completion</code> しか出ないことがあります。<span class="mark">ツール対応の有無は、これでは判断できません。</span><br><br>
+      正確に見るには <code>/api/show</code> を使います。そちらには <code>tools</code> が含まれます。
+    </div>
+
+    <h3><span class="n">A.11.2</span>段階2：Clineと同じ経路で叩く</h3>
+
+    <p>Clineが使うのは <code>/v1/chat/completions</code> です。同じ形で投げます。</p>
+
+<pre><code>'{"model":"&lt;モデル名&gt;","messages":[{"role":"user","content":"hi"}],"stream":true}' | Set-Content -Path t.json -Encoding ascii</code></pre>
+
+<pre><code>curl.exe -s -N "https://&lt;サーバ&gt;/v1/chat/completions" -H "CF-Access-Client-Id:&lt;ID&gt;" -H "CF-Access-Client-Secret:&lt;Secret&gt;" -H "Content-Type: application/json" -d "@t.json"</code></pre>
+
+    <table>
+      <thead><tr><th>返ってきたもの</th><th>意味</th></tr></thead>
+      <tbody>
+        <tr><td><code>data: {...}</code> が並び、最後に <code>data: [DONE]</code></td><td><strong>サーバは完全に正常。</strong>原因はCline側の設定です</td></tr>
+        <tr><td>途中で切れる</td><td>サーバ側かネットワーク。講師に知らせる</td></tr>
+        <tr><td><code>404</code></td><td>URLに <code>/v1</code> が入っていない</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">段階2が通ったら、Clineの設定です</span>
+      見るのはこの3つです。<br><br>
+      <strong>1. Base URL の末尾が <code>/v1</code> か。</strong>いちばん多い失敗です<br>
+      <strong>2. Custom Headers の名前が壊れていないか。</strong><code>heaCF-Access-...</code> のようになっていないか<br>
+      <strong>3. Model ID が段階1で見た名前と一致しているか</strong>
+    </div>
+
+    <h3><span class="n">A.11.3</span>ファイルに書くときの注意</h3>
+
+    <p>JSONを <code>Set-Content</code> でファイルにするとき、<code>-Encoding ascii</code> を付けてください。<span class="mark">付けないとBOMが入り、サーバがJSONとして読めません。</span></p>
+
+    <p>URLは必ず <code>"</code> で囲みます。囲まないと <code>https:</code> のコロンをPowerShellが誤解釈します。</p>
+  </section>
+
+  <section class="sec" id="sa-12">
+    <h2><span class="n">A.12</span>ブラウザのColabでGPUを有効にする</h2>
+
+    <p>PART 8では、VS CodeからColabへ接続します。<span class="mark">その方法がうまくいかない場合は、ブラウザでColabを開いても進められます。</span></p>
+
+    <p>ただし、<strong>GPUは自分で有効にする必要があります。</strong>忘れると動画の生成が終わりません。</p>
+
+    <h3><span class="n">A.12.1</span>ランタイムのタイプを変える</h3>
+
+<p>VS Codeからの接続がうまくいかないときは、ブラウザで開いても構いません。<span class="mark">その場合はGPUを自分で有効にします。</span></p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/colab-runtime-type.png" alt="Colabのランタイムのタイプを変更する画面。ランタイムのタイプは Python 3、ハードウェアアクセラレータで T4 GPU が選択されている" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        <strong>Runtime → Change runtime type</strong> から <span style="color:var(--accent);font-weight:700">T4 GPU</span> を選んで <strong>Save</strong>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>日本語</th><th>English</th></tr></thead>
+      <tbody>
+        <tr><td>ランタイム</td><td><strong>Runtime</strong></td></tr>
+        <tr><td>ランタイムのタイプを変更</td><td><strong>Change runtime type</strong></td></tr>
+        <tr><td>ハードウェア アクセラレータ</td><td>Hardware accelerator</td></tr>
+        <tr><td>保存</td><td><strong>Save</strong></td></tr>
+        <tr><td>ランタイムを接続解除して削除</td><td>Disconnect and delete runtime</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">A.12.2</span>選べないGPUがあります</h3>
+
+    <div class="warn">
+      <span class="tag">有料プランが必要なもの</span>
+      A100、H100、L4は<span class="mark">有料プランでないと選べません。</span>灰色になっています。<strong>T4 GPU で足ります。</strong>
+    </div>
+
+    <h3><span class="n">A.12.3</span>終わったら切ってください</h3>
+
+    <div class="note">
+      <span class="tag">割り当てには上限があります</span>
+      GPUの割り当てには上限があります。<span class="mark">使い終わったら、ランタイムを切ってください。</span>放置すると、次に使いたいときに割り当てが来ません。<br><br>
+      セットアップの05「Ollamaを切る」と同じ話です。
+    </div>
+  </section>
+
+
+  <nav class="pager">
+    <a class="prev" href="part8.html"><span class="dir">← PREV</span><span class="ttl">PART 8　Agentic AIで動画制作を回す</span></a>
+    <a class="next" href="appendix-b.html"><span class="dir">NEXT →</span><span class="ttl">APPENDIX B　Node.js／TypeScript版（原構成）</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'コピー';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'コピーしました';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'コピー';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

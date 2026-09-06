@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setup | Get the tools ready</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#5b6470;
+  --accent-soft:#eef0f3;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html" aria-current="page">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">Setup</div>
+    <h1>Get the tools ready</h1>
+    <p class="lede">Install what you need for Part 1 onwards: VS Code, a terminal, Ollama and a model. About 20 minutes. Setup problems are easier to solve now than in the middle of an exercise, so do this first.</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>Previously</dt><dd>In Exercise 0 you worked out what makes a job worth handing to an AI.</dd>
+      <dt>This part</dt><dd>From here you start typing commands. Install VS Code, open a terminal, and get Ollama and a model ready.</dd>
+      <dt>Next</dt><dd>In Part 1 you test the limits of the model you just installed.</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="Contents of this part">
+    <h2>In this part</h2>
+    <ol>
+      <li><span class="n">01</span><a href="#ss-01">Install VS Code</a></li>
+      <li><span class="n">02</span><a href="#ss-02">Install Ollama</a></li>
+      <li><span class="n">03</span><a href="#ss-03">Check the model</a></li>
+      <li><span class="n">04</span><a href="#ss-04">Say hello to it</a></li>
+      <li><span class="n">05</span><a href="#ss-05">Shut Ollama down</a></li>
+      <li><span class="n">06</span><a href="#ss-06">Optional: chat inside the editor</a></li>
+      <li><span class="n">07</span><a href="#ss-07">Create a GitHub account</a></li>
+    </ol>
+  </nav>
+
+
+  <section class="sec" id="ss-01">
+    <h2><span class="n">01</span>Install VS Code</h2>
+
+    <p>You will open and edit files in these exercises. Any text editor would do, but <span class="mark">Part 3 uses Cline, which is a VS Code extension.</span> Installing it now saves time later.</p>
+
+    <p>Download from <a href="https://code.visualstudio.com/" target="_blank" rel="noopener">https://code.visualstudio.com/</a> and run the installer. All default settings are fine.</p>
+
+    <h3>Open a working folder</h3>
+
+    <p>First use <strong>File → Open Folder</strong> to open a folder to work in. <span class="mark">If you skip this, the terminal will open somewhere you did not expect.</span></p>
+
+    <h3>Open a terminal</h3>
+
+    <p>Three ways. All open the same thing.</p>
+
+    <table>
+      <thead><tr><th>Way</th><th>What to do</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Menu</strong></td><td>Terminal → New Terminal</td></tr>
+        <tr><td><strong>Shortcut</strong></td><td>Windows / Linux: <code>Ctrl</code> + <code>Shift</code> + <code>`</code><br>macOS: <code>Control</code> + <code>Shift</code> + <code>`</code></td></tr>
+        <tr><td><strong>Command palette</strong></td><td><code>Ctrl</code> (macOS <code>Cmd</code>) + <code>Shift</code> + <code>P</code>, then type "terminal"</td></tr>
+      </tbody>
+    </table>
+
+    <p>That character is a backtick. <strong>It sits to the left of the 1 key, or where Shift + @ is on some layouts.</strong> It is not a single quote.</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/vscode-new-terminal.png" alt="Choosing Terminal then New Terminal from the VS Code menu" style="width:100%;max-width:640px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">Terminal → New Terminal</div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">No Terminal menu?</span>
+      When the window is narrow, <span class="mark">the menu collapses into <code>…</code>.</span> The screenshot above was taken in that state. Look for <code>…</code> to the right of File / Edit / Selection / View / Go / Run. Terminal is inside it.<br><br>
+      Widening the window brings the menu back.
+    </div>
+
+    <h3>Check which shell you got</h3>
+
+    <p>On Windows, make sure the terminal is <strong>PowerShell</strong>. The install command in the next section will not run in anything else.</p>
+
+    <table>
+      <thead><tr><th>How to tell</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>Top right of the terminal</td><td>It says <code>powershell</code></td></tr>
+        <tr><td>Start of the prompt</td><td>It begins with <code>PS C:\...&gt;</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>If you got <code>cmd</code> or <code>Git Bash</code>, click the <code>v</code> next to the <code>+</code> at the top right of the terminal and pick <strong>PowerShell</strong>.</p>
+
+    <h3>Check where you are</h3>
+
+<pre><code>pwd</code></pre>
+
+    <p>If it prints the folder you opened, you are ready. <span class="mark">If not, go back to File → Open Folder.</span> Getting this wrong is a common reason files cannot be found later.</p>
+  </section>
+
+  <section class="sec" id="ss-02">
+    <h2><span class="n">02</span>Install Ollama</h2>
+
+    <p>If you do not have it yet, get it from the official site. Open <a href="https://ollama.com/download" target="_blank" rel="noopener">https://ollama.com/download</a> and pick your OS.</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/ollama-download-page.png" alt="The Ollama download page, showing macOS, Linux and Windows" style="width:100%;max-width:520px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        <a href="https://ollama.com/download/windows" target="_blank" rel="noopener">https://ollama.com/download/windows</a>
+      </div>
+    </div>
+
+    <h3>Windows</h3>
+
+    <p>Two ways. <span class="mark">Either one is fine.</span></p>
+
+    <p><strong>A. Command.</strong> Copy the command shown on that page and paste it into PowerShell.</p>
+
+<pre><code>irm https://ollama.com/install.ps1 | iex</code></pre>
+
+    <p>Opening a terminal is covered in section 01. <strong>Confirm it is PowerShell before you paste.</strong></p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/ollama-install-progress.png" alt="PowerShell running the install command, download at 93.5 percent" style="width:100%;max-width:560px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">"Downloading Ollama for Windows..." means it worked</div>
+    </div>
+
+    <p><strong>B. Installer.</strong> Press "Download for Windows" on the same page and run <code>OllamaSetup.exe</code>. If you are not comfortable with the command line, use this.</p>
+
+    <div class="warn">
+      <span class="tag">If it does not work</span>
+      <strong><code>CommandNotFoundException</code>.</strong> You are not in PowerShell. Go back to "Check which shell you got" in section 01.<br><br>
+      <strong>You mistyped the command.</strong> Use the copy button on the page instead of typing it. <code>irm</code> and <code>iex</code> are easy to get wrong.<br><br>
+      <strong>Windows older than 10.</strong> Not supported. The requirements are on the download page.
+    </div>
+
+    <h3>macOS and Linux</h3>
+
+    <p>On macOS, download the app from the same page and open it. On Linux, one line:</p>
+
+<pre><code>curl -fsSL https://ollama.com/install.sh | sh</code></pre>
+
+    <h3>Confirm it installed</h3>
+
+<pre><code>ollama --version</code></pre>
+
+    <p>A version number means it worked. <span class="mark">If nothing appears, close the terminal and open a new one.</span> Right after installing, the PATH may not be picked up yet.</p>
+  </section>
+
+  <section class="sec" id="ss-03">
+    <h2><span class="n">03</span>Check the model</h2>
+
+<pre><code>ollama list</code></pre>
+
+    <p>If <code>qwen3.5:4b</code> is in the list, you are ready. If not, fetch it.</p>
+
+<pre><code>ollama pull qwen3.5:4b</code></pre>
+
+    <div class="warn">
+      <span class="tag">The 27B model is not installed locally</span>
+      The larger model used from Part 3 onwards lives on <span class="mark">a shared server.</span> It is not installed on your machine. It is around 18 GB, which is too much for a classroom to download at once.<br><br>
+      Seeing only <code>qwen3.5:4b</code> in <code>ollama list</code> is correct. Connecting to the server is covered in <a href="appendix-a.html">Appendix A</a>, section A.3.4.
+    </div>
+  </section>
+
+  <section class="sec" id="ss-04">
+    <h2><span class="n">04</span>Say hello to it</h2>
+
+<pre><code>ollama run qwen3.5:4b</code></pre>
+
+    <p>Type a short question and press Enter. Type <code>/bye</code> to leave.</p>
+
+    <div class="note">
+      <span class="tag">It looks frozen before it answers</span>
+      This model thinks before it answers. It first prints its reasoning inside a <code>&lt;think&gt;</code> tag, and only then the real answer. On a laptop this can take over 30 seconds.<br><br>
+      <span class="mark">It is not frozen. Wait.</span>
+    </div>
+  </section>
+
+  <section class="sec" id="ss-05">
+    <h2><span class="n">05</span>Shut Ollama down</h2>
+
+    <p>Knowing how to stop it matters as much as installing it. <span class="mark">A loaded model holds on to memory.</span> If you leave it running, everything else on your machine gets slower.</p>
+
+    <h3>Leave the chat</h3>
+
+<pre><code>/bye</code></pre>
+
+    <p><code>Ctrl</code> + <code>D</code> does the same. <span class="mark">Note that this only returns your terminal. The model is still in memory.</span></p>
+
+    <h3>Unload the model</h3>
+
+<pre><code>ollama ps
+ollama stop qwen3.5:4b</code></pre>
+
+    <p>Run <code>ollama ps</code> again. If the list is empty, it worked.</p>
+
+    <div class="note">
+      <span class="tag">It also unloads on its own</span>
+      Ollama unloads a model roughly <strong>five minutes</strong> after you last used it. If you are not in a hurry, just wait.<br><br>
+      If you need the memory now, or if <code>ollama ps</code> shows <code>100% CPU</code> and things feel slow, an explicit <code>ollama stop</code> and reload sometimes helps.
+    </div>
+
+    <h3>Stop Ollama itself</h3>
+
+    <p>Unloading the model does not stop the server. When the class ends, stop that too.</p>
+
+    <table>
+      <thead><tr><th>OS</th><th>How</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Windows</strong></td><td>System tray, bottom right (inside the <code>^</code> for hidden icons). Right-click the Ollama icon → <strong>Quit Ollama</strong></td></tr>
+        <tr><td><strong>macOS</strong></td><td>Menu bar, top right. Click the Ollama icon → <strong>Quit Ollama</strong></td></tr>
+        <tr><td><strong>Linux</strong></td><td><code>sudo systemctl stop ollama</code> if installed as a service.<br>If you ran <code>ollama serve</code> by hand, press <code>Ctrl</code> + <code>C</code> there</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">If nothing works afterwards</span>
+      Once Ollama is stopped, <code>ollama run</code> stops working and so do API calls from Cline. <span class="mark">This is behind a lot of "but it worked yesterday" reports.</span><br><br>
+      On Windows and macOS, launching the app again brings the server back. On Linux, <code>sudo systemctl start ollama</code>.<br><br>
+      When unsure, run <code>ollama ps</code>. <strong>An error means the server is down.</strong> An empty list means the server is up and simply has no model loaded.
+    </div>
+
+    <h3>Summary</h3>
+
+    <table>
+      <thead><tr><th>Goal</th><th>Command</th></tr></thead>
+      <tbody>
+        <tr><td>Leave the chat</td><td><code>/bye</code></td></tr>
+        <tr><td>See what is loaded</td><td><code>ollama ps</code></td></tr>
+        <tr><td>Unload a model</td><td><code>ollama stop &lt;model&gt;</code></td></tr>
+        <tr><td>Stop the server</td><td>Quit from the tray or menu bar</td></tr>
+        <tr><td>Delete a downloaded model</td><td><code>ollama rm &lt;model&gt;</code></td></tr>
+      </tbody>
+    </table>
+
+    <p><code>ollama rm</code> deletes the model files themselves. <span class="mark">For a 27B model that frees around 18 GB.</span> Delete models you no longer use. You can always <code>ollama pull</code> them again.</p>
+  </section>
+
+  <section class="sec" id="ss-06">
+    <h2><span class="n">06</span>Optional: chat inside the editor</h2>
+
+    <p>You can now use the model from a terminal. <span class="mark">This section is optional.</span> If you want a chat panel next to your code, the way GitHub Copilot does, add one more extension.</p>
+
+    <div class="note">
+      <span class="tag">You can skip this and still follow the course</span>
+      Part 3 onwards uses <strong>Cline</strong>. The extension in this section, <strong>Continue</strong>, is a different thing with a different job.<br><br>
+      Both appear in the sidebar. You end up with two icons, and you can use both.
+    </div>
+
+    <table>
+      <thead><tr><th></th><th>Continue (this section)</th><th>Cline (required in Part 3)</th></tr></thead>
+      <tbody>
+        <tr><td><strong>What it does</strong></td><td>Answers questions, rewrites a selection, tab completion</td><td>Reads and writes files itself, runs commands</td></tr>
+        <tr><td><strong>What you do</strong></td><td>Read the diff, decide whether to apply it</td><td>Approve each action</td></tr>
+        <tr><td><strong>Closest to</strong></td><td>GitHub Copilot</td><td>An agent that works on its own</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Install it</h3>
+
+    <p>Open the extensions panel with <code>Ctrl</code> + <code>Shift</code> + <code>X</code> (macOS <code>Cmd</code> + <code>Shift</code> + <code>X</code>). Search for <strong>Continue</strong> and press <strong>Install</strong>.</p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/vscode-install-continue.png" alt="Extensions search results for Continue, with the official one at the top" style="width:100%;max-width:660px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">The top one, "Continue - open-source AI code agent", is the right one</div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">Check the publisher</span>
+      Several extensions have Continue in the name. <span class="mark">Pick the one published by <strong>Continue</strong>, with the blue check mark.</span><br><br>
+      In the screenshot that is the top result. Vibrancy Continued, Markdown Continue and Cursor Auto Continue are unrelated extensions.
+    </div>
+
+    <h3>Connect a model</h3>
+
+    <p>The first time you open the panel, you get a model setup screen. <span class="mark">There are two tabs.</span></p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/continue-local-tab.png" alt="Continue first-run screen with API Key and Local tabs" style="width:100%;max-width:600px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">Press <strong>Local</strong>, on the right</div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">Local, not API Key</span>
+      The <strong>API Key</strong> tab on the left is for cloud services such as OpenAI and Anthropic. <span class="mark">Those need a key and cost money. This course does not use them.</span><br><br>
+      Press <strong>Local</strong>, the tab with the llama icon.<br><br>
+      The blue banner at the top, "Extension configuration is local only as of v2.0.0", just says settings are stored locally. Close it with <code>×</code>.
+    </div>
+
+    <p>Pressing Local makes Continue look for Ollama. <strong>Ollama is running at http://localhost:11434</strong> with a green check means it found it.</p>
+
+    <h4>Add Chat model</h4>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/continue-add-chat-model.png" alt="Add Chat model dialog with provider Ollama and model Autodetect" style="width:100%;max-width:620px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">Press Connect and the config file is written for you</div>
+    </div>
+
+    <table>
+      <thead><tr><th>Field</th><th>What to do</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Provider</strong></td><td>Leave it as <code>Ollama</code></td></tr>
+        <tr><td><strong>Install provider</strong></td><td><span class="mark">Do not press it.</span> That link is for people who have not installed Ollama</td></tr>
+        <tr><td><strong>Model</strong></td><td><code>Autodetect</code> is fine. It picks up what you have</td></tr>
+        <tr><td><strong>Connect</strong></td><td>Press it. <code>config.yaml</code> is updated automatically</td></tr>
+      </tbody>
+    </table>
+
+    <h4>You are done when it looks like this</h4>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/continue-connected.png" alt="Continue panel after connecting, showing Chat and qwen3.5:4b under the input box" style="width:100%;max-width:620px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">"Chat" and "qwen3.5:4b" under the input box means you are ready</div>
+    </div>
+
+    <table>
+      <thead><tr><th>Left dropdown</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Chat</strong></td><td>Answers questions. Does not touch files. <strong>Choose this</strong></td></tr>
+        <tr><td>Agent</td><td>Edits files and runs commands</td></tr>
+        <tr><td>Plan</td><td>Drafts a plan for a change</td></tr>
+      </tbody>
+    </table>
+
+    <p>It often defaults to <strong>Agent</strong>. Change it to <strong>Chat</strong>.</p>
+
+    <div class="note">
+      <span class="tag">Why not Agent</span>
+      File edits and commands are Cline's job from Part 3 onwards. Overlapping roles get confusing.<br><br>
+      Also, <span class="mark">tool calling is unreliable on a model this small.</span> Part 2 shows what that looks like in practice. Agent mode with a 4B model mostly produces failed attempts.
+    </div>
+
+    <h3>Try it</h3>
+
+    <p>Type "hello" in the chat box. A reply means you are done.</p>
+
+    <p>Select some code and press <code>Ctrl</code> + <code>L</code> (macOS <code>Cmd</code> + <code>L</code>). The selection goes into the chat. You can ask "what does this function do?" or "write a test for this" without leaving the editor.</p>
+
+    <div class="warn">
+      <span class="tag">Replies feel slow</span>
+      <code>qwen3.5:4b</code> prints its <code>&lt;think&gt;</code> block before answering, as you saw in section 04. <span class="mark">That is bearable in a chat panel. It is not usable for tab completion.</span>
+    </div>
+
+    <h3>If you also want tab completion</h3>
+
+    <p>Inline grey suggestions need a different model. It has to support <strong>fill-in-the-middle</strong>: looking at the code before <em>and</em> after the cursor. Chat models are not built for that.</p>
+
+    <p>Completion has to come back in roughly 0.2 seconds, or you stop waiting for it. <span class="mark">For this one job, speed matters more than quality.</span> Install a small model for it. Continue itself suggests the <code>-base</code> variant.</p>
+
+<pre><code>ollama pull qwen2.5-coder:1.5b-base</code></pre>
+
+<pre><code>models:
+  - name: Chat
+    provider: ollama
+    model: qwen3.5:4b
+    roles: [chat]
+  - name: Autocomplete
+    provider: ollama
+    model: qwen2.5-coder:1.5b-base
+    roles: [autocomplete]</code></pre>
+
+    <p><code>roles</code> keeps the two apart. With spare VRAM you could use a 7B for completion, but <strong>if it gets slow you will stop using it.</strong> Start at 1.5B.</p>
+
+    <div class="warn">
+      <span class="tag">No suggestions appearing</span>
+      <span class="mark">Disable other completion features, such as GitHub Copilot.</span> Running two at once makes them fight. This is behind most "completion is not working" reports.<br><br>
+      How to disable them, and what to check if that was not it, is in <a href="appendix-a.html">Appendix A</a>, section A.9.
+    </div>
+
+    <div class="note">
+      <span class="tag">Two stages is easier</span>
+      <strong>1.</strong> Install Continue and use only the sidebar chat. No extra model needed.<br>
+      <strong>2.</strong> If the speed bothers you, add the completion model.<br><br>
+      Setting up two models from the start gives you more places to get stuck.
+    </div>
+  </section>
+
+  <section class="sec" id="ss-07">
+    <h2><span class="n">07</span>Create a GitHub account</h2>
+
+    <div class="warn">
+      <span class="tag">Do this on day one</span>
+      You need it in Part 5. <span class="mark">Creating it on the day means missing that exercise.</span> Email confirmation and two-factor setup can take over 30 minutes.<br><br>
+      If you already have an account, skip this section. <strong>Just check that you can log in.</strong>
+    </div>
+
+    <h3>Steps</h3>
+
+    <ol>
+      <li>Open <a href="https://github.com/signup" target="_blank" rel="noopener">https://github.com/signup</a></li>
+      <li>Enter an email address. <span class="mark">Use one you can read throughout the course</span></li>
+      <li>Choose a password and a username</li>
+      <li>Enter the code sent to your email</li>
+      <li>Set up two-factor authentication (app or SMS)</li>
+      <li>Check that you can log in</li>
+    </ol>
+
+    <div class="warn">
+      <span class="tag">Do not postpone two-factor setup</span>
+      GitHub requires it. <span class="mark">If you put it off, you will be locked out when the deadline arrives.</span><br><br>
+      An authenticator app on your phone (Google Authenticator, Microsoft Authenticator) is the safest option. <strong>Save the recovery codes somewhere else.</strong> Without them, losing your phone means a slow account recovery process.
+    </div>
+
+    <h3>Tell us when it is done</h3>
+
+    <p>Send your username to the instructor. <span class="mark">We need to know who is ready.</span></p>
+
+    <div class="note">
+      <span class="tag">If you cannot create one</span>
+      Sometimes it fails: only a corporate email is available, or phone verification does not go through.<br><br>
+      <strong>You can still do Part 5.</strong> Three of the four break-it tests run entirely on your own machine. Only the pull request one needs GitHub. <span class="mark">The point of the chapter still comes across.</span><br><br>
+      If it does not work, tell the instructor on day one.
+    </div>
+  </section>
+
+
+  <nav class="pager">
+    <a class="prev" href="exercise0.html"><span class="dir">← PREV</span><span class="ttl">Exercise 0　Find work worth handing to an AI agent</span></a>
+    <a class="next" href="part1.html"><span class="dir">NEXT →</span><span class="ttl">PART 1　How an LLM works, and where it fails</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

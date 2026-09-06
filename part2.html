@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 2 Vibe Codingを試してみよう</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#e11d63;
+  --accent-soft:#fdeaf1;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="章の一覧">
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html" aria-current="page">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 2</div>
+    <h1>Vibe Codingを試してみよう</h1>
+    <p class="lede">理屈はここまで。次は実際に手を動かします。実装の詳細を追わず、作りたいものだけを言葉で伝えてAIに委ねる。手元のPCで動くモデルを使って、その極端な形を体験します。</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>前章まで</dt><dd>PART 1で、LLMが何をする部品で、どこで間違えるのかを確認しました。道具は「セットアップ」で揃っています。</dd>
+      <dt>この章</dt><dd>AIと対話しながら、大阪・新世界の写真を別の街に作り変えます。名前を付けたものは制御できるという原則を、手を動かして体験します。</dd>
+      <dt>次章へ</dt><dd>PART 3では、この「読む・書く・実行する」の部分をAIに渡し、Coding Agentを動かします。</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="この章の目次">
+    <h2>この章の内容</h2>
+    <ol>
+      <li><span class="n">2.0</span><a href="#s2-0">この章で何をするか</a></li>
+      <li><span class="n">2.1</span><a href="#s2-1">Vibe Codingとは</a></li>
+      <li><span class="n">2.2</span><a href="#s2-2">この章で使う環境</a></li>
+      <li><span class="n">2.3</span><a href="#s2-3">演習1：街をリミックスする</a></li>
+      <li><span class="n">2.4</span><a href="#s2-4">この章で分かったこと</a></li>
+    </ol>
+  </nav>
+
+
+<style>
+  .demo-box{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px;margin:18px 0}
+  .demo-cols{display:flex;gap:20px;flex-wrap:wrap}
+  .demo-cols>*{flex:1 1 280px;min-width:0}
+  .demo-box .hint{font-size:.86rem;color:var(--ink-soft);margin:0 0 10px}
+  .demo-box textarea{width:100%;height:120px;font-family:var(--mono);font-size:.8rem;
+    padding:10px;border:1px solid var(--line);border-radius:6px;resize:vertical;line-height:1.6}
+  .demo-box svg{width:100%;border:1px solid var(--line);border-radius:6px;background:#fff}
+  .btn{font-size:.8rem;padding:6px 11px;border:1px solid var(--accent);color:var(--accent);
+    background:#fff;border-radius:5px;cursor:pointer;margin:0 6px 7px 0;font-family:inherit}
+  .btn:hover{background:var(--accent);color:#fff}
+  .btn:focus-visible{outline:3px solid #f0b429;outline-offset:2px}
+  .demo-box input[type=range]{vertical-align:middle;width:140px}
+  .demo-box .readout{font-family:var(--mono);font-size:.78rem;color:var(--ink-soft)}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:16px 0}
+  .flow .step{flex:1 1 120px;background:var(--accent-soft);border:1px solid var(--line);
+    border-radius:8px;padding:12px 10px;text-align:center;font-size:.85rem;line-height:1.5}
+  .flow .step b{display:block;color:var(--accent);font-size:.78rem;margin-bottom:3px;font-family:var(--mono)}
+</style>
+
+  <section class="sec" id="s2-0" style="margin-bottom:44px">
+    <h2><span class="n">2.0</span>この章で何をするか</h2>
+
+    <p>この章では、<span class="mark">AIにコードを書かせると何が起きるかを体験します。</span>速さも、限界も、両方まとめて見ます。</p>
+
+    <h3>この章を終えると</h3>
+    <p>大阪・新世界の街を写した1枚のページを、自分のテーマに作り変えられるようになります。色を変え、看板を差し替え、新しいものを描き足す。コードは自分で書きません。</p>
+
+    <h3>この章で繰り返す進め方</h3>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　作りたいものを言う</p>
+      <p><strong>2</strong>　AIが出したコードを受け取る</p>
+      <p><strong>3</strong>　貼って、保存して、見る</p>
+      <p><strong>4</strong>　直したい点を言う</p>
+    </div>
+
+    <p>人間がやるのは、この4つだけです。<span class="mark">2から3のあいだ、コードを運んでいるのはあなたです。</span>この点が、次のPART 3との分かれ目になります。いま覚えておいてください。</p>
+  </section>
+
+  <section class="sec" id="s2-1">
+    <h2><span class="n">2.1</span>Vibe Codingとは</h2>
+
+    <p><strong>Vibe Coding</strong>は、AI研究者のAndrej Karpathyが2025年2月に提案した言葉です。プログラムを1行ずつ書く代わりに、作りたいものを普通の言葉で説明し、コードはAIに書かせます。Karpathyはこれを「コードの存在をほとんど忘れてしまうような書き方」と表現しました。</p>
+
+    <p>人間は、実装の詳細を追いません。<span class="mark">作りたいもの（What）だけを伝えます。</span>作り方（How）はエージェントに任せます。</p>
+
+    <div class="flow">
+      <div class="step"><b>1</b>作りたいものを言葉で伝える</div>
+      <div class="step"><b>2</b>AIがコードを書く</div>
+      <div class="step"><b>3</b>動かして見る</div>
+      <div class="step"><b>4</b>直すところを言う</div>
+      <div class="step"><b>5</b>できるまで繰り返す</div>
+    </div>
+
+    <table>
+      <thead><tr><th></th><th>従来のプログラミング</th><th>Vibe Coding</th></tr></thead>
+      <tbody>
+        <tr><td><strong>コードを書くのは</strong></td><td>自分で1行ずつ</td><td>AIが説明から生成する</td></tr>
+        <tr><td><strong>自分の役割</strong></td><td>設計者・実装者・デバッガ</td><td>案内役・検証者・レビュアー</td></tr>
+        <tr><td><strong>必要な知識</strong></td><td>高い。構文を知っている必要がある</td><td>低め。ただし「正しい状態」が分かる必要はある</td></tr>
+        <tr><td><strong>主な入力</strong></td><td>正確なソースコード</td><td>自然言語の指示とフィードバック</td></tr>
+        <tr><td><strong>速度</strong></td><td>体系的だが遅い</td><td>最初の動く版までは非常に速い</td></tr>
+        <tr><td><strong>エラー対応</strong></td><td>コードを読んで手で直す</td><td>エラー文をAIに貼って直させる</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">正直な注意</span>
+      「必要な知識が低め」は「知識ゼロでよい」ではありません。出力をまったく読めないなら、正しい答えと自信満々の誤答を区別できません。モデルはどちらも同じ口調で返してきます。2.3.7で、今日必要な最低限を押さえます。
+    </div>
+  </section>
+
+  <section class="sec" id="s2-2">
+    <h2><span class="n">2.2</span>この章で使う環境</h2>
+
+    <p>Vibe Codingは、クラウドのサービスで行う人が多い方法です。ChatGPT、Claude、Gemini、GitHub Copilot、Cursorなど。</p>
+
+    <p>この教材は違います。<span class="mark">モデルを自分のPCの中で動かします。</span>インターネット接続も、アカウントも、課金も要りません。</p>
+
+    <table>
+      <thead><tr><th></th><th>クラウドAI</th><th>ローカルAI（本章）</th></tr></thead>
+      <tbody>
+        <tr><td><strong>規模</strong></td><td>数千億パラメータ</td><td>40億〜270億パラメータ</td></tr>
+        <tr><td><strong>動く場所</strong></td><td>データセンター</td><td>目の前のマシン</td></tr>
+        <tr><td><strong>インターネット</strong></td><td>必要</td><td>不要</td></tr>
+        <tr><td><strong>自分のデータ</strong></td><td>手元から出ていく</td><td>手元から出ない</td></tr>
+        <tr><td><strong>費用</strong></td><td>従量課金またはサブスクリプション</td><td>無料・無制限</td></tr>
+        <tr><td><strong>得意なこと</strong></td><td>大きく曖昧な依頼をこなす</td><td>小さく正確な依頼をこなす</td></tr>
+      </tbody>
+    </table>
+
+    <p>最後の行が、この章の進め方すべてを決めます。<span class="mark">小さいモデルは大きいモデルの劣化版ではなく、別の道具です。</span>頼み方が変われば結果が変わります。その違いを体で覚えることが、この章の半分の目的です。</p>
+
+    <h3><span class="n">2.2.1</span>使うもの</h3>
+    <table>
+      <thead><tr><th>用途</th><th>ツール／モデル</th><th>備考</th></tr></thead>
+      <tbody>
+        <tr><td>ランタイム</td><td>Ollama 0.32.15</td><td>ローカルでモデルを動かす</td></tr>
+        <tr><td>演習1のモデル</td><td><code>qwen3.5:4b</code></td><td>ノートPCで動く。小さく正確な依頼向け</td></tr>
+        <tr><td>次のPARTで使うモデル</td><td><code>qwen3.8:27b</code></td><td>GPUのあるマシン。ツール呼び出し対応</td></tr>
+        <tr><td>エージェント（PART 3）</td><td>Cline（VS Code拡張）</td><td>API Providerを Ollama に設定</td></tr>
+        <tr><td>Git / IDE</td><td>GitHub / VS Code</td><td>Dev ContainerでもCodespacesでも可</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">クラウドAPIを使う場合</span>
+      Amazon BedrockのClaudeなど、クラウドのモデルでもまったく同じ手順で実装できます。ただし有料で、アカウントとモデルアクセスの申請が必要になるため、本教材のハンズオンでは使いません。すでにアカウントを持っている場合は、Cline側のAPI Providerを切り替えるだけで動きます。27Bモデルのセットアップとチューニングは<a href="appendix-a.html">付録A</a>にまとめてあります。
+    </div>
+  </section>
+
+  <section class="sec" id="s2-3">
+    <h2><span class="n">2.3</span>演習1：街をリミックスする</h2>
+
+    <h3><span class="n">2.3.1</span>課題</h3>
+
+    <div class="prompt"><span class="tag">ASSIGNMENT 1</span>City remix（Osaka → Mumbai）
+
+大阪・新世界の街を、言葉による指示だけで別の街に作り変えなさい。</div>
+
+<div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="img/shinsekai-original.jpg" alt="大阪・新世界の街並み。通天閣、串かつ店の看板、ビリケン像、ふぐ提灯が写っている" style="width:100%;max-width:680px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        元の写真：大阪・新世界。通天閣、串かつの看板、ビリケン像、ふぐ提灯。<br>
+        <span style="color:var(--accent);font-weight:700">この写真が、約6000個の名前付き図形に分解されています。</span>
+      </div>
+    </div>
+
+    <h4>決まり</h4>
+
+    <ol>
+      <li>変える前に、元の大阪をよく見る</li>
+      <li><strong>何を作るか先に決める。</strong>市場か、祭りの夜か、雨季の午後か。<span class="mark">打ち始める前に決めます。</span>決めてあると指示が具体的になります</li>
+      <li>小さく進める。1ステップごとに、保存・再読み込み・目視</li>
+      <li><code>#tower</code>（通天閣）は残す。<strong>同じ場所だと分かる状態を保つ</strong></li>
+      <li>送ったプロンプトを全部残す。<span class="mark">失敗したものも含めて</span></li>
+    </ol>
+
+
+    <h3><span class="n">2.3.2</span>使う3つのファイル</h3>
+
+    <p>次の3つを1つのフォルダに置きます。名前は変えないでください。</p>
+    <table>
+      <thead><tr><th>ファイル</th><th>中身</th></tr></thead>
+      <tbody>
+        <tr><td><code><a href="shinsekai_remix.html">shinsekai_remix.html</a></code></td><td>街そのもの。ダブルクリックで開きます。約700KB。</td></tr>
+        <tr><td><code><a href="controls.txt">controls.txt</a></code></td><td>変更してよい部分。3KB未満。<strong>AIに渡すのはこれです。</strong></td></tr>
+        <tr><td><code><a href="HO906SDIM3805_TP_V.jpg">HO906SDIM3805_TP_V.jpg</a></code></td><td>元の写真。参照用。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">shinsekai_remix.html をAIに貼らないこと</span>
+      モデルが読める量をはるかに超えています。止まるか、意味不明な出力を返すか、ファイルを壊します。貼るのは <code>controls.txt</code> だけです。
+    </div>
+
+
+    <p><code>shinsekai_remix.html</code> の中には、<span class="mark">あなたが書き換えてよい場所が2か所だけ</span>あります。残りの700KBは触りません。</p>
+
+    <table>
+      <thead><tr><th></th><th>場所</th><th>やること</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>A</strong></td>
+          <td><code>&lt;style&gt;</code> の中<br><code>CONTROL PANEL: START</code> 〜 <code>END</code></td>
+          <td>既にあるものの色を変える、消す</td>
+        </tr>
+        <tr>
+          <td><strong>B</strong></td>
+          <td>ファイル末尾<br><code>ADD LAYER: START</code> 〜 <code>END</code></td>
+          <td>新しいものを描き足す</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><code>controls.txt</code> は、<strong>この2か所を抜き出して1つにしたもの</strong>です。AIに渡すのはこれです。</p>
+
+    <div class="warn">
+      <span class="tag">なぜ2つに分けるのか</span>
+      AとBのあいだには、写真から作った約6000個の図形が挟まっています。<span class="mark">700KBあります。</span><br><br>
+      これをAIに渡すと、止まるか、意味不明な出力を返すか、ファイルを壊します。<strong>渡すのは <code>controls.txt</code> だけです。</strong>
+    </div>
+
+
+    <h3><span class="n">2.3.3</span>完成までの全体像</h3>
+
+    <p>1つ変えるたびに、この9ステップを回します。<span class="mark">1回で全部を変えようとしないでください。</span></p>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　<code>shinsekai_remix.html</code> をブラウザで開く</p>
+      <p><strong>2</strong>　VS Codeで <code>controls.txt</code> を開く</p>
+      <p><strong>3</strong>　ContinueのChatに <code>@controls.txt</code> を添付する</p>
+      <p><strong>4</strong>　変更を<strong>1つだけ</strong>指示する</p>
+      <p><strong>5</strong>　AIが返したCSSだけをコピーする</p>
+      <p><strong>6</strong>　<code>shinsekai_remix.html</code> の<strong>A区間</strong>へ貼る</p>
+      <p><strong>7</strong>　新しい図形がある場合だけ、SVGを<strong>B区間</strong>へ貼る</p>
+      <p><strong>8</strong>　保存して、ブラウザを再読み込みする</p>
+      <p><strong>9</strong>　気に入ったら、プロンプトと結果を記録する</p>
+    </div>
+
+    <div class="warn">
+      <span class="tag"><code>controls.txt</code> は書き換えません</span>
+      <code>controls.txt</code> は、<span class="mark">AIに「いまどんな名前があるか」を見せるための参照ファイルです。</span>編集しません。<br><br>
+      AIが返した行を貼るのは、<strong><code>shinsekai_remix.html</code> のほうです。</strong>参照ファイルを書き換えてしまうと、次の指示で名前の一覧が渡せなくなります。
+    </div>
+
+    <h3><span class="n">2.3.4</span>最初の変更を一緒にやる</h3>
+
+    <p>AIを使う前に、手で1回やります。<span class="mark">貼る場所と再読み込みの手順を、先に確定させます。</span></p>
+
+    <p><code>#name { property: value; }</code> という形が読めない場合は、先に2.3.10を読んでください。3分です。</p>
+
+    <h4>1. A区間を見つける</h4>
+
+    <p>VS Codeで <code>shinsekai_remix.html</code> を開き、<code>Ctrl</code> + <code>F</code> で検索します。</p>
+
+<pre><code>CONTROL PANEL: START</code></pre>
+
+    <p>少し下に、こういう行が並んでいます。<strong>ここがA区間です。</strong></p>
+
+<pre><code>#sky            { }
+#left-shops     { }
+#right-shops    { }
+#street         { }
+#far-buildings  { }
+#tower          { }</code></pre>
+
+    <h4>2. 1行だけ書き換える</h4>
+
+    <p><code>#sky { }</code> を、こう書き換えてください。</p>
+
+<pre><code>#sky            { filter: sepia(.7) saturate(2.4); }</code></pre>
+
+    <h4>3. 保存して見る</h4>
+
+    <p><code>Ctrl</code> + <code>S</code> で保存し、ブラウザで <code>Ctrl</code> + <code>R</code>。<strong>空の色が変われば、仕組みは動いています。</strong></p>
+
+    <p>変わらない場合は、保存したか、再読み込みしたか、<code>&lt;style&gt;</code> の中に書いたか、綴りが合っているかを確認してください。</p>
+
+    <h3><span class="n">2.3.5</span>Continueで controls.txt を渡す</h3>
+
+    <div class="note">
+      <span class="tag">Continueを入れていない場合</span>
+      ターミナルから同じことができます。手順は<a href="appendix-a.html">付録A</a>のA.10にあります。<span class="mark">ただし本編はContinueで進めます。</span>
+    </div>
+
+    <h4>渡し方</h4>
+
+    <p>Continueに<strong>ファイルのアップロード機能はありません。</strong>必要もありません。<span class="mark">VS Codeで開いているファイルを、そのまま渡せます。</span></p>
+
+    <ol>
+      <li>VS Codeで <strong>File → Open Folder</strong> を選ぶ</li>
+      <li><code>controls.txt</code> と <code>shinsekai_remix.html</code> が入っているフォルダを開く</li>
+      <li>Continueのチャット欄で <code>@</code> を入力する</li>
+      <li><strong>Files</strong> を選び、<code>controls.txt</code> を指定する</li>
+      <li>指示を書いて送る</li>
+    </ol>
+
+    <div class="prompt"><span class="tag">PROMPT</span>@controls.txt
+
+Remove the Japanese writing from #sign-kushikatsu and make its board saffron.
+
+Output only the CSS lines to add. Do not return the whole file.
+Do not write placeholders. Write real values.</div>
+
+    <p>返ってくるのは、この2行です。</p>
+
+<pre><code>#sign-kushikatsu .ink   { display: none; }
+#sign-kushikatsu .board { fill: #ff9933; }</code></pre>
+
+    <p>これを <code>controls.txt</code> の <code>#tower { }</code> の下に足します。</p>
+
+    <div class="warn">
+      <span class="tag">全文を返させないこと</span>
+      <code>controls.txt</code> は70行あります。<span class="mark">4Bに全文を返させると、途中で力尽きてプレースホルダに逃げます。</span><br><br>
+      <code>{{ modified board color to saffron }}</code> や <code>... rest of code ...</code> が返ってきたら、それです。<strong>中身がありません。</strong>変わる行だけを求めてください。<br><br>
+      あわせて、あなたも <code>... existing code ...</code> と打たないでください。<span class="mark">それは差分編集の書式です。</span>モデルが真似して、穴埋めテンプレートを返します。
+    </div>
+
+    <div class="note">
+      <span class="tag">添付できているか確認する</span>
+      <code>@</code> と打っただけでは添付されません。<strong>候補から選んで確定してください。</strong>チャット欄の上にファイル名のバッジが出ていれば成功です。<br><br>
+      出ていなければ、モデルは <code>controls.txt</code> を<span class="mark">見ないまま答えています。</span>それらしい返事は来ますが、名前は全部でたらめです。
+    </div>
+
+    <p>もう1つの渡し方もあります。<code>controls.txt</code> を開いて <code>Ctrl</code> + <code>A</code> で全選択し、<code>Ctrl</code> + <code>L</code>。<strong>選択範囲がチャットに入ります。</strong></p>
+
+    <div class="warn">
+      <span class="tag">700KBのファイルは渡さないこと</span>
+      <code>@</code> のファイル一覧に <code>shinsekai_remix.html</code> も出てきます。<span class="mark">選ばないでください。</span>約700KBがそのままコンテキストに入り、4Bモデルは即座に破綻します。<br><br>
+      HTMLの一部をどうしても見せたい場合は、<strong>その区間だけを選択して <code>Ctrl</code> + <code>L</code></strong> を使ってください。
+    </div>
+
+    <div class="warn">
+      <span class="tag">Apply ボタンを押さないこと</span>
+      Continueは返答のコードブロックに <strong>Apply</strong> を出します。変更対象を正確に選んでいれば使えますが、<span class="mark">4Bモデルでは余計な部分まで書き換えることがあります。</span>マーカーごと消えると、次の周で貼る場所が分からなくなります。<br><br>
+      コードブロック右上の<strong>コピーボタン</strong>を使い、AとBの区間へ手で貼ってください。<strong>どこに何を貼るかを自分で決めることが、この演習の中身です。</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">モードは Chat のまま</span>
+      左下のドロップダウンを <strong>Agent</strong> にしないでください。ファイルを勝手に書き換えようとします。<span class="mark">4Bではまず失敗します。</span>ファイル操作をAIに任せるのは、PART 3からです。
+    </div>
+
+
+    <h4>4Bへの頼み方：穴埋めにする</h4>
+
+    <p>ここが、この章でいちばん重要な部分です。<span class="mark">手元の4Bモデルは小さく、普通の頼み方では失敗します。</span></p>
+
+    <p>「文字を消して看板をサフランにして」と頼むと、こういうものが返ってきます。</p>
+
+<pre><code>#sign-kushikatsu {
+  --board-color: SAFFRON;
+}</code></pre>
+
+    <p>動きません。<code>SAFFRON</code> という色名はCSSに存在しません。変数を宣言しただけでは何も起きません。文字を消す指示も無視されています。<strong>それらしい形はできていますが、中身がありません。</strong></p>
+
+    <div class="warn">
+      <span class="tag">プロンプトを工夫しても直りません</span>
+      「色名を使うな」「変数を使うな」と禁止を足しても、<span class="mark">4Bは禁止を理解した上で違反します。</span>返答の中で「これはあなたのルール違反ですが」と書きながら、そのまま出してくることさえあります。<br><br>
+      量を減らしても同じです。<strong>問題は出力の長さではなく、判断の数です。</strong>
+    </div>
+
+    <h4>考えさせる場所を1か所に絞る</h4>
+
+    <p>成功する形はこれです。<span class="mark">穴を1つだけ空けて、埋めさせます。</span></p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Fill in the blank. Output one line only.
+
+#sign-kushikatsu .ink { display: ______; }
+
+Replace ______ with the CSS value that hides the element.</div>
+
+    <p>返ってくるのは1行です。</p>
+
+<pre><code>#sign-kushikatsu .ink { display: none; }</code></pre>
+
+    <p>色を変える場合も同じ形にします。<strong>1回のプロンプトで、穴は1つ。</strong></p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Fill in the blank. Output one line only.
+
+#sign-kushikatsu .board { fill: ______; }
+
+Replace ______ with a hex color for saffron orange.</div>
+
+<pre><code>#sign-kushikatsu .board { fill: #ff9933; }</code></pre>
+
+    <div class="note">
+      <span class="tag">なぜこれなら通るのか</span>
+      モデルが決めるのは <code>none</code> という1語、<code>#ff9933</code> という1つの値だけです。<span class="mark">構造はあなたが書いています。</span>名前も、プロパティも、括弧の位置も、間違えようがありません。<br><br>
+      <strong>4Bにできるのは、判断であって設計ではありません。</strong>設計を人間が持ち、判断だけを渡す。この分担が、小さいモデルを使うときの原則です。
+    </div>
+
+    <h4>A区間へ貼るとこうなる</h4>
+
+    <p>返ってきた2つを、A区間の <code>#tower { }</code> の直後に足します。<span class="mark">貼り付けた後のA区間は、こうなります。</span></p>
+
+<pre><code>.cover { display: none; }
+
+#sky            { }
+#left-shops     { }
+#right-shops    { }
+#street         { }
+#far-buildings  { }
+#tower          { }
+
+/* AIから返ったCSSを、ここへ追加する */
+
+#sign-kushikatsu .ink {
+  display: none;
+}
+
+#sign-kushikatsu .board polygon {
+  fill: #FF9933;
+}</code></pre>
+
+    <div class="warn">
+      <span class="tag">貼る場所を間違えないこと</span>
+      追加するのは、<span class="mark">A区間の <code>#tower { }</code> の直後です。</span>HTML全体の末尾ではありません。<br><br>
+      <strong>既存の行と、START／ENDのマーカーは削除しません。</strong>消すと、次の周で貼る場所が分からなくなります。
+    </div>
+
+    <p>保存して、ブラウザを再読み込み。左上の串かつ看板が変わります。</p>
+
+    <div class="demo-box">
+      <div class="demo-cols">
+        <div>
+          <p class="hint"><strong>変更前</strong></p>
+          <img src="img/remix-before.png" alt="変更前。左上の串かつ看板が黒く、日本語の文字が残っている" style="width:100%;border-radius:6px;border:1px solid var(--line)">
+        </div>
+        <div>
+          <p class="hint"><strong>変更後</strong></p>
+          <img src="img/remix-after.png" alt="変更後。左上の串かつ看板の地の色がサフラン色に変わっている" style="width:100%;border-radius:6px;border:1px solid var(--line)">
+        </div>
+      </div>
+      <p class="hint" style="margin:10px 0 0">CSSを2行足しただけで、左上の看板の地の色が変わりました。<strong>図形は1つも編集していません。</strong></p>
+    </div>
+
+    <div class="note">
+      <span class="tag">なぜ <code>.board polygon</code> なのか</span>
+      <code>.board</code> はグループです。実際に色を持っているのは、その中の <code>&lt;polygon&gt;</code> です。<span class="mark">グループに <code>fill</code> を書いても、子が自分の色を持っていると勝ちます。</span><br><br>
+      効かないときは、<code>#name .board</code> ではなく <code>#name .board polygon</code> を試してください。
+    </div>
+
+    <h4>穴埋めにしない書き方</h4>
+
+    <p>構造まで書かせたい場合は、<strong>名前とプロパティを教えてしまいます。</strong></p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Output one line of CSS only, no explanation.
+
+Hide the Japanese text layer of the kushikatsu sign.
+The text layer is #sign-kushikatsu .ink. Use display.</div>
+
+    <p>これでも通ることがあります。<span class="mark">ただし穴埋めのほうが確実です。</span>まず穴埋めで進め、慣れてきたらこちらを試してください。</p>
+
+    <div class="warn">
+      <span class="tag">この体験が課題の中身です</span>
+      うまくいかなかったやり取りを消さないでください。<strong>何を頼み、何が返り、どう書き直したか。</strong>それが提出物になります。<br><br>
+      PART 3では、より大きなモデルに切り替えます。<span class="mark">そのとき、頼み方をどれだけ変えられるかが分かります。</span>いまの記録が、その比較の材料になります。
+    </div>
+
+
+    <h3><span class="n">2.3.6</span>自分のテーマで繰り返す</h3>
+
+    <p>ここからは自分の街を作ります。2.3.3の9ステップを、変更のたびに回してください。</p>
+
+    <p><span class="mark">先に何を作るか決めてください。</span>市場か、祭りの夜か、雨季の午後か。決めてあると指示が具体的になります。</p>
+
+    <table>
+      <thead><tr><th>やること</th><th>使うもの</th></tr></thead>
+      <tbody>
+        <tr><td>色を変える</td><td><code>#name { filter: ... }</code> または <code>#name .board { fill: ... }</code></td></tr>
+        <tr><td>日本語を消す</td><td><code>#name .ink { display: none; }</code></td></tr>
+        <tr><td>看板ごと消す</td><td><code>#name .cover { display: block; }</code></td></tr>
+        <tr><td>新しいものを描く</td><td>B区間に <code>&lt;text&gt;</code> や <code>&lt;rect&gt;</code> を足す</td></tr>
+      </tbody>
+    </table>
+
+    <p><code>#tower</code>（通天閣）は残してください。<strong>同じ場所だと分かる状態を保ちます。</strong></p>
+
+    <h4>VS Codeでの探し方</h4>
+
+    <p>700KBのファイルをスクロールして探さないでください。<code>Ctrl</code> + <code>F</code> で検索します。</p>
+
+    <table>
+      <thead><tr><th>探す文字列</th><th>飛ぶ場所</th></tr></thead>
+      <tbody>
+        <tr><td><code>CONTROL PANEL: START</code></td><td>Aの始まり</td></tr>
+        <tr><td><code>CONTROL PANEL: END</code></td><td>Aの終わり</td></tr>
+        <tr><td><code>ADD LAYER: START</code></td><td>Bの始まり</td></tr>
+        <tr><td><code>ADD LAYER: END</code></td><td>Bの終わり</td></tr>
+      </tbody>
+    </table>
+
+
+    <h3><span class="n">2.3.7</span>うまくいかないとき</h3>
+
+    <p>必ずうまくいかない場面が来ます。それは演習の失敗ではなく、演習そのものです。失敗はすべて記録してください。</p>
+
+    <table>
+      <thead><tr><th>症状</th><th>起きていること</th><th>対処</th></tr></thead>
+      <tbody>
+        <tr><td>画面が真っ白</td><td>タグか波括弧が閉じられていない</td><td>直前の貼り付けを取り消し、もっと小さい変更で頼み直す</td></tr>
+        <tr><td>前の変更が消えた</td><td>モデルがファイルを一から書き直した</td><td>「既存のルールをすべて残し、#sky だけ変えて」と伝える</td></tr>
+        <tr><td>何も変わらない</td><td>名前の綴り間違い、または存在しない名前</td><td><code>controls.txt</code> と1文字ずつ照合する</td></tr>
+        <tr><td>文字が空の四角になる</td><td>そのフォントがマシンにない</td><td>ラテン文字を使う</td></tr>
+        <tr><td>コードでなく解説文が返る</td><td>命令ではなく質問をした</td><td>命令形で書き、「return only code」を付ける</td></tr>
+        <tr><td>終わらない、同じことを繰り返す</td><td>一度に貼りすぎた</td><td>700KBのファイルは絶対に貼らない。<code>controls.txt</code> だけ</td></tr>
+        <tr><td>色が変なところへ行った</td><td>hue-rotateが全部の色を動かした</td><td><code>.board { fill: ... }</code> で1色だけ指定する</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">こまめに保存する</span>
+      気に入った状態になったら、ファイルを複製して <code>work_01.html</code>、<code>work_02.html</code> と名前を付けてください。バックアップがあれば復旧は10秒、なければ20分かかります。
+    </div>
+
+
+    <h3><span class="n">2.3.8</span>提出する</h3>
+
+    <p>提出はピア評価システムから行います。</p>
+
+    <div class="prompt"><span class="tag">PEER EVALUATION SYSTEM</span><a href="https://nmims.agewec.com/" target="_blank" rel="noopener">https://nmims.agewec.com/</a></div>
+
+    <p><a href="https://nmims.agewec.com/register/" target="_blank" rel="noopener">Register</a>（初回のみ）→ Sign in → <strong>Assignment 1</strong> のカードで File を選んで <strong>Submit</strong> → <strong>Preview</strong> で見え方を確認。出し直しは同じ画面から上書きです。<span class="mark">提出したファイルは手元にも残しておくこと。</span></p>
+
+    <table>
+      <thead><tr><th></th><th>出すもの</th><th>備考</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>ファイル</strong></td>
+          <td>作り変えた <code>shinsekai_remix.html</code>、またはスクリーンショット（PNG / JPG）</td>
+          <td><span class="mark">最大1.5 MB</span></td>
+        </tr>
+        <tr>
+          <td><strong>タイトル</strong></td>
+          <td>作品のテーマ（評価者に表示されます）</td>
+          <td>任意だが書くこと</td>
+        </tr>
+        <tr>
+          <td><strong>リンク</strong></td>
+          <td><strong>プロンプトの記録</strong>を置いた場所（OneDrive / Google Drive）</td>
+          <td>任意欄だが、ここに入れます</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">ファイルサイズに注意</span>
+      元の <code>shinsekai_remix.html</code> は約700KBです。<span class="mark">図形を足しすぎると1.5 MBを超えて提出できなくなります。</span><br><br>
+      超えた場合は、スクリーンショット（PNG）で提出してください。<strong>そのほうが評価者も開きやすくなります。</strong>HTMLはリンク欄で共有できます。
+    </div>
+
+    <div class="note">
+      <span class="tag">プロンプトの記録の出し方</span>
+      テキストファイル1枚で構いません。送った順に、失敗も含めて全部貼ってください。<br><br>
+      OneDriveやGoogle Driveに置き、<span class="mark">共有リンクを「リンクを知っている全員が閲覧可」にしてから</span>リンク欄に入れます。権限を絞ったままだと、評価者が開けません。
+    </div>
+
+
+    <p>クラスメイトがシステム上で、次の4項目（各0〜3点）と自由記述2問で評価します。</p>
+
+    <table>
+      <thead><tr><th>評価項目</th><th>見るところ</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Theme clarity</strong><br><span style="color:var(--ink-soft);font-size:.85em">テーマの伝わりやすさ</span></td><td>作者が表現した街・文化・雰囲気が伝わるか</td></tr>
+        <tr><td><strong>Creativity</strong><br><span style="color:var(--ink-soft);font-size:.85em">創造性</span></td><td>単なる色変更ではなく、独自のアイデアや工夫があるか</td></tr>
+        <tr><td><strong>Visual quality</strong><br><span style="color:var(--ink-soft);font-size:.85em">視覚的な完成度</span></td><td>配置、配色、文字、重なりが整っているか</td></tr>
+        <tr><td><strong>Appeal</strong><br><span style="color:var(--ink-soft);font-size:.85em">魅力・印象度</span></td><td>見ていて面白く、印象に残るか</td></tr>
+        <tr><td><strong>Strongest point</strong></td><td>最も優れた点を具体的に（10〜30語）</td></tr>
+        <tr><td><strong>Could be improved</strong></td><td>さらに改善できる点を具体的に（10〜30語）</td></tr>
+      </tbody>
+    </table>
+
+    <p>これに加えて、<strong>講師がプロンプトの記録を見ます。</strong>どこで失敗し、どう回復したか。<span class="mark">粗い結果でも、問題を切り分けた記録が付いていれば評価します。</span>3回のプロンプトで出来た美しい結果より、そちらのほうが多くを語ります。</p>
+
+    <div class="note">
+      <span class="tag">評価するのは人間です</span>
+      点数とコメントを付けるのは、<span class="mark">割り当てられたクラスメイト本人です。</span>AIは一切関わりません。<br><br>
+      「Feedback you received」に出るのは、あなたの作品を評価した学生の点数とコメントです。名前だけが伏せてあります。集計も、その回答を平均しているだけです。
+    </div>
+
+
+    <h3><span class="n">2.3.9</span>他の人の作品を評価する</h3>
+
+    <p>提出したら終わりではありません。同じカードの <strong>Start evaluating</strong> から、割り当てられたクラスメイトの作品を評価します。作者名は伏せられています。</p>
+
+    <table>
+      <thead><tr><th></th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>人数</strong></td><td>7人</td></tr>
+        <tr><td><strong>時間</strong></td><td>40分。1人あたり数分</td></tr>
+        <tr><td><strong>成績</strong></td><td><span class="mark">評価した内容も成績に入ります</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">プロンプトの記録も見ること</span>
+      作品だけでなく、<span class="mark">相手が公開しているプロンプトの記録にも目を通してください。</span>ざっと見て、どこで失敗し、どう直したかが分かれば十分です。<br><br>
+      <strong>ここがいちばん学べる部分です。</strong>自分が詰まった箇所を、他の人がどう抜けたか。同じ壁に当たった人の記録は、説明を読むより効きます。
+    </div>
+
+    <div class="warn">
+      <span class="tag">「Nice colors」は通りません</span>
+      自由記述が短すぎるもの、全員に同じ点を付けているものは、<span class="mark">評価した側の点数が下がります。</span><br><br>
+      具体的に書いてください。<strong>「どこが」良かったのか。「何を」変えると良くなるのか。</strong>10語から30語です。
+    </div>
+
+    <p>評価期間が終わると、自分が受けた評価（項目別の平均点と匿名のコメント）が同じカードに出ます。</p>
+
+    <div class="note">
+      <span class="tag">完成例</span>
+      先に答えを見たい場合は <a href="demo_indian_version.html">demo_indian_version.html</a> を開いてください。看板をサフランと緑に塗り替え、日本語を消し、三色旗のガーランド、CHAIとSAMOSAの看板、オートリクシャーを足してあります。通天閣は残してあります。<br><br>
+      再現するCSSとSVGは <code><a href="demo_instructions.txt">demo_instructions.txt</a></code> にあります。<code><a href="controls.txt">controls.txt</a></code> に貼れば手元で同じものが出ます。<br><br>
+      <span class="mark">ただし、そのまま提出しないでください。</span>評価するのはプロンプトの記録です。完成例は「どこまでやってよいか」の目安です。
+    </div>
+
+
+    <div class="note">
+      <span class="tag">ここから先は参考です</span>
+      2.3.10以降は、<span class="mark">必要になったときに読めば十分です。</span>詰まったところだけ戻ってきてください。
+    </div>
+
+    <h3><span class="n">2.3.10</span>HTMLとCSSとは</h3>
+
+    <p>この演習で触る2つを、1行ずつ説明します。</p>
+
+    <table>
+      <thead><tr><th></th><th>役割</th></tr></thead>
+      <tbody>
+        <tr><td><strong>HTML</strong></td><td><span class="mark">何があるかを書く。</span>ものに名前を付ける</td></tr>
+        <tr><td><strong>CSS</strong></td><td><span class="mark">それをどう見せるかを書く。</span>名前を指定して色や形を変える</td></tr>
+      </tbody>
+    </table>
+
+    <p>この街のファイルもそうです。約6000個の図形がHTML側にあり、それぞれに名前が付いています。あなたが書き換えるのはCSS側です。</p>
+
+<pre><code>#sign-kushikatsu { fill: #e07b17; }
+   ↑名前            ↑どう見せるか</code></pre>
+
+    <p><span class="mark">これが読めれば演習は進みます。</span>詳しい説明は2.3.7にあります。3分で読めるので、上のコードの意味が分からなければ先にそちらへ。</p>
+
+
+    <h3><span class="n">2.3.11</span>実際に学んでいること</h3>
+
+    <p>絵そのものは目的ではありません。重要なのは次の3点です。</p>
+    <ol>
+      <li><strong>構造は細部に勝つ。</strong>写真には6000個の図形があります。それを1行で全部変えられるのは、誰かが図形に名前を付けたからです。<span class="mark">名前を付けることが、制御可能にするということ</span>です。これは人間にとってもAIにとっても同じです。</li>
+      <li><strong>指示には形がある。</strong>同じ依頼でも、言い方が2通りあれば4Bモデルからは2通りの結果が返ります。10分以内に体感できます。</li>
+      <li><strong>失敗が教材である。</strong>モデルはファイルを壊します。何が壊れ、どう復旧するかが、持ち帰れる技能です。</li>
+    </ol>
+
+    <div class="note">
+      <span class="tag">この演習の位置づけ</span>
+      この演習では、<em>あなた</em>がファイルを開き、AIの出力をコピーし、結果を確認します。<span class="mark">次のPARTでは、この「読む・書く・実行する」の部分もAIに任せます。</span>
+    </div>
+
+
+    <h3><span class="n">2.3.12</span>最低限必要な知識</h3>
+
+    <p>今日は多くのコードを書きませんが、読める必要はあります。ここは15分ほどです。以下のデモはすべて動きます。触って確かめてください。</p>
+
+    <div class="note">
+      <span class="tag">必修はこの5つだけです</span>
+      <strong>1.</strong> <code>id</code> は部品の名前<br>
+      <strong>2.</strong> CSSは、名前に対する変更指示<br>
+      <strong>3.</strong> 1回に1変更<br>
+      <strong>4.</strong> 現在のコードを渡す<br>
+      <strong>5.</strong> 失敗したら小さく戻す<br><br>
+      <code>rect</code>、<code>circle</code>、<code>polygon</code>、色相環の仕組みは<span class="mark">触りたい人向けの寄り道です。</span>読み飛ばして演習に進んでも、課題は完成します。
+    </div>
+
+    <h4>HTMLファイルはただのテキスト</h4>
+    <p>ブラウザは上から下へ読んで、見つけたものを描きます。コンパイルもインストールもありません。保存してダブルクリックすれば動きます。</p>
+<pre><code>&lt;p&gt;Hello Mumbai&lt;/p&gt;</code></pre>
+    <p>開始タグ、中身、終了タグ。画面が突然真っ白になったときの原因は、たいてい終了タグの消失です。</p>
+
+    <h4>SVG：数値でできた図形</h4>
+
+    <div class="demo-box">
+      <div class="demo-cols">
+        <div>
+          <p class="hint"><strong>スライダーを動かしてコードを見てください。</strong></p>
+          <p class="readout">
+            x <input type="range" id="p3sx" min="10" max="230" value="60"> <span id="p3vx">60</span><br>
+            y <input type="range" id="p3sy" min="10" max="130" value="40"> <span id="p3vy">40</span><br>
+            width <input type="range" id="p3sw" min="20" max="180" value="120"> <span id="p3vw">120</span>
+          </p>
+<pre style="margin:0"><code id="p3codeout">&lt;rect x="60" y="40" width="120" height="60"/&gt;</code></pre>
+        </div>
+        <div>
+          <svg id="p3demo1" viewBox="0 0 260 160">
+            <line x1="0" y1="0" x2="260" y2="0" stroke="#c3cad8" stroke-width="2"/>
+            <line x1="0" y1="0" x2="0" y2="160" stroke="#c3cad8" stroke-width="2"/>
+            <text x="7" y="17" font-size="11" fill="#8892a4" font-family="Arial">x=0, y=0</text>
+            <rect id="p3r1" x="60" y="40" width="120" height="60" fill="#e11d63"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="warn">
+      <span class="tag">yは下向きに増える</span>
+      画像の一番上が <code>y = 0</code> です。この街のファイルは一番下が <code>y = 1066</code>。何かを「上へ」動かしてほしいなら、yは<em>小さく</em>なります。全員が一度は間違えます。
+    </div>
+
+    <table>
+      <thead><tr><th>要素</th><th>描くもの</th><th>必要な数値</th></tr></thead>
+      <tbody>
+        <tr><td><code>rect</code></td><td>長方形</td><td><code>x y width height</code></td></tr>
+        <tr><td><code>circle</code></td><td>円</td><td><code>cx cy r</code></td></tr>
+        <tr><td><code>line</code></td><td>直線</td><td><code>x1 y1 x2 y2</code></td></tr>
+        <tr><td><code>polygon</code></td><td>直線で囲んだ任意の形</td><td><code>points="10,10 60,10 35,50"</code></td></tr>
+        <tr><td><code>text</code></td><td>文字</td><td><code>x y</code> とタグの間の言葉</td></tr>
+      </tbody>
+    </table>
+
+    <h4>名前：id と class</h4>
+    <p>「あそこのオレンジのやつ」を変えて、とAIに頼むことはできません。ものには名前が要ります。</p>
+<pre><code>&lt;g id="lantern"&gt; ...たくさんの図形... &lt;/g&gt;</code></pre>
+    <p><code>&lt;g&gt;</code> は<em>グループ</em>です。多数の図形をまとめて、名前を付けて一括で変更できるようにします。<code>id</code> は1つのものに1回だけ使う名前、<code>class</code> は複数のものに付けられるラベルです。街のファイルはすべてこれで構成されています。</p>
+
+    <h4>CSS：名前に届くルール</h4>
+    <p><code>#</code> は「〜という名前のもの」、<code>.</code> は「〜というラベルの付いた全部」を意味します。</p>
+
+    <div class="demo-box">
+      <div class="demo-cols">
+        <div>
+          <p class="hint"><strong>ルールを編集すると、右の絵が即座に変わります。</strong></p>
+          <textarea id="p3cssbox">#sky   { filter: sepia(0.5) saturate(2); }
+#board { fill: #e07b17; }
+#ink   { display: none; }</textarea>
+          <p style="margin-top:10px">
+            <button class="btn" data-css="#sky { }
+#board { }
+#ink { }">リセット</button>
+            <button class="btn" data-css="#sky { filter: sepia(.7) saturate(2.4); }
+#board { fill: #138808; }
+#ink { display: none; }">緑の看板・夕方の空</button>
+            <button class="btn" data-css="#ink { opacity: .15; }">文字を薄くする</button>
+            <button class="btn" data-css="#lamp { display: none; }">照明を消す</button>
+          </p>
+        </div>
+        <div>
+          <svg id="p3demo2" viewBox="0 0 260 200">
+            <g id="sky"><rect x="0" y="0" width="260" height="200" fill="#9fc4dd"/>
+              <ellipse cx="70" cy="42" rx="42" ry="17" fill="#dfeaf3"/>
+              <ellipse cx="182" cy="30" rx="34" ry="13" fill="#dfeaf3"/></g>
+            <g id="board"><rect x="52" y="66" width="98" height="112" fill="#b03a2e"/></g>
+            <g id="ink" fill="#f7f2e6">
+              <rect x="70" y="82" width="14" height="46"/><rect x="70" y="82" width="46" height="13"/>
+              <rect x="96" y="96" width="13" height="32"/><rect x="70" y="140" width="62" height="12"/>
+              <rect x="118" y="82" width="13" height="58"/>
+            </g>
+            <g id="lamp"><circle cx="198" cy="98" r="21" fill="#f2e3c0" stroke="#7a6a4a" stroke-width="3"/>
+              <rect x="195" y="62" width="6" height="18" fill="#7a6a4a"/></g>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <h4>filter：1行で数千の図形を変える</h4>
+    <p>街は約6000個の図形です。1つずつ編集することは決してありません。名前を付けたグループごと、色を一括でずらします。</p>
+
+    <div class="demo-box">
+      <p class="hint"><strong>押して比べてください。</strong></p>
+      <p>
+        <button class="btn" data-f="none">none</button>
+        <button class="btn" data-f="hue-rotate(-25deg)">hue-rotate(-25deg)</button>
+        <button class="btn" data-f="hue-rotate(90deg)">hue-rotate(90deg)</button>
+        <button class="btn" data-f="saturate(2)">saturate(2)</button>
+        <button class="btn" data-f="saturate(0)">saturate(0)</button>
+        <button class="btn" data-f="sepia(.8) saturate(2.2)">sepia + saturate</button>
+        <button class="btn" data-f="brightness(.6)">brightness(.6)</button>
+      </p>
+      <svg id="p3demo3" viewBox="0 0 400 120" style="max-width:420px">
+        <g id="p3swatch">
+          <rect x="0" y="0" width="400" height="120" fill="#9fc4dd"/>
+          <rect x="12" y="18" width="68" height="84" fill="#b03a2e"/>
+          <rect x="92" y="18" width="68" height="84" fill="#2f6fa8"/>
+          <rect x="172" y="18" width="68" height="84" fill="#e8c33a"/>
+          <rect x="252" y="18" width="68" height="84" fill="#3f6b43"/>
+          <rect x="332" y="18" width="58" height="84" fill="#f2e3c0"/>
+        </g>
+      </svg>
+      <p class="readout" id="p3fnow" style="margin:8px 0 0"><code>filter: none</code></p>
+    </div>
+
+    <p><code>hue-rotate</code> は、明るさを変えずに色を色相環上で回します。負の角度は赤をオレンジ寄りに押します。日本の店の看板からインドの看板へ向かう最短経路が、たまたまこれです。</p>
+
+
+    <h3><span class="n">2.3.13</span>街のファイルの構造</h3>
+
+    <p>写真は名前付きの部品に切り分けられています。図形そのものには触りません。部品を名前で変更します。</p>
+<pre><code>&lt;g id="sign-kushikatsu"&gt;
+  &lt;g class="board"&gt;  ...看板の面...  &lt;/g&gt;
+  &lt;g class="ink"&gt;    ...日本語の文字...  &lt;/g&gt;
+  &lt;rect class="cover" ... /&gt;
+&lt;/g&gt;</code></pre>
+
+    <p>すべての看板が3層構造なので、変え方も3通りあります。</p>
+<pre><code>#sign-kushikatsu .ink   { display: none; }   /* 文字を消す     */
+#sign-kushikatsu .board { fill: #e07b17; }   /* 看板を塗り直す */
+#sign-kushikatsu .cover { display: block; }  /* まるごと白紙化 */</code></pre>
+
+    <p>自分の言葉や物は、ファイル末尾の <code>add</code> グループに追加します。</p>
+<pre><code>&lt;text x="76" y="140" font-size="44" fill="#ffffff"
+      font-family="Arial" font-weight="bold"
+      text-anchor="middle"&gt;CHAI&lt;/text&gt;</code></pre>
+
+    <p>使える名前はすべて <code>controls.txt</code> の先頭に列挙されています。<span class="mark">始める前にその一覧を読んでください。載っていない名前を発明することはできません。</span></p>
+
+    <div class="note">
+      <span class="tag">文字化けについて</span>
+      デーヴァナーガリーなど、ラテン文字以外を看板に入れたい場合は、早い段階で試してください。マシンにインストールされているフォントに依存します。空の四角が並んで表示されたら、ラテン文字に切り替えてください。
+    </div>
+
+
+    <h3><span class="n">2.3.14</span>4Bモデルへの話しかけ方</h3>
+
+    <p>確実に動かすための3つの習慣です。</p>
+    <ol>
+      <li><strong>1回の指示につき1つの変更。</strong>「看板をサフラン色にして」は通ります。「看板をサフラン色にして、文字を消して、花飾りを足して、空も変えて」は壊れて返ってきます。</li>
+      <li><strong>毎回かならず現在のコードを貼る。</strong>モデルは前のメッセージを覚えていません。今の状態を見せなければ、似たようなものを勝手に作り、それまでの作業を静かに消します。</li>
+      <li><strong>正確な名前を使う。</strong>「<code>#sign-blue</code> を変えて」には解釈の余地がありません。「右にある青い看板を変えて」にはあります。</li>
+    </ol>
+
+    <h4>良い指示の形</h4>
+    <div class="prompt"><span class="tag">PROMPT TEMPLATE</span>Here is my CSS.
+
+Remove the Japanese writing from #sign-kushikatsu and make its
+board saffron orange. Change nothing else.
+
+Output only the CSS lines to add. Do not return the whole file.
+Do not write placeholders. Write real values.
+
+[paste controls.txt here]</div>
+
+    <p>このテンプレートがやっていることは5つです。<span class="mark">文脈を与える／変更を1つだけ明示する／巻き添えを禁じる／出力の範囲を絞る／プレースホルダを禁じる。</span>どれも仕事をしています。1つ抜けるだけで結果が崩れます。</p>
+
+    <div class="note">
+      <span class="tag">最後の2行が効きます</span>
+      4Bは、長い出力を求められると途中で諦めて <code>{{ ... }}</code> や <code>... rest of code ...</code> を書きます。<span class="mark">禁じておくと、短く正確に返ってきます。</span>
+    </div>
+
+  </section>
+
+  <section class="sec" id="s2-4">
+    <h2><span class="n">2.4</span>この章で分かったこと</h2>
+
+    <p>今回は、AIが出したコードを<strong>人間が受け取り、貼り付け、動かしました。</strong>速さは体験できたはずです。数分で街の色が変わり、看板の文字が消えました。</p>
+
+    <p>同時に、限界も見えたはずです。AIはコードを書けても、<span class="mark">自分ではあなたのファイルを読めず、テストも実行できません。</span>ファイルを開いたのも、貼り付けたのも、結果を見て「違う」と判断したのも、すべてあなたです。</p>
+
+    <p>では、AIにファイルとターミナルという道具を渡したら、何が変わるでしょうか。</p>
+  </section>
+
+<script>
+(function () {
+  // --- SVG スライダーのデモ -------------------------------------------
+  var sx = document.getElementById('p3sx');
+  if (sx) {
+    var sy = document.getElementById('p3sy');
+    var sw = document.getElementById('p3sw');
+    var vx = document.getElementById('p3vx');
+    var vy = document.getElementById('p3vy');
+    var vw = document.getElementById('p3vw');
+    var rect = document.getElementById('p3r1');
+    var out = document.getElementById('p3codeout');
+
+    function draw() {
+      var x = sx.value, y = sy.value, w = sw.value;
+      vx.textContent = x; vy.textContent = y; vw.textContent = w;
+      rect.setAttribute('x', x);
+      rect.setAttribute('y', y);
+      rect.setAttribute('width', w);
+      out.textContent = '<rect x="' + x + '" y="' + y +
+                        '" width="' + w + '" height="60"/>';
+    }
+    [sx, sy, sw].forEach(function (el) { el.addEventListener('input', draw); });
+    draw();
+  }
+
+  // --- CSS 編集のデモ --------------------------------------------------
+  var box = document.getElementById('p3cssbox');
+  if (box) {
+    var style = document.createElement('style');
+    document.head.appendChild(style);
+
+    function apply() {
+      // #sky などが他の要素へ漏れないよう、デモのSVG内に限定する
+      var scoped = box.value.replace(/(^|\})\s*([#.][\w-]+)/g,
+        function (m, brace, sel) { return brace + ' #p3demo2 ' + sel; });
+      style.textContent = scoped;
+    }
+    box.addEventListener('input', apply);
+
+    document.querySelectorAll('[data-css]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var add = btn.getAttribute('data-css');
+        // リセット用（3行そろっているもの）は置き換え、1行のものは追記
+        if (add.split('\n').length > 1) { box.value = add; }
+        else { box.value = box.value.replace(/\s*$/, '') + '\n' + add; }
+        apply();
+      });
+    });
+    apply();
+  }
+
+  // --- filter のデモ ---------------------------------------------------
+  var swatch = document.getElementById('p3swatch');
+  if (swatch) {
+    var now = document.getElementById('p3fnow');
+    document.querySelectorAll('[data-f]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var f = btn.getAttribute('data-f');
+        swatch.style.filter = f;
+        now.innerHTML = '<code>filter: ' + f + '</code>';
+      });
+    });
+  }
+})();
+</script>
+
+
+
+  
+
+
+  <nav class="pager">
+    <a class="prev" href="part1.html"><span class="dir">← PREV</span><span class="ttl">PART 1　LLMの仕組みと限界</span></a>
+    <a class="next" href="part3.html"><span class="dir">NEXT →</span><span class="ttl">PART 3　Coding Agentを動かす</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'コピー';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'コピーしました';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'コピー';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

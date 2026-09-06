@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>Vibe Order</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; }
+    li { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <h1>Vibe Order</h1>
+
+  <!-- PART 6.4.2 でここに注文フォームを追加する -->
+
+  <ul id="order-list">
+    {% for order in orders %}
+      <li>{{ order.table_no }} 番 / {{ order.status }}</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>

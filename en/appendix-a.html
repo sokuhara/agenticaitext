@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Appendix A Running everything with local models</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#1f7a5a;
+  --accent-soft:#e2f3ec;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html" aria-current="page">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">APPENDIX A</div>
+    <h1>Running everything with local models</h1>
+    <p class="lede">How to work through this course with models running on your own machine or a shared lab server. Setup, the traps, and how to narrow down a connection problem.</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>Previously</dt><dd>Part 8 applied the agent design to video production.</dd>
+      <dt>This part</dt><dd>Ollama setup, the two-model split, connecting to a shared server, and what to do when things do not work.</dd>
+      <dt>Next</dt><dd>Appendix B records the original Node.js and TypeScript build.</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="Contents of this part">
+    <h2>In this part</h2>
+    <ol>
+      <li><span class="n">A.1</span><a href="#sa-1">What this appendix is</a></li>
+      <li><span class="n">A.2</span><a href="#sa-2">Requirements, and using two models</a></li>
+      <li><span class="n">A.3</span><a href="#sa-3">Setting up Ollama</a></li>
+      <li><span class="n">A.4</span><a href="#sa-4">Cline settings</a></li>
+      <li><span class="n">A.5</span><a href="#sa-5">Notes per part</a></li>
+      <li><span class="n">A.6</span><a href="#sa-6">Where local setups get stuck</a></li>
+      <li><span class="n">A.7</span><a href="#sa-7">Reference: choosing a model</a></li>
+      <li><span class="n">A.8</span><a href="#sa-8">Using a Dev Container</a></li>
+      <li><span class="n">A.9</span><a href="#sa-9">No completions, or two sets</a></li>
+      <li><span class="n">A.10</span><a href="#sa-10">Passing files from a terminal</a></li>
+      <li><span class="n">A.11</span><a href="#sa-11">Narrowing down a connection problem</a></li>
+      <li><span class="n">A.12</span><a href="#sa-12">Enabling the GPU in browser Colab</a></li>
+    </ol>
+  </nav>
+
+
+
+  <section class="sec" id="sa-1">
+    <h2><span class="n">A.1</span>What this appendix is</h2>
+
+    <p>The hands-on parts of this course assume you run models locally. A cloud API setup works the same way, but it costs money and needs an account and model access. <span class="mark">When you are setting up an environment for a whole class, arranging the billing is itself the obstacle.</span> So local is the default here.</p>
+
+    <p><strong>What actually changes is the model and the provider.</strong> The agent is still Cline; the repository layout, the prompts and the commands are the same.</p>
+
+    <div class="note">
+      <span class="tag">What changes, and what does not</span>
+      <strong>Changes:</strong> API provider, model name, how you think about cost (your own hardware versus per-token billing), how much you can delegate in one session<br><br>
+      <strong>Does not change:</strong> Cline, the repository layout, <code>.clinerules</code>, commands such as <code>/deep-planning</code> and <code>/selfcheck.md</code>, how CI is put together
+    </div>
+  </section>
+
+  <section class="sec" id="sa-2">
+    <h2><span class="n">A.2</span>Requirements, and using two models</h2>
+
+    <p>Doing everything with one model means tying up a large model for trivial work, while a small model breaks partway through a long implementation loop. <span class="mark">Splitting by role is easier to live with.</span></p>
+
+    <table>
+      <thead><tr><th>Role</th><th>Model</th><th>Ollama tag</th><th>Where it lives</th></tr></thead>
+      <tbody>
+        <tr><td><strong>The agent</strong><br>implementation, planning, self-check</td><td>Qwen3.8 27B</td><td><code>qwen3.8:27b</code></td><td>Shared lab server (A.3.4)</td></tr>
+        <tr><td><strong>Light work</strong><br>summaries, drafts, Exercise 1 in Part 2</td><td>Qwen3.5 4B</td><td><code>qwen3.5:4b</code></td><td>Each student's laptop</td></tr>
+      </tbody>
+    </table>
+
+    <p>The default Ollama build of Qwen3.8 27B is around 18 GB at Q4_K_M quantisation, with tool calling and thinking. <span class="mark">Tool calling is exactly what a coding agent needs, so whether a model supports it is the deciding factor.</span> With about 24 GB of VRAM it fits at a usable context length.</p>
+
+    <p>Qwen3.5 4B also supports tool calling. It is enough for work like Exercise 1 in Part 2, where the target is clear and each change is small. <strong>It is too small for the long implementation loops in Part 6.</strong></p>
+
+    <p><span class="mark">Treat the 4B as good for small, precise requests</span>, and use the 27B from Part 5 onwards.</p>
+
+    <div class="warn">
+      <span class="tag">Check before you rely on this</span>
+      Ollama's model library changes its tag layout often. <span class="mark">Confirm the tag name, the quantisation and the supported features (tools / thinking) with <code>ollama list</code> and the official library page</span> before using them. What is written here was accurate at the time of writing.
+    </div>
+  </section>
+
+  <section class="sec" id="sa-3">
+    <h2><span class="n">A.3</span>Setting up Ollama</h2>
+
+    <h3><span class="n">A.3.1</span>Check the version and fetch the models</h3>
+
+    <p>This appendix assumes Ollama 0.32.15. Installing Ollama itself is covered in <a href="setup.html">Setup</a>, section 02.</p>
+
+<pre><code>ollama --version
+# ollama version is 0.32.15
+
+# the agent model (about 18 GB)
+ollama pull qwen3.8:27b
+
+# the light model (on each laptop)
+ollama pull qwen3.5:4b
+
+# is the GPU visible?
+nvidia-smi
+ollama ps</code></pre>
+
+    <h3><span class="n">A.3.2</span>Raise the context length explicitly</h3>
+
+    <p><strong>This is the setting people most often miss.</strong></p>
+
+    <p>Ollama's default context length is too short for coding agent work. <span class="mark">The conversation history gets trimmed with no warning, and the agent forgets a file it created a moment ago.</span></p>
+
+    <p>A model supporting a long context does nothing on its own. <strong>The runtime default is what applies unless you set <code>num_ctx</code>.</strong></p>
+
+    <p>The reliable approach is a derived model with the setting baked in. <strong>This also matters when you run your own agent in Part 7.</strong> Setting <code>num_ctx</code> in code affects one call; changing the model default is safer.</p>
+
+<pre><code># Modelfile.agent
+FROM qwen3.8:27b
+PARAMETER num_ctx 131072</code></pre>
+
+<pre><code>ollama create qwen38-agent -f Modelfile.agent
+ollama show qwen38-agent   # confirm num_ctx took effect</code></pre>
+
+    <div class="warn">
+      <span class="tag">Longer context costs VRAM</span>
+      A longer context means a larger KV cache. <span class="mark">If <code>ollama ps</code> shows work spilling to the CPU, lower <code>num_ctx</code> or look at quantising the KV cache.</span> The moment it falls back to CPU, the speed becomes unusable.
+    </div>
+
+    <h3><span class="n">A.3.3</span>Serving it (sharing in a lab or classroom)</h3>
+
+    <p>Putting the 27B on one machine with a GPU is easier to manage than distributing it to every laptop.</p>
+
+<pre><code># on the server (exposed on the LAN)
+OLLAMA_HOST=0.0.0.0:11434 ollama serve
+
+# from a client
+curl http://&lt;server&gt;:11434/api/tags</code></pre>
+
+    <div class="warn">
+      <span class="tag">Caution</span>
+      <span class="mark">The Ollama endpoint has no authentication.</span> If it goes outside your internal network, put a reverse proxy or an SSH tunnel in front of it. The "what to protect" decision from Part 4 does not disappear because the model is local.
+    </div>
+
+    <h3><span class="n">A.3.4</span>Connecting to a shared server through Cloudflare Access</h3>
+
+    <p>To use the lab server from outside, put authentication in front of it. <strong>Cloudflare Access is the example here.</strong></p>
+
+    <p>Ollama has <span class="mark">an OpenAI-compatible endpoint.</span> Add <code>/v1</code> and existing clients work unchanged.</p>
+
+    <table>
+      <thead><tr><th></th><th>Endpoint</th><th>Model</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Your laptop</strong></td><td><code>http://localhost:11434</code></td><td><code>qwen3.5:4b</code></td></tr>
+        <tr><td><strong>The lab server</strong></td><td><code>https://&lt;hostname&gt;/v1</code></td><td>The 27B model</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">The 27B is not on your laptop</span>
+      <span class="mark">Locally you only have <code>qwen3.5:4b</code>.</span> The 27B used from Part 3 lives on the server.<br><br>
+      Running <code>ollama list</code> locally will not show it. That is correct. <span class="mark">18 GB per student is more than most classroom networks and laptops can absorb at once.</span>
+    </div>
+
+    <h4>Check the connection first</h4>
+
+<pre><code>import os
+
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://&lt;hostname&gt;/v1",
+    api_key="ollama",                       # Ollama ignores this
+    default_headers={
+        "CF-Access-Client-Id": os.environ["CF_ACCESS_CLIENT_ID"],
+        "CF-Access-Client-Secret": os.environ["CF_ACCESS_CLIENT_SECRET"],
+    },
+)
+
+for m in client.models.list().data:
+    print(m.id)</code></pre>
+
+    <p>If the model appears in the list, you are connected.</p>
+
+    <div class="warn">
+      <span class="tag">Do not put credentials in the code</span>
+      <span class="mark">A service token written into source goes straight into Git.</span> This is the Part 5 lesson arriving early.<br><br>
+      Use environment variables. If you use a <code>.env</code>, confirm it is in <code>.gitignore</code>.<br><br>
+      If you commit one by accident, <strong>deleting it is not enough.</strong> Revoke the token in the Cloudflare dashboard and issue a new one. Revoking is more reliable than scrubbing history.
+    </div>
+
+<pre><code># PowerShell (this session only)
+$env:CF_ACCESS_CLIENT_ID="&lt;your ID&gt;"
+$env:CF_ACCESS_CLIENT_SECRET="&lt;your secret&gt;"
+
+# macOS / Linux
+export CF_ACCESS_CLIENT_ID="&lt;your ID&gt;"
+export CF_ACCESS_CLIENT_SECRET="&lt;your secret&gt;"</code></pre>
+
+    <h4>Using it from Cline or Continue</h4>
+
+    <p>Choose <strong>OpenAI Compatible</strong> as the provider. Not the Ollama provider.</p>
+
+    <table>
+      <thead><tr><th>Field</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Provider</td><td><code>OpenAI Compatible</code></td></tr>
+        <tr><td>Base URL</td><td><code>https://&lt;hostname&gt;/v1</code></td></tr>
+        <tr><td>API Key</td><td>Any string (Ollama ignores it)</td></tr>
+        <tr><td>Model</td><td>The model name you were given</td></tr>
+        <tr><td>Custom headers</td><td><code>CF-Access-Client-Id</code> and <code>CF-Access-Client-Secret</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>For Continue, it goes in the config file.</p>
+
+<pre><code>models:
+  - name: Lab 27B
+    provider: openai
+    model: &lt;model name&gt;
+    apiBase: https://&lt;hostname&gt;/v1
+    apiKey: ollama
+    roles: [chat]
+    requestOptions:
+      headers:
+        CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+        CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}</code></pre>
+
+    <div class="warn">
+      <span class="tag">These are not read from OS environment variables</span>
+      Even written as <code>${{ secrets.X }}</code>, <span class="mark">the VS Code extension does not see variables you <code>export</code>ed.</span> They have to be in a <code>.env</code> file.<br><br>
+      This is the order it looks in.
+    </div>
+
+    <table>
+      <thead><tr><th></th><th>Location</th><th>When to use it</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>.env</code> in the working folder</td><td>For that project only</td></tr>
+        <tr><td>2</td><td><code>.continue/.env</code> in the working folder</td><td>Same, but kept separate for Continue</td></tr>
+        <tr><td>3</td><td><code>~/.continue/.env</code></td><td><strong>Shared across projects. Easiest for a class</strong></td></tr>
+        <tr><td>4</td><td>OS environment variables</td><td><span class="mark">Continue CLI only. Not the VS Code extension</span></td></tr>
+      </tbody>
+    </table>
+
+    <p>Option 3 is what we recommend. Write it once and it works in every folder.</p>
+
+<pre><code># ~/.continue/.env
+CF_ACCESS_CLIENT_ID=&lt;your ID&gt;
+CF_ACCESS_CLIENT_SECRET=&lt;your secret&gt;</code></pre>
+
+    <p>Do not put quotes around the values. It is dotenv format.</p>
+
+    <h4>Creating it on Windows</h4>
+
+    <p><code>~</code> is <code>C:\Users\&lt;username&gt;</code>, so the file is <code>C:\Users\&lt;username&gt;\.continue\.env</code>.</p>
+
+    <div class="warn">
+      <span class="tag">Explorer and Notepad will not do it</span>
+      Two reasons.<br><br>
+      <strong>1. Extensions are hidden.</strong> Notepad saves it as <code>.env.txt</code>. It looks like <code>.env</code>, so you never notice.<br><br>
+      <strong>2. Leading dots are awkward.</strong> Explorer's "New file" sometimes refuses the name.<br><br>
+      <span class="mark">Use PowerShell.</span>
+    </div>
+
+<pre><code># 1. find out where your home is
+echo $HOME
+
+# 2. create the folder (does nothing if it exists)
+New-Item -ItemType Directory -Force -Path "$HOME\.continue" | Out-Null
+
+# 3. write the contents
+[System.IO.File]::WriteAllText(
+  "$HOME\.continue\.env",
+  "CF_ACCESS_CLIENT_ID=&lt;your ID&gt;`nCF_ACCESS_CLIENT_SECRET=&lt;your secret&gt;`n"
+)
+
+# 4. check it
+Get-Content "$HOME\.continue\.env"</code></pre>
+
+    <div class="warn">
+      <span class="tag">Why not Set-Content</span>
+      On PowerShell 5.1, <code>Set-Content -Encoding utf8</code> writes an invisible <strong>BOM</strong> at the start of the file. <span class="mark">The first key then reads as <code>﻿CF_ACCESS_CLIENT_ID</code> and the value is never found.</span><br><br>
+      It looks correct on screen, so this takes a long time to diagnose. <code>WriteAllText</code> above writes no BOM.
+    </div>
+
+    <h4>Creating it in VS Code</h4>
+
+    <ol>
+      <li>Run <code>New-Item -ItemType Directory -Force -Path "$HOME\.continue"</code> in PowerShell to make the folder</li>
+      <li>In VS Code, <strong>File → Open Folder</strong>, and type <code>%USERPROFILE%\.continue</code> in the address box</li>
+      <li>Create a new file and name it <code>.env</code></li>
+      <li>Write the two lines and save</li>
+    </ol>
+
+    <p>VS Code will not add an extension, and the status bar shows you the encoding is <code>UTF-8</code>.</p>
+
+    <div class="note">
+      <span class="tag">If Windows is running in a virtual machine</span>
+      With Parallels and similar, you may see the macOS side mounted at something like <code>C:\Mac\Home</code>. <span class="mark">That is not your Windows home.</span><br><br>
+      Always run <code>echo $HOME</code> first.
+    </div>
+
+    <h4>macOS and Linux</h4>
+
+<pre><code>mkdir -p ~/.continue
+cat > ~/.continue/.env &lt;&lt;'EOF'
+CF_ACCESS_CLIENT_ID=&lt;your ID&gt;
+CF_ACCESS_CLIENT_SECRET=&lt;your secret&gt;
+EOF
+cat ~/.continue/.env</code></pre>
+
+    <p><span class="mark">Reload VS Code afterwards</span> (<code>Ctrl</code> + <code>Shift</code> + <code>P</code> → <code>Reload Window</code>). The file is read at startup, so nothing happens while the window stays open.</p>
+
+    <div class="warn">
+      <span class="tag">If you put it in the working folder</span>
+      With option 1 or 2, <span class="mark">confirm <code>.env</code> is in <code>.gitignore</code>.</span><br><br>
+      Option 3 lives outside any repository, so there is nothing to commit by accident. That is one reason it is the recommendation.
+    </div>
+
+    <div class="note">
+      <span class="tag">If custom headers are not supported</span>
+      Some versions have no field for adding headers. Two ways round it.<br><br>
+      <strong>1. Tunnel.</strong> Use <code>cloudflared access tcp</code> to forward a local port, and set the Base URL to <code>http://localhost:&lt;port&gt;/v1</code>. The tunnel handles authentication, so the extension never needs the headers.<br><br>
+      <strong>2. A local proxy.</strong> A small server that adds the headers and forwards. After Part 7 you can write it in a few dozen lines.
+    </div>
+
+    <div class="warn">
+      <span class="tag">A shared server is shared</span>
+      One GPU serves everyone, so <span class="mark">when someone is running a long task, replies slow down.</span> That is not a fault.<br><br>
+      When the wait is long, use <code>qwen3.5:4b</code> locally. The exercises in Parts 1 and 2 are fine on it.
+    </div>
+  </section>
+
+  <section class="sec" id="sa-4">
+    <h2><span class="n">A.4</span>Cline settings</h2>
+
+    <table>
+      <thead><tr><th>Field</th><th>This course (Ollama)</th><th>For reference: a cloud API</th></tr></thead>
+      <tbody>
+        <tr><td>API Provider</td><td><code>Ollama</code> or <code>OpenAI Compatible</code></td><td>Amazon Bedrock and similar</td></tr>
+        <tr><td>Base URL</td><td><code>http://localhost:11434</code><br>or <code>http://&lt;server&gt;:11434</code></td><td>—</td></tr>
+        <tr><td>Model ID</td><td><code>qwen38-agent</code> (built in A.3.2)</td><td>A Claude or GPT model</td></tr>
+        <tr><td>Authentication</td><td>None</td><td><code>aws configure sso</code> and similar</td></tr>
+        <tr><td>Cost</td><td>Your own hardware</td><td>Per-token billing</td></tr>
+      </tbody>
+    </table>
+
+    <p>As an OpenAI-compatible endpoint, add <code>/v1</code> to the Base URL. No API key is needed, but if the field is mandatory, any string will do.</p>
+
+    <p>Once configured, send one message to confirm the round trip. <span class="mark">If nothing comes back, it is almost always connectivity or a mistyped model name.</span></p>
+  </section>
+
+  <section class="sec" id="sa-5">
+    <h2><span class="n">A.5</span>Notes per part</h2>
+
+    <table>
+      <thead><tr><th>Part</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td><strong>2 and 3</strong></td><td>Already written for local models. Exercise 1 in Part 2 needs only <code>qwen3.5:4b</code> and no Cline. <span class="mark">Do the <code>num_ctx</code> setup in A.3.2 before Part 3.</span></td></tr>
+        <tr><td><strong>4</strong><br>review</td><td>No change. If anything, a local model fails more often, which raises the value of linters, tests and CI. <strong>Do not skip this part.</strong></td></tr>
+        <tr><td><strong>5</strong><br>tests</td><td>No change. Flask and pytest run the same locally.</td></tr>
+        <tr><td><strong>6</strong><br>implementation</td><td>Written for local models already. Handing over at 70% context, and keeping reference material short, both assume a local model.</td></tr>
+        <tr><td><strong>7</strong><br>your own agent</td><td>MCP is described as a layer independent of both the model and the language, so nothing needs rewriting.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="sec" id="sa-6">
+    <h2><span class="n">A.6</span>Where local setups get stuck</h2>
+
+    <h3><span class="n">A.6.1</span>The context is cut silently</h3>
+
+    <p>The agent forgets a file it just made, proposes the same fix repeatedly, or stops making sense halfway through a plan. <span class="mark">No error appears, which is what makes it hard to spot.</span></p>
+
+    <p>Do the <code>num_ctx</code> setup in A.3.2 first.</p>
+
+    <h3><span class="n">A.6.2</span>Diff edits failing</h3>
+
+    <p>Cline's file rewriting requires the target string to match exactly. Local models tend to need several retries here.</p>
+
+    <p>The remedy is to <strong>touch fewer files and change less per request.</strong> Apply the "cut the work into small iterations" idea from Part 6 more aggressively.</p>
+
+    <h3><span class="n">A.6.3</span>Tool calls printed as text</h3>
+
+    <p>Sometimes the model writes the tool call out as prose instead of calling it. <span class="mark">This kind of problem is often fixed by a runtime update</span>, so if it persists, try a different combination of Ollama version and model tag.</p>
+
+    <h3><span class="n">A.6.4</span>Do not run auto-approve for long</h3>
+
+    <p>With a local model, leaving auto-approve on means <span class="mark">it can run for a long time in a broken state.</span></p>
+
+    <p><strong>More approval points usually finish faster overall.</strong></p>
+  </section>
+
+  <section class="sec" id="sa-7">
+    <h2><span class="n">A.7</span>Reference: choosing a model and a provider</h2>
+
+    <p>Reference material moved here from Part 1. <span class="mark">You do not need it to follow the course.</span> Read it when you are choosing your own setup.</p>
+
+    <h3><span class="n">A.7.1</span>Four kinds of provider</h3>
+
+    <table>
+      <thead><tr><th></th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Model developers</strong></td><td>First access to new capabilities. OpenAI, Anthropic, Google</td></tr>
+        <tr><td><strong>Hosting platforms</strong></td><td>Many models behind one API. OpenRouter and similar</td></tr>
+        <tr><td><strong>Managed services</strong></td><td>Integrated with cloud identity and networking, better for governance. Amazon Bedrock, Azure AI Foundry, Vertex AI</td></tr>
+        <tr><td><strong>Running it yourself</strong></td><td>Open-weight models on your own hardware. Ollama, vLLM, llama.cpp. <span class="mark">This course</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">A.7.2</span>Proprietary and open-weight</h3>
+
+    <p>The first fork when choosing a model is not performance or price. It is <span class="mark">whether the weights are published.</span></p>
+
+    <table>
+      <thead><tr><th></th><th>Proprietary</th><th>Open-weight</th></tr></thead>
+      <tbody>
+        <tr><td>How you get it</td><td>Call an API. You cannot see inside</td><td>Download the weight files</td></tr>
+        <tr><td>Where it runs</td><td>The provider's data centre</td><td>Anywhere, including your own machine</td></tr>
+        <tr><td>Cost</td><td>Per token</td><td>Electricity and hardware</td></tr>
+        <tr><td>Risk of it stopping</td><td>Discontinuation, price rises, terms changing</td><td>It runs as long as you have it</td></tr>
+        <tr><td>Modification</td><td>Not possible</td><td>Fine-tuning, quantisation, distillation</td></tr>
+        <tr><td>Examples</td><td>Claude, GPT, Gemini, Grok</td><td>Qwen, DeepSeek, Kimi, GLM, Llama, Gemma, gpt-oss</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">"Open-weight", not "open source"</span>
+      Published weights do not mean published training data or training code. <span class="mark">Licences vary too</span>: some are Apache-2.0 or MIT, others carry conditions on use.<br><br>
+      <strong>Check the licence before using one in research or teaching.</strong>
+    </div>
+
+    <h3><span class="n">A.7.3</span>The landscape</h3>
+
+    <p><span class="mark">This section dates faster than anything else here.</span> Rather than the names, look at what families exist and what axes they differ on. <strong>Those hold longer than any particular model.</strong></p>
+
+    <table>
+      <thead><tr><th>Family</th><th>From</th><th>Position</th></tr></thead>
+      <tbody>
+        <tr><td>Qwen</td><td>Alibaba</td><td>Apache-2.0. A wide range of sizes, strong even when small. <strong>Used in this course</strong></td></tr>
+        <tr><td>DeepSeek</td><td>DeepSeek</td><td>MIT. Showed that reasoning models could be published, and changed expectations</td></tr>
+        <tr><td>Kimi</td><td>Moonshot AI</td><td>Very large MoE. Well regarded for agent use and terminal work</td></tr>
+        <tr><td>GLM</td><td>Z.ai</td><td>MIT. Focused on coding and agents</td></tr>
+        <tr><td>Llama / Gemma</td><td>Meta / Google</td><td>The family that started the open-weight movement, and its smaller sibling</td></tr>
+        <tr><td>gpt-oss</td><td>OpenAI</td><td>OpenAI's open-weight release. Apache-2.0</td></tr>
+        <tr><td>Claude / GPT / Gemini</td><td>Anthropic / OpenAI / Google</td><td>Proprietary, used through an API</td></tr>
+      </tbody>
+    </table>
+
+    <p>Until around 2024, open-weight models were assumed to be a few generations behind proprietary ones. Through 2025 and 2026 that gap narrowed sharply. <span class="mark">This course can run a coding agent on your own machine because of that change.</span></p>
+
+    <h3><span class="n">A.7.4</span>Size, MoE and quantisation</h3>
+
+    <p>Running locally, these matter before benchmark scores do.</p>
+
+    <p><strong>Parameter count.</strong> The <code>4b</code> or <code>27b</code> at the end of a name. Bigger is more capable, uses more memory, and is slower.</p>
+
+    <p><strong>Dense and MoE.</strong> A dense model uses every parameter each time. MoE (Mixture of Experts) splits the model into many experts and activates only some per input. A figure like "1.6T total / 4.9B active" means <span class="mark">you need memory for the total, but only part of it computes.</span> <strong>For a single GPU, a mid-sized dense model is more realistic.</strong></p>
+
+    <p><strong>Quantisation.</strong> Dropping the weights to 4 or 8 bits to save space. <code>Q4_K_M</code> is one such label. Quality drops slightly; size drops to roughly a quarter.</p>
+
+    <table>
+      <thead><tr><th>Size</th><th>At 4-bit</th><th>Runs on</th><th>Good for</th></tr></thead>
+      <tbody>
+        <tr><td>3B–8B</td><td>2–6 GB</td><td>A laptop, even without a GPU</td><td>Summaries, formatting, small precise requests</td></tr>
+        <tr><td>14B–32B</td><td>8–20 GB</td><td>One GPU, 24 GB class</td><td><span class="mark">Real agent work. The centre of this course</span></td></tr>
+        <tr><td>70B and large MoE</td><td>40 GB to hundreds</td><td>Multiple GPUs, a server</td><td>Shared across a lab or an organisation</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">A.7.5</span>Reading benchmarks</h3>
+
+    <table>
+      <thead><tr><th>Benchmark</th><th>What it measures</th></tr></thead>
+      <tbody>
+        <tr><td>SWE-bench Verified</td><td>Bug fixes from real GitHub issues. Top models are approaching saturation, so it discriminates less than it did</td></tr>
+        <tr><td>SWE-bench Pro</td><td>Fixes spanning several languages and files</td></tr>
+        <tr><td>Terminal-Bench</td><td>Completing a task in a terminal. <span class="mark">The one to look at for agent use</span></td></tr>
+        <tr><td>LiveCodeBench</td><td>Problems from after the training cutoff, so harder to contaminate</td></tr>
+        <tr><td>Aider Polyglot</td><td>Retry-after-error format, close to how an agent actually behaves</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>No single score settles the question.</strong> Numbers a vendor measured themselves were taken under conditions they chose. <span class="mark">Look at a benchmark close to how you actually work, then try the model on your own codebase at a small scale.</span></p>
+
+    <h3><span class="n">A.7.6</span>How your data is handled</h3>
+
+    <p>Managed cloud services usually state in their terms that submitted data is not used for training. On hosting platforms, whether data is used for training, and how long logs are kept, depends on the downstream provider and the settings.</p>
+
+    <p>For sensitive code, <span class="mark">check retention periods and whether zero data retention is available</span>, not just the training flag.</p>
+
+    <div class="warn">
+      <span class="tag">"Local means nothing leaves" has conditions</span>
+      Running the model locally does not itself send anything out. <span class="mark">But anything you add that uses the network does.</span><br><br>
+      Web search, an MCP server calling an external API, a cloud-synced folder, telemetry. <strong>Check the whole setup.</strong> Running locally is a precondition, not a guarantee on its own.
+    </div>
+  </section>
+
+  <section class="sec" id="sa-8">
+    <h2><span class="n">A.8</span>Using a Dev Container</h2>
+
+    <p>When machines in a class or a lab are all in different states, a Dev Container gives everyone the same environment. Not required for Part 5, but <span class="mark">sometimes faster than spending the session on "it does not work on my machine".</span></p>
+
+    <p>There is another reason. Since you let the agent run commands, <strong>there is value in the workspace not being your own machine.</strong> <span class="mark">If something goes wrong inside a container, you rebuild it rather than repair your laptop.</span></p>
+
+<pre><code>// .devcontainer/devcontainer.json
+{
+  "name": "vibe-chat",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "features": {
+    "ghcr.io/va-h/devcontainers-features/uv:1": {},
+    "ghcr.io/devcontainers/features/node:1": {}
+  },
+  "postCreateCommand": "uv sync",
+  "customizations": {
+    "vscode": {
+      "extensions": ["saoudrizwan.claude-dev", "charliermarsh.ruff"]
+    }
+  }
+}</code></pre>
+
+    <div class="warn">
+      <span class="tag">Do not put an installer in postCreateCommand</span>
+      You often see <code>curl -LsSf https://astral.sh/uv/install.sh | sh &amp;&amp; uv sync</code>. <span class="mark">There is no guarantee the freshly installed <code>uv</code> resolves on the PATH within that same command.</span> Calling it immediately in the same shell can fail.<br><br>
+      Install it as a Feature, or use an image with <code>uv</code> already in it. <strong><code>postCreateCommand</code> should only contain things already on the PATH.</strong>
+    </div>
+
+    <p>The Node.js Feature is there because many MCP servers are distributed through <code>npx</code>. You are not writing JavaScript in the application (Part 7).</p>
+
+    <p>The same <code>devcontainer.json</code> works in GitHub Codespaces. <span class="mark">If some students have no Docker locally, that is the more reliable route.</span></p>
+  </section>
+
+  <section class="sec" id="sa-9">
+    <h2><span class="n">A.9</span>No completions, or two sets of them</h2>
+
+    <p>This applies if you added Continue's tab completion in Setup 06. <span class="mark">Almost every "completion is not working" report comes from another completion feature interfering.</span></p>
+
+    <h3><span class="n">A.9.1</span>First, work out which symptom you have</h3>
+
+    <table>
+      <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td>No grey suggestions at all</td><td>Another extension answers first, or Continue is disabled</td></tr>
+        <tr><td>Suggestions appear, but suspiciously fast</td><td>Those are Copilot's, not Continue's</td></tr>
+        <tr><td>Suggestions flicker, or look doubled</td><td>Two completion engines are running at once</td></tr>
+      </tbody>
+    </table>
+
+    <p>The second one is the troublesome case. <span class="mark">What you thought was working turns out to be a different extension.</span> You think you are running locally, while your code is being sent to a cloud service.</p>
+
+    <h3><span class="n">A.9.2</span>Turning GitHub Copilot off</h3>
+
+    <p>Three levels, each stronger than the last.</p>
+
+    <h4>1. Stop inline completions only</h4>
+
+    <p>Click the Copilot icon in the status bar, bottom right, and choose <strong>Disable Completions</strong>. Chat stays.</p>
+
+    <p>From settings: <code>Ctrl</code> (macOS <code>Cmd</code>) + <code>,</code>, then search for <code>github.copilot.enable</code>. Open <strong>Edit in settings.json</strong> and write:</p>
+
+<pre><code>"github.copilot.enable": {
+  "*": false
+}</code></pre>
+
+    <h4>2. Disable it for this project only</h4>
+
+    <p>In the extensions panel (<code>Ctrl</code> + <code>Shift</code> + <code>X</code>), find GitHub Copilot and choose <strong>Disable (Workspace)</strong> from the gear.</p>
+
+    <p><span class="mark">This is what we recommend for the course.</span> Copilot keeps working in your other projects and is off only in this folder.</p>
+
+    <h4>3. Disable it completely</h4>
+
+    <p><strong>Disable</strong> from the same gear. Reload VS Code if asked.</p>
+
+    <div class="warn">
+      <span class="tag">Other extensions produce completions too</span>
+      Tabnine, Codeium, Amazon Q and others may have been installed by a school or company default. <span class="mark">Clear the search box in the extensions panel and read the list from the top.</span><br><br>
+      Anything with "completion", "AI" or "assistant" in the name is a candidate.
+    </div>
+
+    <h3><span class="n">A.9.3</span>Check the Continue side</h3>
+
+    <p>If nothing appears even with the others off, Continue itself may be inactive.</p>
+
+    <ol>
+      <li>Click Continue in the status bar and check <strong>Enable Tab Autocomplete</strong> is on</li>
+      <li>Check the model name in your config matches <code>ollama list</code> <span class="mark">character for character</span>, including the tag</li>
+      <li>Check <code>autocomplete</code> is in <code>roles</code>. A chat-only entry produces no completions</li>
+      <li>Run <code>ollama ps</code>. If the completion model never loads, Continue is not reaching it</li>
+    </ol>
+
+    <h3><span class="n">A.9.4</span>If you still cannot tell</h3>
+
+    <p>Look at the VS Code log. <code>Ctrl</code> (macOS <code>Cmd</code>) + <code>Shift</code> + <code>P</code>, run <strong>Toggle Developer Tools</strong>, and open the <strong>Console</strong> tab.</p>
+
+    <p><span class="mark">Wrong model names and connection errors show up there.</span> Paste the error into the agent and you will get somewhere. <strong>The method from Part 2 applies unchanged.</strong></p>
+  </section>
+
+  <section class="sec" id="sa-10">
+    <h2><span class="n">A.10</span>If you cannot use Continue: passing files from a terminal</h2>
+
+    <p>Exercise 1 in Part 2 assumes you hand files to the AI through Continue. <span class="mark">If you cannot install it, you can do the same from a terminal.</span></p>
+
+    <p>The main text does not cover this. <strong>Two ways of doing the same thing makes it unclear which to use.</strong></p>
+
+    <div class="warn">
+      <span class="tag">curl.exe, not curl</span>
+      PowerShell's <code>curl</code> is an alias for something else. <span class="mark">Always write <code>curl.exe</code>.</span> The <code>-H</code> syntax differs and it will fail.
+    </div>
+
+    <h3><span class="n">A.10.1</span>Passing a file</h3>
+
+    <p>Pasting long text into <code>ollama run</code> can execute the line breaks partway through. <span class="mark">Pipe the file in instead of pasting.</span></p>
+
+<pre><code># PowerShell
+Get-Content controls.txt | ollama run qwen3.5:4b
+
+# macOS / Linux
+cat controls.txt | ollama run qwen3.5:4b</code></pre>
+
+    <p>One line, and no paste accidents.</p>
+
+    <h3><span class="n">A.10.2</span>Passing an instruction with it</h3>
+
+    <p>A file alone does not say what you want done.</p>
+
+<pre><code># PowerShell
+"Fill in the blank. Output one line only.`n" +
+"#sign-kushikatsu .board { fill: ______; }`n" +
+"Replace ______ with a hex color for saffron orange." |
+  ollama run qwen3.5:4b</code></pre>
+
+    <p>The reason for the blank-filling shape is the same as in Part 2. <span class="mark">Give a 4B model one thing to decide per request.</span></p>
+
+    <h3><span class="n">A.10.3</span>What to do with the reply</h3>
+
+    <p>From here it is the same as with Continue. Paste the returned CSS into region A of <code>shinsekai_remix.html</code>, save, and reload.</p>
+
+    <div class="note">
+      <span class="tag">Use Continue if you can</span>
+      A terminal works, but <strong>handing over a file you already have open is more reliable.</strong> No paste accidents, and copying the reply is one button.<br><br>
+      Installation is in <a href="setup.html">Setup</a>, section 06.
+    </div>
+  </section>
+
+  <section class="sec" id="sa-11">
+    <h2><span class="n">A.11</span>Narrowing down a shared-server connection problem</h2>
+
+    <p>When Cline will not work, the cause is <span class="mark">either the server or Cline.</span> Calling the server from a terminal tells you which.</p>
+
+    <p>Run these in PowerShell. <strong>Each one on a single line.</strong> Wrapping splits it into two commands and the second half loses the headers.</p>
+
+    <h3><span class="n">A.11.1</span>Stage 1: authentication and the model list</h3>
+
+<pre><code>curl.exe "https://&lt;server&gt;/api/tags" -H "CF-Access-Client-Id:&lt;ID&gt;" -H "CF-Access-Client-Secret:&lt;Secret&gt;"</code></pre>
+
+    <table>
+      <thead><tr><th>What comes back</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td>JSON (<code>{"models":[...]}</code>)</td><td><strong>Authentication works.</strong> Go to stage 2</td></tr>
+        <tr><td>HTML saying <code>302 Found</code></td><td>The credentials are not arriving. Check the header names and values</td></tr>
+        <tr><td>Nothing at all</td><td>A wrong URL, or the server is down</td></tr>
+      </tbody>
+    </table>
+
+    <p>When JSON comes back, <span class="mark">the <code>name</code> field is the model name.</span> Check it matches the Model ID in Cline.</p>
+
+    <div class="warn">
+      <span class="tag"><code>capabilities</code> here is not reliable</span>
+      <code>/api/tags</code> may report only <code>completion</code> in <code>capabilities</code>. <span class="mark">You cannot tell from this whether tool calling is supported.</span><br><br>
+      Use <code>/api/show</code> for that. It includes <code>tools</code>.
+    </div>
+
+    <h3><span class="n">A.11.2</span>Stage 2: call it the way Cline does</h3>
+
+    <p>Cline uses <code>/v1/chat/completions</code>. Send the same shape.</p>
+
+<pre><code>'{"model":"&lt;model&gt;","messages":[{"role":"user","content":"hi"}],"stream":true}' | Set-Content -Path t.json -Encoding ascii</code></pre>
+
+<pre><code>curl.exe -s -N "https://&lt;server&gt;/v1/chat/completions" -H "CF-Access-Client-Id:&lt;ID&gt;" -H "CF-Access-Client-Secret:&lt;Secret&gt;" -H "Content-Type: application/json" -d "@t.json"</code></pre>
+
+    <table>
+      <thead><tr><th>What comes back</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td><code>data: {...}</code> lines ending in <code>data: [DONE]</code></td><td><strong>The server is fine.</strong> The problem is in Cline</td></tr>
+        <tr><td>It cuts off partway</td><td>The server or the network. Tell your instructor</td></tr>
+        <tr><td><code>404</code></td><td>The URL is missing <code>/v1</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">If stage 2 works, it is your Cline settings</span>
+      Three things to check.<br><br>
+      <strong>1. Does the Base URL end in <code>/v1</code>?</strong> The most common mistake<br>
+      <strong>2. Are the custom header names intact?</strong> Not <code>heaCF-Access-...</code><br>
+      <strong>3. Does the Model ID match what stage 1 showed?</strong>
+    </div>
+
+    <h3><span class="n">A.11.3</span>Writing the JSON to a file</h3>
+
+    <p>Use <code>-Encoding ascii</code> with <code>Set-Content</code>. <span class="mark">Without it you get a BOM, and the server cannot parse the JSON.</span></p>
+
+    <p>Always quote the URL. Unquoted, PowerShell misreads the colon in <code>https:</code>.</p>
+  </section>
+
+  <section class="sec" id="sa-12">
+    <h2><span class="n">A.12</span>Enabling the GPU in browser Colab</h2>
+
+    <p>Part 8 connects to Colab from VS Code. <span class="mark">If that does not work for you, the browser is fine.</span></p>
+
+    <p>But <strong>you have to enable the GPU yourself.</strong> Forget it and the video generation never finishes.</p>
+
+    <h3><span class="n">A.12.1</span>Change the runtime type</h3>
+
+<div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/colab-runtime-type.png" alt="The Colab change-runtime-type dialog, with Python 3 selected and T4 GPU chosen as the hardware accelerator" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        From <strong>Runtime → Change runtime type</strong>, pick <span style="color:var(--accent);font-weight:700">T4 GPU</span> and press <strong>Save</strong>
+      </div>
+    </div>
+
+    <h3><span class="n">A.12.2</span>Some GPUs are unavailable</h3>
+
+    <div class="warn">
+      <span class="tag">The greyed-out ones need a paid plan</span>
+      A100, H100 and L4 <span class="mark">require a paid plan.</span> They appear greyed out. <strong>T4 GPU is enough for this work.</strong>
+    </div>
+
+    <h3><span class="n">A.12.3</span>Disconnect when you are done</h3>
+
+    <div class="note">
+      <span class="tag">There is a limit on GPU allocation</span>
+      <span class="mark">Disconnect the runtime when you finish.</span> Leave it running and you may not get an allocation next time you want one.<br><br>
+      The same point as "shut Ollama down" in Setup 05.
+    </div>
+  </section>
+
+
+
+  <nav class="pager">
+    <a class="prev" href="part8.html"><span class="dir">← PREV</span><span class="ttl">PART 8　Run video production with an agent</span></a>
+    <a class="next" href="appendix-b.html"><span class="dir">NEXT →</span><span class="ttl">APPENDIX B　The Node.js / TypeScript build</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

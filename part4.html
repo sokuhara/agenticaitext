@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 4 このアプリ、本当に提出できる？</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#c2670a;
+  --accent-soft:#fdf0dd;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="章の一覧">
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html" aria-current="page">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 4</div>
+    <h1>このアプリ、本当に提出できる？</h1>
+    <p class="lede">Agentが「完成しました」と言っても、それは完成の根拠になりません。自分で操作して確かめ、問題があれば直させます。この章ではコードを書かず、テストと承認の判断だけを行います。</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>前章まで</dt><dd>PART 3で、Clineが自分でファイルを読み書きし、コマンドを実行してアプリを組み上げました。速さは体験できたはずです。</dd>
+      <dt>この章</dt><dd>PART 3で作ったアプリを自分でテストし、見つかった問題をClineに直させます。修正のループを1周、最後まで通します。</dd>
+      <dt>次章へ</dt><dd>PART 5では、この確認を機械にやらせます。人間が毎回やると必ず忘れるからです。</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="この章の目次">
+    <h2>この章の内容</h2>
+    <ol>
+      <li><span class="n">4.1</span><a href="#s4-1">テスト項目を1つ選ぶ</a></li>
+      <li><span class="n">4.2</span><a href="#s4-2">問題を記録する</a></li>
+      <li><span class="n">4.3</span><a href="#s4-3">Clineに修正させる</a></li>
+      <li><span class="n">4.4</span><a href="#s4-4">提出物</a></li>
+      <li><span class="n">4.5</span><a href="#s4-5">この章で分かったこと</a></li>
+    </ol>
+  </nav>
+
+
+  <section class="sec" id="s4-0" style="margin-bottom:44px">
+    <h2><span class="n">4.0</span>この章で何をするか</h2>
+
+    <div class="prompt"><span class="tag">MISSION</span>PART 3で作った Vibe Chat をテストしなさい。
+
+問題を1つ見つけ、Clineを使って修正し、同じテストをもう一度行いなさい。</div>
+
+    <h3>3つの作業を順に行います</h3>
+
+    <table>
+      <thead><tr><th></th><th>やること</th><th>誰が</th><th>目安</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>テスト項目を1つ選ぶ（4.1）</td><td>人間</td><td>5分</td></tr>
+        <tr><td><strong>2</strong></td><td>ブラウザで実際に操作する（4.1）</td><td>人間</td><td>15分</td></tr>
+        <tr><td><strong>3</strong></td><td>問題を記録する（4.2）</td><td>人間</td><td>15分</td></tr>
+        <tr><td><strong>4</strong></td><td>Planモードで修正を依頼する（4.3.1）</td><td>Cline</td><td>10分</td></tr>
+        <tr><td><strong>5</strong></td><td>Planを判断する（4.3.2）</td><td><span class="mark">人間</span></td><td>10分</td></tr>
+        <tr><td><strong>6</strong></td><td>差分を判断する（4.3.3）</td><td><span class="mark">人間</span></td><td>10分</td></tr>
+        <tr><td><strong>7</strong></td><td>再テストする（4.3.4）</td><td>人間</td><td>15分</td></tr>
+      </tbody>
+    </table>
+
+    <p>およそ1時間20分です。<span class="mark">7つのうち6つが人間の作業です。</span>Agentがやるのは、調べて直すところだけです。</p>
+
+    <h3>使うもの</h3>
+
+    <p>PART 3で作った <code>index.html</code> です。<span class="mark">ブラウザで開ける状態にしておいてください。</span></p>
+
+    <p>3.4の発展課題（Deleteボタン）まで終えている場合は、そちらを使います。<strong>Deleteがある版のほうが、テストする項目が増えます。</strong></p>
+
+    <div class="warn">
+      <span class="tag">仕様どおりの動作を欠陥と呼ばないこと</span>
+      再読み込みで投稿が消えるのは、<span class="mark">PART 3で「JavaScript配列だけに保持する」と指示したからです。</span>仕様どおりです。<br><br>
+      複数のタブで共有されないのも同じです。<strong>これらは不具合ではありません。</strong>この章で探すのは、指示していないのに起きてしまう問題です。
+    </div>
+  </section>
+
+  <section class="sec" id="s4-1">
+    <h2><span class="n">4.1</span>テスト項目を1つ選ぶ</h2>
+
+    <p>次から<strong>1つ</strong>選びます。<span class="mark">全部やる必要はありません。</span>1件で、修正のループを最後まで通すことが目的です。</p>
+
+    <table>
+      <thead><tr><th></th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>User name を空欄にして Send</td></tr>
+        <tr><td><strong>2</strong></td><td>Message を空欄にして Send</td></tr>
+        <tr><td><strong>3</strong></td><td>1000文字を入力して Send</td></tr>
+        <tr><td><strong>4</strong></td><td><code>&lt;h1&gt;Hello&lt;/h1&gt;</code> を入力して Send</td></tr>
+        <tr><td><strong>5</strong></td><td>メッセージを2件作り、1件目を Delete</td></tr>
+        <tr><td><strong>6</strong></td><td>Send と Delete を何度か繰り返す</td></tr>
+      </tbody>
+    </table>
+
+    <p>5と6は、PART 3の3.4（発展課題）でDeleteを実装した場合だけです。</p>
+
+    <div class="warn">
+      <span class="tag">自分の手で操作してください</span>
+      入力欄に文字を入れ、ボタンを押し、画面を見る。<span class="mark">これを人間がやります。</span><br><br>
+      Clineに「テストして」と頼まないでください。<strong>「動きました」という報告は合格の根拠になりません。</strong>
+    </div>
+
+    <h3><span class="n">4.1.1</span>1000文字の作り方</h3>
+
+    <p>手で打つ必要はありません。適当な文章をコピーして、10回ほど貼り付けてください。<span class="mark">枠からはみ出すかどうかが分かればよいので、正確に1000文字である必要はありません。</span></p>
+  </section>
+
+  <section class="sec" id="s4-2">
+    <h2><span class="n">4.2</span>問題を記録する</h2>
+
+    <p>3つを書きます。<span class="mark">3番目が重要です。</span></p>
+
+    <table>
+      <thead><tr><th></th><th>書くこと</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>行った操作</td></tr>
+        <tr><td><strong>2</strong></td><td>実際に起きたこと</td></tr>
+        <tr><td><strong>3</strong></td><td><span class="mark">本来どうなるべきか</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">4.2.1</span>書き方の例</h3>
+
+    <blockquote>
+      メッセージ欄に1000文字を入力してSendを押した。<br>
+      文字がカードの外へはみ出した。<br>
+      <strong>カード内で折り返して表示されるべきである。</strong>
+    </blockquote>
+
+    <div class="warn">
+      <span class="tag">3番目は、あなたが決めます</span>
+      <span class="mark">「本来どうなるべきか」は、Agentには決められません。</span>仕様を決めるのは人間の仕事です。<br><br>
+      折り返すのか、途中で切るのか、そもそも1000文字を入力できないようにするのか。<strong>どれも正解になりえます。</strong>あなたが選んだものが仕様になります。<br><br>
+      ここを書かずに「はみ出します、直して」とだけ伝えると、Agentは勝手に決めます。<strong>意図と違う直し方をされます。</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">問題が見つからない場合</span>
+      27Bが作ったものは、意外としっかりしていることがあります。<span class="mark">6項目すべて問題なしでも、失敗ではありません。</span><br><br>
+      その場合は「改善したい点」を1つ選んでください。投稿時刻の表示、削除の確認、長い名前の省略など。<strong>「本来どうなるべきか」を書く練習は同じようにできます。</strong>
+    </div>
+  </section>
+
+  <section class="sec" id="s4-3">
+    <h2><span class="n">4.3</span>Clineに修正させる</h2>
+
+    <h3><span class="n">4.3.1</span>Planモードで依頼する</h3>
+
+    <p><strong>Plan</strong> に切り替えてから送ります。<span class="mark">4.2で書いた3つを、そのまま英語にします。</span></p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>The message layout breaks when I submit a very long message.
+
+Expected result:
+The text should wrap inside the message card.
+
+Inspect index.html and show a short plan.
+Edit index.html only.
+Do not change the current design or other functions.
+Do not edit the file yet.</div>
+
+    <p>上から3行目までが<strong>実際に起きたこと</strong>、`Expected result` が<strong>本来どうなるべきか</strong>です。あなたの記録に合わせて書き換えてください。</p>
+
+    <div class="note">
+      <span class="tag">最後の4行は必ず入れます</span>
+      <code>Edit index.html only</code>　変更範囲を限定する<br>
+      <code>Do not change the current design or other functions</code>　巻き添えを防ぐ<br>
+      <code>Do not edit the file yet</code>　Planを読む前に実装させない<br><br>
+      <span class="mark">1つ抜けるだけで、余計な変更が混ざります。</span>
+    </div>
+
+    <h3><span class="n">4.3.2</span>Planを人間が判断する</h3>
+
+    <p>Clineが計画を出します。<strong>読んでから次へ進みます。</strong></p>
+
+    <table>
+      <thead><tr><th>確認すること</th><th>問題があったら</th></tr></thead>
+      <tbody>
+        <tr><td>問題と関係のある変更か</td><td>関係ない箇所を触る計画なら、指摘して出し直させる</td></tr>
+        <tr><td><code>index.html</code> 以外を変更しないか</td><td>別ファイルを作る計画なら、1ファイルで済む方法を求める</td></tr>
+        <tr><td>SendやDeleteを壊さないか</td><td>書き換える計画なら、理由を確かめる</td></tr>
+        <tr><td>不要な機能を追加していないか</td><td><span class="mark">デザインの刷新、新機能は頼んでいません</span></td></tr>
+      </tbody>
+    </table>
+
+    <p>問題がなければ <strong>Act</strong> へ切り替えます。問題があれば、その場で指摘して計画を出し直させます。</p>
+
+    <h3><span class="n">4.3.3</span>差分を人間が判断する</h3>
+
+    <p>Actにすると、Clineが変更を提示します。<span class="mark">SaveかRejectかを、あなたが選びます。</span></p>
+
+    <table>
+      <thead><tr><th>差分の中身</th><th>判断</th></tr></thead>
+      <tbody>
+        <tr><td>必要な変更だけ</td><td><strong>Save</strong></td></tr>
+        <tr><td>全体を書き直している</td><td><strong>Reject</strong></td></tr>
+        <tr><td>外部ライブラリを追加している</td><td><strong>Reject</strong></td></tr>
+        <tr><td>別の機能を削除している</td><td><strong>Reject</strong></td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">差分を見ずに押さないこと</span>
+      <span class="mark">見ずにSaveを押していると、承認の意味がありません。</span>何が変わるのかを読んでから決めてください。<br><br>
+      Rejectしたら、理由を書いて出し直させます。<strong>そのやり取りが提出物になります。</strong>
+    </div>
+
+    <h3><span class="n">4.3.4</span>人間が再テストする</h3>
+
+    <p>Saveしたら、ブラウザを再読み込みします。<span class="mark">確認するのは3つです。</span></p>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　4.1で選んだ操作を、もう一度行う</p>
+      <p><strong>2</strong>　<strong>Send</strong> が今までどおり動くか確認する</p>
+      <p><strong>3</strong>　<strong>Delete</strong> が今までどおり動くか確認する（実装している場合）</p>
+    </div>
+
+    <p>2と3を飛ばさないでください。<strong>直したつもりで、別のところを壊していることがあります。</strong></p>
+
+    <div class="note">
+      <span class="tag">Agentの「修正しました」は根拠になりません</span>
+      <span class="mark">根拠になるのは、あなたが操作して結果が変わったことだけです。</span><br><br>
+      直っていなければ、何が起きたかを伝えて再修正させます。4.3.1へ戻ってください。
+    </div>
+  </section>
+
+  <section class="sec" id="s4-4">
+    <h2><span class="n">4.4</span>提出物</h2>
+
+    <p>6つを1つのファイルにまとめてください。</p>
+
+    <table>
+      <thead><tr><th>提出物</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td><strong>修正前</strong></td><td>問題が分かる画像</td></tr>
+        <tr><td><strong>問題の記録</strong></td><td>操作、実際の結果、期待する結果</td></tr>
+        <tr><td><strong>Plan</strong></td><td>Clineが提示した計画</td></tr>
+        <tr><td><strong>人間の判断</strong></td><td>SaveまたはRejectを選んだ理由</td></tr>
+        <tr><td><strong>修正後</strong></td><td>問題が直ったことが分かる画像</td></tr>
+        <tr><td><strong>再テスト</strong></td><td>問題、Send、Deleteの確認結果</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">「人間の判断」がいちばん重要です</span>
+      <span class="mark">なぜSaveしたのか。なぜRejectしたのか。</span>1〜3行で構いません。<br><br>
+      「差分がindex.htmlのCSS3行だけで、Send機能に手を入れていなかったのでSaveした」<br>
+      「デザイン全体を書き換える計画だったのでRejectし、折り返しの指定だけを頼み直した」<br><br>
+      <strong>この判断が、この章で身につけるものです。</strong>
+    </div>
+
+    <h3><span class="n">4.4.1</span>誰が何をしたか</h3>
+
+    <p>提出前に、自分の作業を振り返ってください。</p>
+
+    <table>
+      <thead><tr><th>担当</th><th>やったこと</th></tr></thead>
+      <tbody>
+        <tr><td><strong>あなた</strong></td><td>問題を見つける。<span class="mark">本来どうなるべきかを決める。</span>Planを確認する。差分を承認する。最終確認をする</td></tr>
+        <tr><td><strong>Cline</strong></td><td>コードを調べる。修正案を出す。変更を適用する</td></tr>
+      </tbody>
+    </table>
+
+    <p><span class="mark">仕様を決めるのも、承認するのも、確認するのも人間です。</span>Agentがやったのは、調査と修正だけです。</p>
+
+    <p>提出先は、演習1と同じピア評価システムです。<strong>Assignment 2</strong> のカードから提出します。</p>
+  </section>
+
+  <section class="sec" id="s4-5">
+    <h2><span class="n">4.5</span>この章で分かったこと</h2>
+
+    <p>Agentが「完成しました」と言っても、<span class="mark">それは完成の根拠になりません。</span></p>
+
+    <p>根拠になるのは、あなたが操作して結果を確かめたことだけです。この章では、それを手で行いました。</p>
+
+    <div class="warn">
+      <span class="tag">毎回これをやりますか</span>
+      1件直すのに1時間20分かかりました。<span class="mark">操作して、記録して、依頼して、Planを読んで、差分を見て、また操作する。</span><br><br>
+      変更のたびに繰り返せますか。<strong>Sendが動くか、Deleteが動くか、毎回忘れずに確かめられますか。</strong>
+    </div>
+
+    <p>やれません。人間は忘れます。だから<strong>機械にやらせます。</strong></p>
+
+    <p>PART 5では、この確認を自動化します。<span class="mark">「Sendが動く」「Deleteが動く」のように機械が判定できるものは、テストになります。</span></p>
+
+    <p>一方で、「本来どうなるべきか」を決めることと、差分を承認することは<strong>自動化できません。</strong>それは人間に残ります。</p>
+
+    <p>その切り分けが、次章の入り口です。</p>
+  </section>
+
+
+  <nav class="pager">
+    <a class="prev" href="part3.html"><span class="dir">← PREV</span><span class="ttl">PART 3　Coding Agentを動かす</span></a>
+    <a class="next" href="part5.html"><span class="dir">NEXT →</span><span class="ttl">PART 5　テストで完了条件を作る</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'コピー';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'コピーしました';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'コピー';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

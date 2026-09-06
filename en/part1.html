@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 1 How an LLM works, and where it fails</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#4f46e5;
+  --accent-soft:#eef0fe;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html" aria-current="page">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 1</div>
+    <h1>How an LLM works, and where it fails</h1>
+    <p class="lede">An LLM sits at the centre of a Coding Agent. On its own, though, it cannot even read a single file. This part covers what an LLM does as a component, and where and why it gets things wrong.</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>Previously</dt><dd>Setup is done: VS Code, Ollama and a model are in place.</dd>
+      <dt>This part</dt><dd>You look at what the LLM does, what it cannot do, and why it makes mistakes.</dd>
+      <dt>Next</dt><dd>In Part 2 you build something by talking to an AI, and feel both the speed and the limits.</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="Contents of this part">
+    <h2>In this part</h2>
+    <ol>
+      <li><span class="n">1.1</span><a href="#s1-1">What an LLM does</a></li>
+      <li><span class="n">1.2</span><a href="#s1-2">Context and error</a></li>
+      <li><span class="n">1.3</span><a href="#s1-3">Exercise: find the limits yourself</a></li>
+      <li><span class="n">1.4</span><a href="#s1-4">What we know so far</a></li>
+    </ol>
+  </nav>
+
+
+  <section class="sec" id="s1-1">
+    <h2><span class="n">1.1</span>What an LLM does</h2>
+
+    <p>A large language model (LLM) is a very large neural network. It has been trained on an enormous amount of text.</p>
+
+    <p>What it does is simple. <span class="mark">From the text so far, it picks the next word. Then it does that again.</span></p>
+
+<div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:18px 12px">
+      <svg viewBox="0 0 720 320" style="width:100%;max-width:720px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Next-token prediction">
+        <defs>
+          <marker id="tk" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 z" fill="#9aa0ab"/>
+          </marker>
+        </defs>
+        <g font-family="system-ui, sans-serif">
+
+          <g font-size="12" fill="#6c727d" font-weight="700">
+            <text x="14" y="55">Step 1</text>
+            <text x="14" y="115">Step 2</text>
+            <text x="14" y="175">Step 3</text>
+          </g>
+
+          <g font-size="14" text-anchor="middle">
+            <g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4">
+              <rect x="78"  y="34" width="62" height="30" rx="7"/>
+              <rect x="146" y="34" width="62" height="30" rx="7"/>
+              <rect x="78"  y="94" width="62" height="30" rx="7"/>
+              <rect x="146" y="94" width="62" height="30" rx="7"/>
+              <rect x="214" y="94" width="46" height="30" rx="7"/>
+              <rect x="78"  y="154" width="62" height="30" rx="7"/>
+              <rect x="146" y="154" width="62" height="30" rx="7"/>
+              <rect x="214" y="154" width="46" height="30" rx="7"/>
+              <rect x="266" y="154" width="58" height="30" rx="7"/>
+            </g>
+            <g fill="var(--ink)">
+              <text x="109" y="54">Once</text><text x="177" y="54">upon</text>
+              <text x="109" y="114">Once</text><text x="177" y="114">upon</text><text x="237" y="114">a</text>
+              <text x="109" y="174">Once</text><text x="177" y="174">upon</text><text x="237" y="174">a</text><text x="295" y="174">time</text>
+            </g>
+
+            <g fill="#eef0f2" stroke="#b9bec7" stroke-width="1.4">
+              <rect x="240" y="34" width="46" height="30" rx="7"/>
+              <rect x="292" y="94" width="58" height="30" rx="7"/>
+              <rect x="356" y="154" width="66" height="30" rx="7"/>
+            </g>
+            <g fill="#4b5160" font-weight="700">
+              <text x="263" y="54">a</text>
+              <text x="321" y="114">time</text>
+              <text x="389" y="174">there</text>
+            </g>
+          </g>
+
+          <g stroke="#9aa0ab" stroke-width="1.5" fill="none" marker-end="url(#tk)">
+            <path d="M212,49 H234"/>
+            <path d="M264,109 H286"/>
+            <path d="M328,169 H350"/>
+          </g>
+
+          <rect x="452" y="30" width="252" height="158" rx="10"
+                fill="var(--paper)" stroke="var(--line)" stroke-width="1.4"/>
+          <text x="468" y="52" font-size="12" font-weight="700" fill="var(--accent)">Candidates at Step 2</text>
+          <text x="468" y="70" font-size="11" fill="#6c727d">after &#8220;Once upon a&#8221;</text>
+
+          <g font-size="12">
+            <g fill="var(--accent)"><rect x="468" y="82" width="150" height="16" rx="4"/></g>
+            <text x="474" y="94" fill="#fff" font-weight="700">time</text>
+            <text x="628" y="94" fill="var(--ink)" font-weight="700">0.87</text>
+
+            <rect x="468" y="106" width="24" height="16" rx="4" fill="#b9c0cc"/>
+            <text x="498" y="118" fill="#4b5160">day</text>
+            <text x="628" y="118" fill="#6c727d">0.05</text>
+
+            <rect x="468" y="130" width="12" height="16" rx="4" fill="#c9cfd8"/>
+            <text x="486" y="142" fill="#4b5160">hill</text>
+            <text x="628" y="142" fill="#6c727d">0.02</text>
+
+            <rect x="468" y="154" width="8" height="16" rx="4" fill="#d5dae1"/>
+            <text x="482" y="166" fill="#4b5160">moment</text>
+            <text x="628" y="166" fill="#6c727d">0.01</text>
+          </g>
+
+          <rect x="14" y="216" width="690" height="86" rx="10"
+                fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+          <text x="34" y="244" font-size="13" font-weight="700" fill="var(--accent)">The model only picks the next token.</text>
+          <text x="34" y="268" font-size="13" fill="var(--ink)">It repeats this. Sentences, paragraphs and code all come out of the same loop.</text>
+          <text x="34" y="290" font-size="13" fill="var(--ink)">Nothing is planned in advance.</text>
+        </g>
+      </svg>
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        Predict the next token and append it. Text and code come out of this loop alone
+      </div>
+    </div>
+
+    <p>The smallest unit here is called a <strong>token</strong>. A token is often smaller than a word. "hello" is one token; "unbelievable" is usually three or four. <span class="mark">Languages that do not use spaces, such as Japanese or Thai, are split differently again.</span></p>
+
+    <p>The LLM converts your input into tokens before it does anything else.</p>
+
+    <p>Out of this loop come translation, summarising, conversation and programming. Code is a particular strength, for two reasons. The format is strict, and there is a great deal of it in the training data.</p>
+
+    <h3><span class="n">1.1.1</span>What it cannot do</h3>
+
+    <p>This is the starting point. <span class="mark">An LLM takes text and returns text. By itself it does nothing else.</span></p>
+
+    <table>
+      <thead><tr><th>It cannot</th></tr></thead>
+      <tbody>
+        <tr><td>Read a file</td></tr>
+        <tr><td>Run a command</td></tr>
+        <tr><td>Know what is happening now (its knowledge stops at training time)</td></tr>
+        <tr><td>Check whether its own answer is correct</td></tr>
+      </tbody>
+    </table>
+
+    <p>However capable it is, an LLM by itself never touches your codebase.</p>
+
+    <p><strong>How you fill those four gaps is what a Coding Agent design is.</strong> Section 1.2 looks at the limits. Part 3 looks at how they are filled.</p>
+
+    <div class="note">
+      <span class="tag">Models that show their reasoning</span>
+      Some models print their intermediate reasoning before the answer. Run <code>ollama run qwen3.5:4b</code> and you will see a long <code>&lt;think&gt;</code> block first. <span class="mark">Nothing is stuck. Wait for it.</span><br><br>
+      Do not treat that block as the model's real thinking. It is generated text like any other, and it sometimes contradicts the final answer. It is useful to read. It is not evidence.
+    </div>
+  </section>
+
+  <section class="sec" id="s1-2">
+    <h2><span class="n">1.2</span>Context and error</h2>
+
+    <p>Most of the trouble you will hit falls into two shapes. <span class="mark">Either the input does not fit, or the answer is wrong and confident.</span></p>
+
+    <h3><span class="n">1.2.1</span>The context window</h3>
+
+    <p>An LLM has a <strong>context window</strong>. Think of it as working memory. The tokens in your input and its output together have to fit inside it.</p>
+
+    <p>The numbers move quickly. At the time of writing, some frontier models handle around a million tokens, and models you can run locally may support 200,000 or more.</p>
+
+    <p>But <span class="mark">"supports it" and "you are actually using it" are different things.</span></p>
+
+    <div class="warn">
+      <span class="tag">Two traps</span>
+      <strong>1. It does nothing unless you configure it.</strong><br>
+      When you run locally, the runtime's own default may be much smaller. A model may support 260,000 tokens, but without setting <code>num_ctx</code> you get the default. <span class="mark">No error appears. History is silently dropped.</span> (<a href="appendix-a.html">Appendix A</a>, A.3.2)<br><br>
+      <strong>2. Longer does not mean smarter.</strong><br>
+      Information in the middle of a long context tends to be used less reliably than what sits at either end. This is known as <strong>Lost in the Middle</strong>. Making the window longer does not remove it.
+    </div>
+
+    <p>When a Coding Agent seems to forget a file it created earlier in a long session, this is one of the first things to suspect.</p>
+
+    <p>There are two responses. Summarise the history partway through, or hand over to a new session. You will do this in Part 6.</p>
+
+    <h3><span class="n">1.2.2</span>Knowledge stops at training time</h3>
+
+    <p>The model knows the world as it was when training finished.</p>
+
+    <p>Library APIs change. Patterns that have since been deprecated are still in the model. Newer versions are not.</p>
+
+    <p><span class="mark">That is where most "works, but written the old way" code comes from.</span></p>
+
+    <h3><span class="n">1.2.3</span>Confident and wrong</h3>
+
+    <p><strong>Hallucination</strong> is when the model states something untrue as though it were fact.</p>
+
+    <blockquote>
+      "Tell me about the new programming language announced in August 2025."<br>
+      → "NeoScript rethinks JavaScript's asynchronous model from the ground up, and was developed jointly by Google and Meta..."<br>
+      (No such language, and no such announcement)
+    </blockquote>
+
+    <p>The difficulty is the tone. <span class="mark">A correct answer and a wrong one come back in exactly the same voice.</span> Uncertainty is not displayed.</p>
+
+    <p>So bracing yourself against "AI lies" does not help much. <strong>A more useful reading: if you ask it to answer without giving it what it needs, it fills the gap with something plausible.</strong></p>
+
+    <div class="note">
+      <span class="tag">Back to Exercise 0</span>
+      In <a href="exercise0.html">Exercise 0</a> you named work for three countries. <span class="mark">One of them was probably a country you know almost nothing about. The table still filled up.</span><br><br>
+      What this section describes happened in your own hands, less than an hour ago.<br><br>
+      That is why you were asked to mark <code>*guess</code> and <code>[assumption: ...]</code>. <span class="mark">You will do the same thing to an agent's output for the rest of this course:</span> separate what it actually checked from what it filled in.
+    </div>
+
+    <p>The remedy is <strong>grounding</strong>: give the model accurate source material and make it answer from that.</p>
+
+    <p>There are two routes, RAG and tool use. Tool use is what Part 3 covers. Putting <code>llms.txt</code> next to the code in Part 6 is the same idea.</p>
+  </section>
+
+  <section class="sec" id="s1-3">
+    <h2><span class="n">1.3</span>Exercise: find the limits yourself</h2>
+
+    <p>Reproduce sections 1.1 and 1.2 on your own machine. <span class="mark">Reading and agreeing is not the same as watching it happen on your screen.</span> About 20 minutes.</p>
+
+    <p>Opening a terminal and installing a model are covered in <a href="setup.html">Setup</a>. Do that first if you have not.</p>
+
+<pre><code>ollama run qwen3.5:4b</code></pre>
+
+    <h3><span class="n">1.3.1</span>Test 1: knowledge stops at training time</h3>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Up to what point does your knowledge go?
+Then name one event that happened after that, and describe it.</div>
+
+    <p>The second half is the interesting part. Some models <strong>invent a plausible event.</strong> Others answer that they cannot know. <span class="mark">Record which one you got, and what it said.</span></p>
+
+    <h3><span class="n">1.3.2</span>Test 2: confident and wrong</h3>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Explain how to use the quickload module in the Python
+standard library, with a code example.</div>
+
+    <p>There is no such module. <strong>You may still get a code example that looks like it would run.</strong></p>
+
+    <p>Look at the tone of the reply. Could you tell it apart from a correct answer?</p>
+
+    <div class="note">
+      <span class="tag">This is the point</span>
+      <span class="mark">Wrong answers do not look wrong.</span> Uncertainty is not displayed. That is why, from Part 4 onwards, you put machine checks around the model rather than inside it.
+    </div>
+
+    <h3><span class="n">1.3.3</span>Test 3: does an instruction at the top survive to the bottom?</h3>
+
+    <p>Use the long documents provided. <span class="mark">A rule appears only at the top, and a question comes at the very end.</span></p>
+
+    <p>There are five versions of the same document, at different lengths (<code>experiment3/</code>). <strong>Start with the shortest and work up, watching for where the rule stops being followed.</strong></p>
+
+    <table>
+      <thead><tr><th>File</th><th>Characters</th><th>Rough tokens</th></tr></thead>
+      <tbody>
+        <tr><td><code>exp3_short.md</code></td><td>~1,200</td><td>~600</td></tr>
+        <tr><td><code>exp3_medium.md</code></td><td>~2,100</td><td>~1,000</td></tr>
+        <tr><td><code>exp3_long.md</code></td><td>~3,400</td><td>~1,700</td></tr>
+        <tr><td><code>exp3_xlong.md</code></td><td>~6,900</td><td>~5,700</td></tr>
+        <tr><td><code>exp3_xxlong.md</code></td><td>~12,100</td><td>~10,100</td></tr>
+      </tbody>
+    </table>
+
+    <p>Three rules are stated at the top of each document.</p>
+
+<pre><code>1. Answer with exactly three bullet points. No more, no fewer.
+2. Keep each point under 40 characters.
+3. No preamble and no closing remark. Output only the bullets.</code></pre>
+
+    <p>The question at the end asks how orders are handled during the lunch peak. The answer is <strong>near the middle</strong> of the document.</p>
+
+    <h4>How to run it</h4>
+
+    <ol>
+      <li>Start <code>ollama run qwen3.5:4b</code> in a terminal</li>
+      <li>Open <code>experiment3/exp3_short.md</code> in VS Code</li>
+      <li>Select all with <code>Ctrl</code> + <code>A</code>, copy with <code>Ctrl</code> + <code>C</code></li>
+      <li>Paste into the terminal and press <code>Enter</code> as it is</li>
+      <li>Record whether the output follows the three rules</li>
+      <li>Repeat with medium, long, xlong and xxlong</li>
+    </ol>
+
+    <div class="warn">
+      <span class="tag">Do not add a question of your own</span>
+      <span class="mark">The question is already at the end of the file.</span> Paste and press Enter without adding anything.<br><br>
+      If you type something like "answer the question above", that becomes the new ending. <strong>The distance between the rule and the question changes, so you are no longer testing the same thing.</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">If pasting misbehaves</span>
+      Some terminals execute the newlines while you paste a long text. If that happens, pipe the file in instead of pasting.<br><br>
+      <code>Get-Content exp3_short.md | ollama run qwen3.5:4b</code> (PowerShell)<br>
+      <code>cat exp3_short.md | ollama run qwen3.5:4b</code> (macOS / Linux)<br><br>
+      <span class="mark">This is more reliable.</span> One line, and no paste accidents.
+    </div>
+
+    <p>Watch whether the rules hold. <strong>They break down in stages.</strong> Record how it broke, rather than a yes or no.</p>
+
+    <table>
+      <thead><tr><th>Stage</th><th>What you see</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Three points, but one of them runs past 40 characters</td></tr>
+        <tr><td>2</td><td>A preamble appears ("Sure, here is a summary...")</td></tr>
+        <tr><td>3</td><td>Four points, or two</td></tr>
+        <tr><td>4</td><td>Not a bullet list at all</td></tr>
+        <tr><td>5</td><td>An answer unrelated to the question</td></tr>
+        <tr><td>6</td><td>It answers from the start or the end of the document, not from the middle</td></tr>
+      </tbody>
+    </table>
+
+    <p>If you see stage 6, <span class="mark">that is Lost in the Middle.</span> The centre of the context was dropped.</p>
+
+    <div class="note">
+      <span class="tag">A shorter version of the same test</span>
+      Using a model configured with a small <code>num_ctx</code>, the same thing happens within a few exchanges. Setup is in <a href="appendix-a.html">Appendix A</a>, A.3.2.<br><br>
+      Which is the point: <span class="mark">this is not the model being forgetful. There is simply a limit to how much fits.</span> Change the setting and it happens sooner or later.
+    </div>
+
+    <p>This is the same effect as a Coding Agent drifting away from a rule you set at the beginning of a long task.</p>
+
+    <h3><span class="n">1.3.4</span>What to hand in</h3>
+
+    <table>
+      <thead><tr><th>Test</th><th>Record</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Did the model state a cutoff? Did it invent an event after it?</td></tr>
+        <tr><td>2</td><td>Did it write code for a module that does not exist? Was the tone any different?</td></tr>
+        <tr><td>3</td><td>Did the rule at the top hold? At what length did it stop holding?</td></tr>
+        <tr><td>Summary</td><td><strong>Which of these three failures could an automated test catch, and which could not?</strong> Say why</td></tr>
+      </tbody>
+    </table>
+
+    <p>Think about that last row. <span class="mark">Parts 4 and 5 come back to it.</span></p>
+  </section>
+
+  <section class="sec" id="s1-4">
+    <h2><span class="n">1.4</span>What we know so far</h2>
+
+    <p>An LLM can produce code and prose. From the enormous amount of code it has seen, it can assemble something that looks like it works.</p>
+
+    <p>But <span class="mark">it cannot check whether that code runs.</span> It cannot open a file, run a test, or read an error message. The four limits from 1.1.1 are all still there.</p>
+
+    <p>In the next part you build something by talking to an AI. You get to feel the speed. <span class="mark">You also get to see what is missing when the LLM is all you have.</span></p>
+  </section>
+
+
+  <nav class="pager">
+    <a class="prev" href="setup.html"><span class="dir">← PREV</span><span class="ttl">Setup　Get the tools ready</span></a>
+    <a class="next" href="part2.html"><span class="dir">NEXT →</span><span class="ttl">PART 2　Try Vibe Coding</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

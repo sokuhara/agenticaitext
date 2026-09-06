@@ -1,0 +1,6 @@
+# Agentに見せないもの
+.env
+.env.*
+*.pem
+*.key
+.git/

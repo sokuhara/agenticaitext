@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Appendix C Releasing and operating an agent</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#475569;
+  --accent-soft:#eef1f5;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html" aria-current="page">C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">APPENDIX C</div>
+    <h1>Releasing and operating an agent</h1>
+    <p class="lede">How to put the application you built somewhere other people can use it. Not required for the main course. Read it when you are publishing inside a lab or a university, or taking this into real work.</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>Previously</dt><dd>Appendix B covered the original Node.js and TypeScript build.</dd>
+      <dt>This part</dt><dd>Build, verify, deploy to staging, end-to-end tests, release, and operations. What each deployment target needs.</dd>
+      <dt>Next</dt><dd>That is the end of the course.</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="Contents of this part">
+    <h2>In this part</h2>
+    <ol>
+      <li><span class="n">C.1</span><a href="#sc-1">What this appendix covers</a></li>
+      <li><span class="n">C.2</span><a href="#sc-2">Preparing the deployment environment</a></li>
+      <li><span class="n">C.3</span><a href="#sc-3">Implementing the deployment</a></li>
+      <li><span class="n">C.4</span><a href="#sc-4">Deploying</a></li>
+      <li><span class="n">C.5</span><a href="#sc-5">Checking after deployment</a></li>
+      <li><span class="n">C.6</span><a href="#sc-6">Before a commercial release</a></li>
+    </ol>
+  </nav>
+
+
+
+  <section class="sec" id="sc-1">
+    <h2><span class="n">C.1</span>What this appendix covers</h2>
+
+    <div class="note">
+      <span class="tag">Carried over from the main text</span>
+      Whatever you choose from here on, these five do not change.<br><br>
+      <strong>1.</strong> Nothing moves on until <code>pytest</code> passes (Part 5)<br>
+      <strong>2.</strong> End-to-end tests are needed on top of unit tests (C.5)<br>
+      <strong>3.</strong> Deployment credentials are kept separate from your own (C.2)<br>
+      <strong>4.</strong> Secrets never go in the repository (Part 5)<br>
+      <strong>5.</strong> Operations needs logs, cost visibility and a way to stop (C.6)
+    </div>
+
+    <p>This appendix covers putting the application you built somewhere real, checking it works, and deciding whether to publish it.</p>
+
+    <h3><span class="n">C.1.1</span>Only the sequence is universal</h3>
+
+    <p>Wherever you deploy, the order is the same.</p>
+
+<pre><code>build -&gt; verify -&gt; deploy -&gt; end-to-end check -&gt; release decision</code></pre>
+
+    <p><span class="mark">The sequence is the only thing that carries over.</span> The artefact format, authentication, networking, where data lives, monitoring, and how you roll back all differ considerably between targets. <strong>Treating them as interchangeable is where projects lose time.</strong></p>
+
+    <h3><span class="n">C.1.2</span>Pick one standard route</h3>
+
+    <table>
+      <thead><tr><th></th><th>Route</th><th>What it needs</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Standard</strong></td><td>Docker Compose</td><td>Docker only. No cloud account, no billing</td></tr>
+        <tr><td>Extended</td><td>AWS (CDK for Python)</td><td>An AWS account, OIDC setup, role design</td></tr>
+        <tr><td>Extended</td><td>A PaaS</td><td>An account with that service</td></tr>
+      </tbody>
+    </table>
+
+    <p>For a class or a lab, <span class="mark">make Docker Compose the standard.</span> Students can run it locally, the way the app is served stays visible, and it carries all the way to end-to-end tests. A Dockerfile and a <code>compose.yaml</code> written by an agent are also good review material.</p>
+
+    <div class="warn">
+      <span class="tag">Why AWS is not in the main text</span>
+      Publishing on AWS means students spend their time not on Python and not on agentic coding, but on <span class="mark">IAM permissions.</span><br><br>
+      That is genuinely important knowledge. <strong>It is not what this course is for.</strong> For the AWS route, see C.4.2 onwards.
+    </div>
+
+    <div class="warn">
+      <span class="tag">What containers are and are not for</span>
+      Docker is <span class="mark">a way to package software and make environments consistent.</span> It is not a requirement for agentic AI. To run FastAPI locally, <code>uv run uvicorn</code> is enough.<br><br>
+      A Dev Container is the same: a tool for reproducible development environments. <strong>It is not a box that safely contains an agent.</strong> Mount the Docker socket or a broad host directory and the agent reaches straight outside it.<br><br>
+      Control permissions through the permissions you grant, not through the container.
+    </div>
+  </section>
+
+  <section class="sec" id="sc-2">
+    <h2><span class="n">C.2</span>Preparing the deployment environment</h2>
+
+    <h3><span class="n">C.2.1</span>Separate the deployment credentials</h3>
+
+    <p>On AWS, you set up the CLI and grant permissions before an agent can build or change infrastructure. <span class="mark">You are about to hand an agent strong permissions.</span> Apply the "what to protect" decision from Part 4 here, for real.</p>
+
+    <div class="warn">
+      <span class="tag">Credentials you hand to an agent</span>
+      Use a dedicated set of deployment credentials, <strong>not your own.</strong><br><br>
+      <span class="mark">Agents do misread instructions.</span> <strong>What can be destroyed when one does is set entirely by the permissions you handed over.</strong>
+    </div>
+  </section>
+
+  <section class="sec" id="sc-3">
+    <h2><span class="n">C.3</span>Implementing the deployment</h2>
+
+    <p>From here you can connect the agent to external sources through MCP.</p>
+
+    <div class="note">
+      <span class="tag">Connecting external tools</span>
+      MCP is one way to connect an agent to a browser, documentation or a database. <span class="mark">It is not a deployment technology.</span><br><br>
+      Enable only what you need, and only connect servers you trust. See section 7.5 in <a href="part7.html">Part 7</a>.
+    </div>
+
+    <h3><span class="n">C.3.1</span>Planning the implementation</h3>
+
+    <p>Have the agent draw up a plan with the design documents in front of it.</p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Based on @/docs/design/implementation_plan.md
+and @/docs/design/deploy.md, work out an implementation plan
+for the deployment setup.</div>
+
+    <p>On the standard route this is where the <code>Dockerfile</code> and <code>compose.yaml</code> appear. You may let the agent write them, but <strong>read the generated configuration yourself.</strong></p>
+
+    <p>Health checks, published ports, how environment variables are passed, the scope of volumes. <span class="mark">Approve those without reading and you can expose more than you intended.</span></p>
+
+<pre><code># compose.yaml (skeleton)
+services:
+  app:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      - APP_ENV=staging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      retries: 5</code></pre>
+
+    <div class="warn">
+      <span class="tag">Extended: deploying to AWS Lambda</span>
+      FastAPI is an ASGI application, so <span class="mark">a few lines of CDK will not make it run.</span> You need an adapter such as Mangum, or the Lambda Web Adapter, or to ship it as a container image. Dependencies also have to be packaged for Lambda's Linux environment.<br><br>
+      Python 3.12 is available on Lambda, but <strong>"write a bit of CDK and it goes live" is not accurate.</strong> If you teach this, budget a full session for it.
+    </div>
+
+    <h3><span class="n">C.3.2</span>Checking before you deploy</h3>
+
+    <p>Once implemented, confirm the definitions resolve before deploying anything.</p>
+
+<pre><code>uv run cdk synth        # check the CloudFormation template generates
+
+# or
+
+docker compose config   # check syntax and variable expansion
+docker compose up --build   # bring it up locally once</code></pre>
+  </section>
+
+  <section class="sec" id="sc-4">
+    <h2><span class="n">C.4</span>Deploying</h2>
+
+    <p>Now you build the CI/CD that performs the deployment, and run it through GitHub Actions. <span class="mark">You are adding a deploy job to the CI workflow from Part 5.</span></p>
+
+    <h3><span class="n">C.4.1</span>Designing the pipeline</h3>
+
+    <p>Keep verification and deployment separate, so that <strong>only what passed verification proceeds to deploy.</strong> Making the deploy a manual trigger rather than automatic limits the blast radius of a mistake.</p>
+
+    <h3><span class="n">C.4.2</span>Implementing the pipeline</h3>
+
+<pre><code># .github/workflows/deploy-staging.yml
+name: Deploy staging
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: pytest
+      - uses: aws-actions/configure-aws-credentials@&lt;pinned commit SHA&gt;
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-northeast-1
+      - run: uv run cdk diff
+      - run: uv run cdk deploy --require-approval never</code></pre>
+
+    <div class="warn">
+      <span class="tag"><code>permissions</code> alone does not authenticate</span>
+      <code>id-token: write</code> only grants permission to issue an OIDC token. <span class="mark">Without the step that assumes the limited role on the AWS side (<code>configure-aws-credentials</code>), the deploy will not go through.</span><br><br>
+      GitHub Actions OIDC exists so that you do not keep long-lived AWS keys in Secrets, and use short-lived credentials per run instead. <strong>Narrow the role's trust policy to the repository and the branch.</strong>
+    </div>
+
+    <p>gitleaks, added in Part 5, is a last net for a key that got committed by accident. <span class="mark">Designing so the key is never there in the first place comes first.</span></p>
+
+    <h3><span class="n">C.4.3</span>Verifying the pipeline</h3>
+
+    <p>Once designed and implemented, have the agent verify it. Use actionlint and zizmor to lint the workflow itself.</p>
+
+    <h3><span class="n">C.4.4</span>Pull requests and CI checks</h3>
+
+    <p>Open a pull request on GitHub and let the checks run.</p>
+
+<div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:18px 12px">
+      <svg viewBox="0 0 700 330" style="width:100%;max-width:700px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pull request checks">
+        <g font-family="system-ui, sans-serif">
+          <rect x="10" y="10" width="680" height="310" rx="10" fill="var(--paper)" stroke="var(--line)" stroke-width="1.4"/>
+
+          <text x="30" y="42" font-size="15" font-weight="700" fill="var(--ink)">Add allergy check to order flow</text>
+          <text x="272" y="42" font-size="15" fill="#8a8f99">#42</text>
+          <text x="30" y="62" font-size="12" fill="#6c727d">feature/allergy-check into main</text>
+
+          <line x1="30" y1="76" x2="670" y2="76" stroke="var(--line)" stroke-width="1"/>
+
+          <text x="30" y="98" font-size="13" font-weight="700" fill="var(--ink)">Some checks were not successful</text>
+
+          <g font-size="13">
+            <circle cx="40" cy="122" r="8" fill="#2da44e"/><path d="M36,122 l3,3 l6,-6" stroke="#fff" stroke-width="2" fill="none"/>
+            <text x="58" y="127" fill="var(--ink)">check / format</text>
+            <text x="560" y="127" fill="#6c727d">Successful in 12s</text>
+
+            <circle cx="40" cy="152" r="8" fill="#2da44e"/><path d="M36,152 l3,3 l6,-6" stroke="#fff" stroke-width="2" fill="none"/>
+            <text x="58" y="157" fill="var(--ink)">check / lint</text>
+            <text x="560" y="157" fill="#6c727d">Successful in 8s</text>
+
+            <circle cx="40" cy="182" r="8" fill="#cf222e"/>
+            <path d="M37,179 l6,6 M43,179 l-6,6" stroke="#fff" stroke-width="2"/>
+            <text x="58" y="187" fill="#cf222e" font-weight="700">check / test</text>
+            <text x="560" y="187" fill="#cf222e">Failing after 34s</text>
+
+            <circle cx="40" cy="212" r="8" fill="#2da44e"/><path d="M36,212 l3,3 l6,-6" stroke="#fff" stroke-width="2" fill="none"/>
+            <text x="58" y="217" fill="var(--ink)">gitleaks</text>
+            <text x="560" y="217" fill="#6c727d">Successful in 5s</text>
+          </g>
+
+          <rect x="30" y="238" width="640" height="34" rx="7" fill="#fff1f0" stroke="#f0b8b4" stroke-width="1.4"/>
+          <text x="46" y="260" font-size="13" font-weight="700" fill="#cf222e">Merging is blocked</text>
+          <text x="188" y="260" font-size="13" fill="#7a3b3b">Required status check &#8220;check&#8221; must pass before merging.</text>
+
+          <rect x="30" y="284" width="196" height="28" rx="7" fill="#eef0f2" stroke="#c9cfd8" stroke-width="1.4"/>
+          <text x="128" y="303" font-size="13" fill="#9aa0ab" text-anchor="middle" font-weight="700">Merge pull request</text>
+          <text x="242" y="303" font-size="12" fill="#8a8f99">disabled</text>
+        </g>
+      </svg>
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        A failing check blocks the merge. <span style="color:var(--accent);font-weight:700">That is what branch protection does</span>
+      </div>
+    </div>
+
+    <p>When a deprecation warning or a test failure appears, use the MCP server you connected in Part 7 and have the agent find the cause.</p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Run pytest.
+Where a DeprecationWarning appears, look up the currently
+recommended usage through MCP before fixing it.</div>
+
+    <h3><span class="n">C.4.5</span>Running the deployment</h3>
+
+    <p>Once the checks pass, run the deployment from "Run workflow" in GitHub Actions.</p>
+
+<div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:18px 12px">
+      <svg viewBox="0 0 700 340" style="width:100%;max-width:700px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Workflow run">
+        <g font-family="system-ui, sans-serif">
+          <rect x="10" y="10" width="680" height="320" rx="10" fill="var(--paper)" stroke="var(--line)" stroke-width="1.4"/>
+
+          <text x="30" y="40" font-size="15" font-weight="700" fill="var(--ink)">Deploy staging</text>
+          <text x="146" y="40" font-size="15" fill="#8a8f99">#17</text>
+          <rect x="182" y="26" width="66" height="20" rx="10" fill="#cf222e"/>
+          <text x="215" y="41" font-size="12" fill="#fff" text-anchor="middle" font-weight="700">failed</text>
+          <text x="30" y="60" font-size="12" fill="#6c727d">workflow_dispatch &#183; main &#183; 1m 12s</text>
+
+          <line x1="30" y1="74" x2="670" y2="74" stroke="var(--line)" stroke-width="1"/>
+
+          <g font-size="13">
+            <circle cx="40" cy="98" r="7" fill="#2da44e"/><path d="M36.5,98 l2.5,2.5 l5,-5" stroke="#fff" stroke-width="2" fill="none"/>
+            <text x="56" y="103" fill="var(--ink)">Checkout</text><text x="600" y="103" fill="#6c727d">2s</text>
+
+            <circle cx="40" cy="126" r="7" fill="#2da44e"/><path d="M36.5,126 l2.5,2.5 l5,-5" stroke="#fff" stroke-width="2" fill="none"/>
+            <text x="56" y="131" fill="var(--ink)">Set up Python</text><text x="600" y="131" fill="#6c727d">6s</text>
+
+            <circle cx="40" cy="154" r="7" fill="#2da44e"/><path d="M36.5,154 l2.5,2.5 l5,-5" stroke="#fff" stroke-width="2" fill="none"/>
+            <text x="56" y="159" fill="var(--ink)">uv sync --locked</text><text x="600" y="159" fill="#6c727d">21s</text>
+
+            <circle cx="40" cy="182" r="7" fill="#cf222e"/>
+            <path d="M37.5,179.5 l5,5 M42.5,179.5 l-5,5" stroke="#fff" stroke-width="2"/>
+            <text x="56" y="187" fill="#cf222e" font-weight="700">make check</text><text x="600" y="187" fill="#cf222e">43s</text>
+
+            <circle cx="40" cy="210" r="7" fill="none" stroke="#c9cfd8" stroke-width="2"/>
+            <text x="56" y="215" fill="#9aa0ab">Configure AWS credentials</text><text x="596" y="215" fill="#9aa0ab">skipped</text>
+
+            <circle cx="40" cy="238" r="7" fill="none" stroke="#c9cfd8" stroke-width="2"/>
+            <text x="56" y="243" fill="#9aa0ab">cdk deploy</text><text x="596" y="243" fill="#9aa0ab">skipped</text>
+          </g>
+
+          <rect x="30" y="258" width="640" height="58" rx="7" fill="#1f2430"/>
+          <g font-family="SFMono-Regular, Consolas, monospace" font-size="11" fill="#e6a9a3">
+            <text x="44" y="278">FAILED tests/test_orders.py::test_allergy_blocks_cooking</text>
+            <text x="44" y="294" fill="#d9e5c3">1 failed, 23 passed in 12.4s</text>
+            <text x="44" y="310">Error: Process completed with exit code 1</text>
+          </g>
+        </g>
+      </svg>
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        When <code>make check</code> stops, every later deploy step is skipped
+      </div>
+    </div>
+
+    <p>When the check step stops, none of the later steps run. <span class="mark">That is the whole point of putting verification before deployment.</span></p>
+  </section>
+
+  <section class="sec" id="sc-5">
+    <h2><span class="n">C.5</span>Checking after deployment</h2>
+
+    <h3><span class="n">C.5.1</span>Writing end-to-end tests</h3>
+
+    <p>To confirm it works in a real environment, build end-to-end tests with Playwright. <span class="mark">Playwright has a Python version with a pytest plugin.</span></p>
+
+    <div class="warn">
+      <span class="tag">Do not run end-to-end tests for the first time in production</span>
+      The order is: <strong>local → CI → deploy to staging → end-to-end on staging → human approval → production.</strong><br><br>
+      <span class="mark">If production is the first place you run them, your users see the failures before you do.</span>
+    </div>
+
+    <p>When you write them, follow these.</p>
+
+    <ul>
+      <li>Switch <code>BASE_URL</code> through an environment variable. Do not hard-code a URL</li>
+      <li>Create test data inside the test, and delete it afterwards</li>
+      <li>Save a screenshot and a trace on failure</li>
+      <li>Never use production data or a real user's account</li>
+      <li>If sign-in is needed, use a dedicated test account with its own permissions</li>
+    </ul>
+
+<pre><code>uv add --dev pytest-playwright
+uv run playwright install chromium</code></pre>
+
+<pre><code># tests/e2e/test_message_flow.py
+def test_send_message(page):
+    page.goto("http://localhost:8000/")
+    page.fill("input[name='name']", "Asha")
+    page.fill("input[name='message']", "Hello")
+    page.click("button[type='submit']")
+    assert page.locator("#message-list li").count() &gt; 0</code></pre>
+
+    <h3><span class="n">C.5.2</span>Debugging end-to-end tests</h3>
+
+    <p>When a test fails, paste the terminal output straight into the instruction.</p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Debug why the end-to-end test does not run. @terminal</div>
+
+    <p><span class="mark">Most end-to-end failures are not implementation bugs.</span> <strong>They are the test failing to set up its own preconditions.</strong> Redirect handling and role permissions are common causes.</p>
+
+    <h3><span class="n">C.5.3</span>More tests, and fixes</h3>
+
+    <p>Add end-to-end tests for each flow in turn, and work iteratively until they all pass.</p>
+
+    <div class="warn">
+      <span class="tag">Not finished until the end-to-end tests pass</span>
+      Part 6 mentioned tests passing while the page is broken. <span class="mark">The usual cause is too much mocking.</span><br><br>
+      <strong>All the unit tests being green does not mean the implementation is done. One passing end-to-end test does.</strong>
+    </div>
+  </section>
+
+  <section class="sec" id="sc-6">
+    <h2><span class="n">C.6</span>Before a commercial release</h2>
+
+    <p>Once the application runs, these are what you prepare for real operation. <span class="mark">The list is the same whether you deploy to a cloud or to containers.</span></p>
+
+    <table>
+      <thead><tr><th></th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Multiple environments</strong></td><td>Separate production from staging and development, and configure each</td></tr>
+        <tr><td><strong>Monitoring, logs, alerts</strong></td><td>Metrics, how much log detail to keep, automatic alerting</td></tr>
+        <tr><td><strong>Security</strong></td><td>A WAF, secrets held outside the repository, least privilege</td></tr>
+        <tr><td><strong>Performance and cost</strong></td><td>Cost alerts, caching</td></tr>
+        <tr><td><strong>Operations</strong></td><td>An incident runbook, automated maintenance and patching</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">Dependency updates are part of operations</span>
+      Automated dependency updates, such as Renovate, start earning their place here. <span class="mark">An agent pins the dependencies as they were when it wrote the code. Somebody has to update them after that.</span><br><br>
+      The "outdated dependency" problem from Part 1 is not only a problem while you are building. <strong>Left alone, it arrives on its own.</strong>
+    </div>
+  </section>
+
+
+
+  <nav class="pager">
+    <a class="prev" href="appendix-b.html"><span class="dir">← PREV</span><span class="ttl">APPENDIX B　The Node.js / TypeScript build</span></a>
+    <a class="next disabled" href="#"><span class="dir">NEXT →</span><span class="ttl">This is the last page</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

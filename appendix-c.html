@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>付録C Agentのリリースと運用</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#475569;
+  --accent-soft:#eef1f5;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="章の一覧">
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html" aria-current="page">付C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">APPENDIX C</div>
+    <h1>Agentのリリースと運用</h1>
+    <p class="lede">作ったアプリを、他人が使える場所へ出すための手順です。本編の必修ではありません。研究室や学内で公開する、あるいは実務へ持ち込む段階で読んでください。</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>前章まで</dt><dd>付録Bで、Node.js／TypeScript版の原構成を確認しました。</dd>
+      <dt>この章</dt><dd>ビルド、検証、Stagingへのデプロイ、E2E、本番リリース、そして運用。デプロイ先の選択肢と、それぞれで必要になるものを扱います。</dd>
+      <dt>次章へ</dt><dd>教材はここまでです。</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="この章の目次">
+    <h2>この章の内容</h2>
+    <ol>
+      <li><span class="n">C.1</span><a href="#sc-1">本章の概要</a></li>
+      <li><span class="n">C.2</span><a href="#sc-2">デプロイ環境の準備と権限</a></li>
+      <li><span class="n">C.3</span><a href="#sc-3">デプロイ環境の実装</a></li>
+      <li><span class="n">C.4</span><a href="#sc-4">デプロイ</a></li>
+      <li><span class="n">C.5</span><a href="#sc-5">デプロイ後の動作確認</a></li>
+      <li><span class="n">C.6</span><a href="#sc-6">商用リリースまでに取り組むべきこと</a></li>
+    </ol>
+  </nav>
+
+
+  <section class="sec" id="sc-1">
+    <h2><span class="n">C.1</span>本章の概要</h2>
+
+    <div class="note">
+      <span class="tag">本編から引き継ぐこと</span>
+      ここから先で何を選んでも、次の5つは変わりません。<br><br>
+      <strong>1.</strong> <code>make check</code> を通してから次へ進める（PART 5）<br>
+      <strong>2.</strong> E2Eテストは単体テストとは別に必要（C.5）<br>
+      <strong>3.</strong> デプロイ用の権限は、開発者本人の強い権限と分ける（C.2）<br>
+      <strong>4.</strong> シークレットをリポジトリへ置かない（PART 5の5.5）<br>
+      <strong>5.</strong> ログ、コスト、停止手順が運用には要る（C.6）
+    </div>
+    <p>ここでは、作ったアプリケーションを実際の環境へ出し、動作確認と公開判断を行う一連のプロセスを扱います。</p>
+
+    <h3><span class="n">C.1.1</span>共通するのは流れだけです</h3>
+
+    <p>どこへ出すにしても、順序は同じです。</p>
+
+    <div class="flow-steps">
+      <p><strong>ビルド</strong> → <strong>検証</strong> → <strong>デプロイ</strong> → <strong>E2E確認</strong> → <strong>リリース判断</strong></p>
+    </div>
+
+    <p>ただし、<span class="mark">共通するのはこの流れだけです。</span>成果物の形、認証、ネットワーク、データの保存先、監視、そして失敗したときの戻し方は、デプロイ先ごとにかなり違います。「どこでも同じ」と考えて進めると、必ずどこかで詰まります。</p>
+
+    <h3><span class="n">C.1.2</span>標準ルートを1つ決めます</h3>
+
+    <table>
+      <thead><tr><th></th><th>ルート</th><th>必要なもの</th></tr></thead>
+      <tbody>
+        <tr><td><strong>標準</strong></td><td>Docker Compose</td><td>Dockerのみ。課金もクラウドアカウントも不要</td></tr>
+        <tr><td>発展</td><td>AWS（CDK for Python）</td><td>AWSアカウント、OIDC設定、ロール設計</td></tr>
+        <tr><td>発展</td><td>PaaS</td><td>各サービスのアカウント</td></tr>
+      </tbody>
+    </table>
+
+    <p>授業や研究室で進めるなら、<span class="mark">Docker Composeを標準にしてください。</span>学生が手元で動かして確認でき、FastAPIの実行形態がそのまま見え、E2Eまで一貫して進められます。Agentに書かせたDockerfileやcompose.yamlをレビューする題材にもなります。</p>
+
+    <div class="warn">
+      <span class="tag">AWSを本編に入れない理由</span>
+      AWSで公開すると、学生が時間を使うのはPythonでもAgentic Codingでもなく、<strong>IAMの権限設定</strong>になります。それ自体は重要な技術ですが、この教材の目的ではありません。AWSルートはC.4.2以降を参照してください。
+    </div>
+
+    <div class="note">
+      <span class="tag">コンテナは何のための道具か</span>
+      Dockerは<span class="mark">配布と実行環境を揃えるための選択肢</span>であって、Agentic AIに必須の技術ではありません。手元でFastAPIを動かすだけなら <code>uv run uvicorn</code> で足ります。<br><br>
+      Dev Containerも同じで、再現可能な開発環境を作る道具です。<strong>Agentを安全に閉じ込める箱ではありません。</strong>Dockerソケットやホストの広いディレクトリをマウントしていれば、コンテナの外へ手が届きます。権限制御はコンテナではなく、渡す権限そのもので行ってください。
+    </div>
+  </section>
+
+  <section class="sec" id="sc-2">
+    <h2><span class="n">C.2</span>デプロイ環境の準備</h2>
+
+    <h3><span class="n">C.2.1</span>デプロイ用の権限を分ける</h3>
+
+    <p>AWSを使う場合は、Agentic Codingでインフラを操作・構築するために、事前に必要なCLIの設定や権限付与を行っておきます。エージェントに強い権限を渡すことになるので、PART 4の4.4.3で決めた「守る対象」を、ここで実際に適用してください。</p>
+
+    <div class="warn">
+      <span class="tag">エージェントに渡す権限</span>
+      デプロイ用の認証情報は、開発者自身のものではなく専用のものを用意します。<span class="mark">エージェントは指示を取り違えます。</span>取り違えたときに何が消えるかは、渡した権限の範囲で決まります。
+    </div>
+  </section>
+
+  <section class="sec" id="sc-3">
+    <h2><span class="n">C.3</span>デプロイ環境の実装</h2>
+
+    <p>ここからはMCP（Model Context Protocol）でエージェントに外部の情報源を繋ぎます。</p>
+
+    <div class="note">
+      <span class="tag">外部ツールをAgentへ接続する場合</span>
+      MCPは、Agentにブラウザ、ドキュメント、データベースなどを接続するための方法のひとつです。<span class="mark">デプロイの技術ではありません。</span>必要なものだけを有効にし、信頼できるサーバだけを使ってください。詳しくは<a href="part7.html">PART 7</a>の7.5にあります。
+    </div>
+
+    <h3><span class="n">C.3.1</span>実装計画の策定</h3>
+
+    <p>まず、設計書を参照させながら実装計画を立ててもらいます。</p>
+
+    <div class="prompt"><span class="tag">PROMPT</span>@/docs/design/implementation_plan_vibe_order.md と @/docs/design/deploy.md を元に、デプロイ構成の実装計画を検討してください。</div>
+
+<p>標準ルート（Docker Compose）では、この位置に <code>Dockerfile</code> と <code>compose.yaml</code> が来ます。Agentに書かせて構いませんが、<span class="mark">生成された設定ファイルは必ず自分で読んでください。</span>ヘルスチェック、公開ポート、環境変数の渡し方、ボリュームの範囲。ここを読まずに通すと、意図せず広い範囲を外へ出すことがあります。</p>
+
+<pre><code># compose.yaml（骨格）
+services:
+  app:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      - APP_ENV=staging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      retries: 5</code></pre>
+
+    <div class="warn">
+      <span class="tag">発展：AWS Lambdaへ出す場合</span>
+      FastAPIはASGIアプリなので、CDKで関数を数行定義するだけでは動きません。<span class="mark">Mangumのようなアダプタを挟むか、Lambda Web Adapterを使うか、コンテナイメージとして配布する</span>必要があります。依存パッケージも、LambdaのLinux環境に合う形で同梱しなければなりません。<br><br>
+      Python 3.12自体はLambdaで利用できますが、「CDKを数行書けば出る」わけではありません。授業で扱うなら、ここだけで1コマ分の重さがあると考えてください。
+    </div>
+
+    <p>Docker Composeで進める場合は、<code>compose.yaml</code> とアプリケーション用の <code>Dockerfile</code> がこの位置に来ます。</p>
+
+    <h3><span class="n">C.3.2</span>デプロイ前の動作確認</h3>
+
+    <p>実装が完了したら、デプロイ前に定義が正しく解決できるかを確認します。</p>
+
+<pre><code>uv run cdk synth          # CloudFormationテンプレートの生成を確認
+# または
+docker compose config     # composeファイルの構文と変数展開を確認
+docker compose up --build # ローカルで一度立ち上げる</code></pre>
+  </section>
+
+  <section class="sec" id="sc-4">
+    <h2><span class="n">C.4</span>デプロイ</h2>
+
+    <p>ここからは、実際にデプロイするためのCI/CDシステムを構築し、GitHub Actionsを通じてデプロイを実行していきます。PART 5で作ったCIワークフローに、デプロイのジョブを足す形になります。</p>
+
+    <h3><span class="n">C.4.1</span>CI/CD環境の設計</h3>
+    <p>検証（PART 5で作った <code>check</code> ジョブ）とデプロイを分け、検証が通ったものだけがデプロイへ進むようにします。デプロイは自動ではなく手動起動にしておくと、事故の範囲を限定できます。</p>
+
+    <h3><span class="n">C.4.2</span>CI/CD環境の実装</h3>
+    <p>Actモードへ移行したエージェントは、計画に従って段階的にパイプラインを実装します。</p>
+
+<pre><code># .github/workflows/deploy-staging.yml
+name: Deploy staging
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: make check
+      - uses: aws-actions/configure-aws-credentials@&lt;固定したコミットSHA&gt;
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-northeast-1
+      - run: uv run cdk diff
+      - run: uv run cdk deploy --require-approval never</code></pre>
+
+    <div class="warn">
+      <span class="tag">permissions だけでは認証できません</span>
+      <code>id-token: write</code> はOIDCトークンを発行する許可にすぎません。<span class="mark">AWS側に作った限定ロールを引き受ける処理（<code>configure-aws-credentials</code>）がないと、デプロイは通りません。</span>GitHub ActionsのOIDCは、長期のAWSキーをSecretsに置かず、実行ごとの短期資格情報を使うための仕組みです。ロール側の信頼ポリシーで、リポジトリとブランチを絞ってください。
+    </div>
+
+    <p>認証情報を直接置かず、OIDCによる一時的な権限で動かします。PART 5の5.5で入れたgitleaksは、うっかりコミットされた鍵を止めるための最後の網ですが、そもそも鍵を置かない設計のほうが先です。</p>
+
+    <h3><span class="n">C.4.3</span>CI/CD環境の検証</h3>
+    <p>設計・実装が完了したら、エージェントに検証を依頼します。ワークフローそのものの検査にはactionlintとzizmorを使います。</p>
+
+    <h3><span class="n">C.4.4</span>プルリクエストとCIチェック</h3>
+    <p>GitHubにプルリクエストを作成し、自動テスト（CIチェック）を実行します。</p>
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:18px 12px">
+      <svg viewBox="0 0 700 330" style="width:100%;max-width:700px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pull request checks">
+        <g font-family="system-ui, sans-serif">
+          <rect x="10" y="10" width="680" height="310" rx="10" fill="var(--paper)" stroke="var(--line)" stroke-width="1.4"/>
+
+          <text x="30" y="42" font-size="15" font-weight="700" fill="var(--ink)">Add allergy check to order flow</text>
+          <text x="272" y="42" font-size="15" fill="#8a8f99">#42</text>
+          <text x="30" y="62" font-size="12" fill="#6c727d">feature/allergy-check into main</text>
+
+          <line x1="30" y1="76" x2="670" y2="76" stroke="var(--line)" stroke-width="1"/>
+
+          <text x="30" y="98" font-size="13" font-weight="700" fill="var(--ink)">Some checks were not successful</text>
+
+          <g font-size="13">
+            <circle cx="40" cy="122" r="8" fill="#2da44e"/><path d="M36,122 l3,3 l6,-6" stroke="#fff" stroke-width="2" fill="none"/>
+            <text x="58" y="127" fill="var(--ink)">check / format</text>
+            <text x="560" y="127" fill="#6c727d">Successful in 12s</text>
+
+            <circle cx="40" cy="152" r="8" fill="#2da44e"/><path d="M36,152 l3,3 l6,-6" stroke="#fff" stroke-width="2" fill="none"/>
+            <text x="58" y="157" fill="var(--ink)">check / lint</text>
+            <text x="560" y="157" fill="#6c727d">Successful in 8s</text>
+
+            <circle cx="40" cy="182" r="8" fill="#cf222e"/>
+            <path d="M37,179 l6,6 M43,179 l-6,6" stroke="#fff" stroke-width="2"/>
+            <text x="58" y="187" fill="#cf222e" font-weight="700">check / test</text>
+            <text x="560" y="187" fill="#cf222e">Failing after 34s</text>
+
+            <circle cx="40" cy="212" r="8" fill="#2da44e"/><path d="M36,212 l3,3 l6,-6" stroke="#fff" stroke-width="2" fill="none"/>
+            <text x="58" y="217" fill="var(--ink)">gitleaks</text>
+            <text x="560" y="217" fill="#6c727d">Successful in 5s</text>
+          </g>
+
+          <rect x="30" y="238" width="640" height="34" rx="7" fill="#fff1f0" stroke="#f0b8b4" stroke-width="1.4"/>
+          <text x="46" y="260" font-size="13" font-weight="700" fill="#cf222e">Merging is blocked</text>
+          <text x="188" y="260" font-size="13" fill="#7a3b3b">Required status check &#8220;check&#8221; must pass before merging.</text>
+
+          <rect x="30" y="284" width="196" height="28" rx="7" fill="#eef0f2" stroke="#c9cfd8" stroke-width="1.4"/>
+          <text x="128" y="303" font-size="13" fill="#9aa0ab" text-anchor="middle" font-weight="700">Merge pull request</text>
+          <text x="242" y="303" font-size="12" fill="#8a8f99">disabled</text>
+        </g>
+      </svg>
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        CIが落ちるとマージできない。<span style="color:var(--accent);font-weight:700">これがブランチ保護の効果です</span>
+      </div>
+    </div>
+    <p>非推奨（deprecated）APIの警告やテストエラーが発生した場合は、7.3で接続したMCPサーバを活用して、エージェントに原因特定と修正を依頼します。</p>
+    <div class="prompt"><span class="tag">PROMPT</span>make check を実行してください。DeprecationWarning が出る箇所については、MCPで現在の推奨される書き方を調べてから修正してください。</div>
+
+    <h3><span class="n">C.4.5</span>デプロイの実行</h3>
+    <p>チェックが通った後、GitHub Actionsの「Run workflow」からデプロイを実行します。</p>
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:18px 12px">
+      <svg viewBox="0 0 700 340" style="width:100%;max-width:700px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Workflow run">
+        <g font-family="system-ui, sans-serif">
+          <rect x="10" y="10" width="680" height="320" rx="10" fill="var(--paper)" stroke="var(--line)" stroke-width="1.4"/>
+
+          <text x="30" y="40" font-size="15" font-weight="700" fill="var(--ink)">Deploy staging</text>
+          <text x="146" y="40" font-size="15" fill="#8a8f99">#17</text>
+          <rect x="182" y="26" width="66" height="20" rx="10" fill="#cf222e"/>
+          <text x="215" y="41" font-size="12" fill="#fff" text-anchor="middle" font-weight="700">failed</text>
+          <text x="30" y="60" font-size="12" fill="#6c727d">workflow_dispatch &#183; main &#183; 1m 12s</text>
+
+          <line x1="30" y1="74" x2="670" y2="74" stroke="var(--line)" stroke-width="1"/>
+
+          <g font-size="13">
+            <circle cx="40" cy="98" r="7" fill="#2da44e"/><path d="M36.5,98 l2.5,2.5 l5,-5" stroke="#fff" stroke-width="2" fill="none"/>
+            <text x="56" y="103" fill="var(--ink)">Checkout</text><text x="600" y="103" fill="#6c727d">2s</text>
+
+            <circle cx="40" cy="126" r="7" fill="#2da44e"/><path d="M36.5,126 l2.5,2.5 l5,-5" stroke="#fff" stroke-width="2" fill="none"/>
+            <text x="56" y="131" fill="var(--ink)">Set up Python</text><text x="600" y="131" fill="#6c727d">6s</text>
+
+            <circle cx="40" cy="154" r="7" fill="#2da44e"/><path d="M36.5,154 l2.5,2.5 l5,-5" stroke="#fff" stroke-width="2" fill="none"/>
+            <text x="56" y="159" fill="var(--ink)">uv sync --locked</text><text x="600" y="159" fill="#6c727d">21s</text>
+
+            <circle cx="40" cy="182" r="7" fill="#cf222e"/>
+            <path d="M37.5,179.5 l5,5 M42.5,179.5 l-5,5" stroke="#fff" stroke-width="2"/>
+            <text x="56" y="187" fill="#cf222e" font-weight="700">make check</text><text x="600" y="187" fill="#cf222e">43s</text>
+
+            <circle cx="40" cy="210" r="7" fill="none" stroke="#c9cfd8" stroke-width="2"/>
+            <text x="56" y="215" fill="#9aa0ab">Configure AWS credentials</text><text x="596" y="215" fill="#9aa0ab">skipped</text>
+
+            <circle cx="40" cy="238" r="7" fill="none" stroke="#c9cfd8" stroke-width="2"/>
+            <text x="56" y="243" fill="#9aa0ab">cdk deploy</text><text x="596" y="243" fill="#9aa0ab">skipped</text>
+          </g>
+
+          <rect x="30" y="258" width="640" height="58" rx="7" fill="#1f2430"/>
+          <g font-family="SFMono-Regular, Consolas, monospace" font-size="11" fill="#e6a9a3">
+            <text x="44" y="278">FAILED tests/test_orders.py::test_allergy_blocks_cooking</text>
+            <text x="44" y="294" fill="#d9e5c3">1 failed, 23 passed in 12.4s</text>
+            <text x="44" y="310">Error: Process completed with exit code 1</text>
+          </g>
+        </g>
+      </svg>
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        <code>make check</code> で止まると、以降のデプロイ手順は実行されない
+      </div>
+    </div>
+    <p>途中でエラーが発生した場合は、エラーログをそのまま解析させ、修正と再実行を繰り返して正常完了を目指します。依存関係の解決やパスの設定不足が原因であることが多く、ログを渡せばエージェントが特定できます。</p>
+  </section>
+
+  <section class="sec" id="sc-5">
+    <h2><span class="n">C.5</span>デプロイ後の動作確認</h2>
+
+    <h3><span class="n">C.5.1</span>E2Eテストの実装</h3>
+    <p>実際の環境で正しく機能するか確認するため、Playwrightを用いたE2E（End-to-End）テストを構築します。PlaywrightにはPython版があり、pytestプラグインが用意されています。</p>
+
+    <div class="warn">
+      <span class="tag">本番に出してからE2Eを走らせない</span>
+      流れはこうします。<span class="mark">ローカル → CI → Stagingへデプロイ → StagingでE2E → 人間の承認 → Production。</span>本番で初めてE2Eを回す構造にすると、失敗が利用者に見えてしまいます。
+    </div>
+
+    <p>E2Eを書くときは、次を守ってください。</p>
+
+    <ul>
+      <li><code>BASE_URL</code> を環境変数で切り替える。テストコードにURLを埋め込まない</li>
+      <li>テスト用のデータを、テストの中で作成し、終わったら削除する</li>
+      <li>失敗時にスクリーンショットとtraceを保存する</li>
+      <li>本番データや実ユーザーのアカウントを使わない</li>
+      <li>サインインが必要なら、テスト専用アカウントと権限を用意する</li>
+    </ul>
+
+<pre><code>uv add --dev pytest-playwright
+uv run playwright install chromium</code></pre>
+
+    <div class="prompt"><span class="tag">PROMPT</span>/deep-planning &lt;デプロイしたフロントエンドのURL&gt; についてサインインが成功しました。サインイン後の画面のE2Eテストを実装する計画を立ててください。</div>
+
+<pre><code># tests/e2e/test_order_flow.py
+def test_create_order(page):
+    page.goto("http://localhost:8000/")
+    page.fill("input[name='table_no']", "12")
+    page.click("button[type='submit']")
+    assert page.locator("#order-list li").count() &gt; 0</code></pre>
+
+    <h3><span class="n">C.5.2</span>E2Eテストのデバッグ</h3>
+    <p>テスト実行時に失敗が発生した場合、ターミナルのログ出力をそのまま指示に含めてデバッグを依頼します。</p>
+    <div class="prompt"><span class="tag">PROMPT</span>E2Eテストが動かない理由をデバッグしてください。@terminal</div>
+    <p>リダイレクト処理や権限（管理者ロール）の制限が原因で発生するエラーを特定し、修正を適用します。E2Eで落ちる原因の多くは実装の誤りではなく、テスト側が前提条件を用意できていないことです。</p>
+
+    <h3><span class="n">C.5.3</span>追加のE2Eテストと機能修正</h3>
+    <p>「メニュー新規登録」「注文登録」「席管理」などの各登録フローに対してE2Eテストを追加し、イテレーティブに修正を進め、全テストのパスを目指します。</p>
+
+    <div class="note">
+      <span class="tag">E2Eが通るまでは完了としない</span>
+      6.4.4で「テストが通るのに動かない」という症状に触れました。原因はたいていモックの作り過ぎです。<span class="mark">単体テストが全部緑でも、E2Eを1本通すまでは実装が完了したとは言えません。</span>
+    </div>
+  </section>
+
+  <section class="sec" id="sc-6">
+    <h2><span class="n">C.6</span>商用リリースまでに取り組むべきこと</h2>
+    <p>アプリケーションが正常動作した後の「商用運用」に向け、以下の観点について準備・強化を行います。デプロイ先がクラウドでもコンテナでも、項目としては共通です。</p>
+    <ul>
+      <li><strong>マルチ環境の整備</strong>：本番環境（Production）と検証環境（Staging/Dev）の分離と設定</li>
+      <li><strong>監視・ログ・アラート体制</strong>：メトリクス監視、ログ収集粒度の決定、アラート通知の自動化</li>
+      <li><strong>セキュリティの強化</strong>：WAFの導入、シークレット管理の外部化、権限の最小化</li>
+      <li><strong>パフォーマンスとコスト最適化</strong>：費用アラート、キャッシュ最適化</li>
+      <li><strong>運用体制の構築</strong>：インシデント対応手順書、定期メンテナンスやパッチ適用の自動化</li>
+    </ul>
+
+    <div class="warn">
+      <span class="tag">依存更新は運用の一部です</span>
+      依存の自動更新（Renovateなど）が効いてくるのはここから先です。エージェントは書いた時点の依存を固定するだけで、その後の更新は誰かがやらなければなりません。<span class="mark">PART 4で見た「古い依存」は、作るときだけの問題ではなく、放置すれば必ず起きる問題です。</span>
+    </div>
+  </section>
+
+
+  <nav class="pager">
+    <a class="prev" href="appendix-b.html"><span class="dir">← PREV</span><span class="ttl">APPENDIX B　Node.js／TypeScript版（原構成）</span></a>
+    <a class="next disabled" href="#"><span class="dir">NEXT →</span><span class="ttl">最後のページです</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'コピー';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'コピーしました';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'コピー';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

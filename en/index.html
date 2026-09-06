@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What to learn when AI writes the code | Agentic Coding</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#9a6b1f;
+  --accent-soft:#f6efdf;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html" aria-current="page">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">Introduction</div>
+    <h1>What to learn when AI writes the code</h1>
+    <p class="lede">AI no longer just answers questions. It reads files, edits code and runs tests. In this course you will see that change with your own hands.</p>
+  </header>
+
+
+
+
+<style>
+  .challenge{margin:26px 0 38px;background:#20221f;color:#f7f5ee;border-radius:14px;padding:24px 24px 22px;box-shadow:0 12px 30px rgba(30,28,22,.12)}
+  .challenge .kicker{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;color:#ebc981;font-weight:700}
+  .challenge h2{font-size:1.28rem;line-height:1.45;margin:7px 0 14px;color:#fff}
+  .challenge p{color:#dad9d3;font-size:.94rem;margin-bottom:12px}
+  .terminal{font-family:var(--mono);font-size:.78rem;line-height:1.8;background:#11130f;border:1px solid #3d4235;color:#d9e5c3;padding:13px 15px;border-radius:8px;overflow:auto}
+  .terminal .dim{color:#899182}.terminal .ok{color:#b8e780}.terminal .warn-t{color:#f7cd74}
+  .question{font-size:1.03rem;font-weight:700;color:#fff!important;margin:15px 0 0!important}
+</style>
+
+  <div class="challenge">
+    <div class="kicker">FIRST, WATCH THIS</div>
+    <h2>You say "build me a submission tracker." Here is what happens in a few minutes.</h2>
+    <p>Start with an empty folder. Give the Coding Agent this one instruction.</p>
+
+    <div class="prompt" style="background:#2a2d28;border-color:#4a5043;color:#e8e6df"><span class="tag" style="background:#ebc981;color:#20221f">PROMPT</span>Build a web app in Python that tracks assignment submissions.
+Students, assignments, submission dates and status.
+I want to add records and see them in a list.
+Start it at the end and check that it runs.</div>
+
+    <div class="terminal">
+<span class="dim">▸</span> Read src/app.py
+<span class="dim">▸</span> Write requirements.txt, src/app.py, templates/index.html
+<span class="dim">▸</span> Run uv run pytest
+<span class="warn-t">!</span> Test failed: date validation is missing
+<span class="dim">▸</span> Edit src/app.py
+<span class="ok">✓</span> 12 passed in 0.43s
+    </div>
+
+    <p class="question">Impressive. But would you submit this app as it is?</p>
+  </div>
+
+  <section class="sec" id="s0-1">
+    <h2><span class="n">01</span>From answering questions to doing the work</h2>
+
+    <p>Look at the example again. The AI did not only write code. <span class="mark">It created files, ran them, read the failure, fixed it and checked again.</span></p>
+
+    <p><strong>Agentic AI</strong> is one way of using AI. You give it a goal. The AI plans the steps. It uses tools to carry them out. It looks at the result and decides what to do next.</p>
+
+    <p>A <strong>Coding Agent</strong> applies that idea to software development.</p>
+
+    <p>Here is the difference, using a bug fix as the example.</p>
+
+    <table>
+      <thead><tr><th></th><th>Ordinary generative AI</th><th>Coding Agent</th></tr></thead>
+      <tbody>
+        <tr><td><strong>You say</strong></td><td>"How do I fix this error?"</td><td>"One test is failing. Fix it."</td></tr>
+        <tr><td><strong>You get</strong></td><td>A suggestion or a code sample</td><td>Fixed code and a test result</td></tr>
+        <tr><td><strong>The AI does</strong></td><td>Answers the question</td><td>Finds files, reads them, edits them, runs tests</td></tr>
+        <tr><td><strong>You do</strong></td><td>Apply the code and run it</td><td>State the goal, make the important calls, check the result</td></tr>
+      </tbody>
+    </table>
+
+    <p>The AI did not suddenly become capable of everything. <span class="mark">What changed is that it can use tools.</span> It reads files, runs commands, and feeds the result into its next move.</p>
+
+    <div class="warn">
+      <span class="tag">The important part</span>
+      The LLM is not driving your computer. <span class="mark">It proposes what to do next.</span> The program that actually touches files and runs commands is the agent host, such as Cline, and it acts within the permissions you gave it.<br><br>
+      So the places where you can stop the work are outside the model: permissions, approvals and tests. <strong>You set them up in the environment.</strong>
+    </div>
+
+    <p>The same idea applies outside coding. Paperwork, support requests, cleaning up data. <span class="mark">Part 8 does exactly this with video production.</span></p>
+
+    <p>This course still uses coding as its subject, for two reasons.</p>
+
+    <ul>
+      <li>Every change is visible as a diff, so you can see exactly what the agent did</li>
+      <li>Tests can check some of the behaviour for you, instead of you checking it by hand</li>
+    </ul>
+
+    <p><span class="mark">Tests do not prove that the code is correct.</span> They check that the behaviour you asked for is still there.</p>
+  </section>
+
+  <section class="sec" id="s0-2">
+    <h2><span class="n">02</span>Why now</h2>
+
+    <p>AI can now carry out development work. This is not because the models write better prose. <span class="mark">Three things had to come together first.</span></p>
+
+    <table>
+      <thead><tr><th>Condition</th><th>What it made possible</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Tool calling became reliable</strong></td><td>The AI can state which operation to run, with which arguments, in a structured form</td></tr>
+        <tr><td><strong>Context windows grew</strong></td><td>It can keep several files and a work history in view across many steps</td></tr>
+        <tr><td><strong>It connected to the editor</strong></td><td>It can use the editor, the terminal, the tests and version control</td></tr>
+      </tbody>
+    </table>
+
+    <p>Together these changed what the AI can be used for. <span class="mark">Not only a completion feature that suggests the next line, but an agent that carries out work within limits you set.</span></p>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/copilot-to-pilot.png" alt="Copilot versus Pilot. With Copilot the human writes and runs the code and the AI assists. With Pilot the agent reads, writes, tests and fixes, and the human sets goals and guardrails" style="width:100%;max-width:720px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        From Copilot to Pilot. <span style="color:var(--accent);font-weight:700">Your work moves from implementation to design, verification and judgement.</span>
+      </div>
+    </div>
+
+    <p>Now go back to the app at the top of this page. Could you really submit it?</p>
+
+    <p>Input validation may be missing. The data may not survive a restart. Something no test covers may already be broken.</p>
+
+    <p><span class="mark">Building fast and building correctly are different things.</span> So the question becomes: where does a human decide, and what limits do you put in place?</p>
+  </section>
+
+  <section class="sec" id="s0-3">
+    <h2><span class="n">03</span>What this course aims for</h2>
+
+    <p>This course is not about handing development over to AI. <span class="mark">It is about deciding how much to hand over, and staying responsible for the result.</span></p>
+
+    <p>You will still be the one who says what "done" means, and who approves each change.</p>
+
+    <p>By the end, you should be able to do the following.</p>
+
+    <ul>
+      <li>Read what a Coding Agent looked at, what it changed, and on what grounds it called the work done</li>
+      <li>Let the AI implement something, then verify the result against tests, diffs and the specification</li>
+      <li>Narrow what you delegate, safely, using tests, linters, CI and permissions</li>
+      <li>Design a small agent in Python and LangGraph, with approval and retry built in</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">What you need</span>
+      Python 3.12. Basic programming and some terminal experience are enough. No prior knowledge of any particular framework is required.<br><br>
+      Models run on your own machine or on a shared server provided for the class. <span class="mark">The exercises are written so that you do not need a paid cloud API.</span> Setup is in <a href="appendix-a.html">Appendix A</a>.
+    </div>
+  </section>
+
+  <section class="sec" id="s0-4">
+    <h2><span class="n">04</span>How this course is organised</h2>
+
+    <table>
+      <thead><tr><th></th><th></th><th>What you do</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Ex 0</strong></td><td>Find work worth delegating</td><td>Think, on paper. 20 minutes</td></tr>
+        <tr><td><strong>Setup</strong></td><td>Get the tools ready</td><td>VS Code, Ollama, a model, GitHub</td></tr>
+        <tr><td><strong>1</strong></td><td>How LLMs work, and where they fail</td><td>Reproduce the limits yourself</td></tr>
+        <tr><td><strong>2</strong></td><td>Try Vibe Coding</td><td>Rebuild a street scene with words only</td></tr>
+        <tr><td><strong>3</strong></td><td>Run a Coding Agent</td><td>Let Cline build a small app</td></tr>
+        <tr><td><strong>4</strong></td><td>Test it, then have it fixed</td><td>You find the problem. The agent fixes it</td></tr>
+        <tr><td><strong>5</strong></td><td>Turn the check into tests</td><td>Move it to Flask. Break it on purpose</td></tr>
+        <tr><td><strong>6</strong></td><td>Add features behind the tests</td><td>Two features, one of them unplanned</td></tr>
+        <tr><td><strong>7</strong></td><td>Build the agent yourself</td><td>Python, LangChain, LangGraph</td></tr>
+        <tr><td><strong>8</strong></td><td>Move the design to other work</td><td>A video production workflow</td></tr>
+      </tbody>
+    </table>
+
+    <p>Each part starts from what you built in the one before it. <span class="mark">Working in order matters more here than in most courses.</span></p>
+
+    <p>Every part marks what is required and what is optional. <span class="mark">You do not have to do all of it.</span></p>
+  </section>
+
+
+  <nav class="pager">
+    <a class="prev disabled" href="#"><span class="dir">← PREV</span><span class="ttl">This is the first page</span></a>
+    <a class="next" href="exercise0.html"><span class="dir">NEXT →</span><span class="ttl">Exercise 0　Find work worth handing to an AI agent</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

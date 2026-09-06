@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PART 7 Build the agent yourself</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#7c3aed;
+  --accent-soft:#f1ecfe;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html" aria-current="page">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PART 7</div>
+    <h1>Build the agent yourself</h1>
+    <p class="lede">So far the agent has been someone else's product. Here you write the inside of it: tool calling, a loop, a stopping condition, branching and human approval, in Python, LangChain and LangGraph.</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>Previously</dt><dd>In Part 6 you added features to Vibe Chat with tests behind you. Cline did the editing; you approved it.</dd>
+      <dt>This part</dt><dd>One test is failing. You build an agent that finds the cause, fixes it, and stops for your approval before the change is accepted.</dd>
+      <dt>Next</dt><dd>Part 8 takes the same design and applies it to work that is not coding.</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="Contents of this part">
+    <h2>In this part</h2>
+    <ol>
+      <li><span class="n">7.0</span><a href="#s7-0">What you do in this part</a></li>
+      <li><span class="n">7.1</span><a href="#s7-1">A minimal agent in plain Python</a></li>
+      <li><span class="n">7.2</span><a href="#s7-2">Connecting the pieces with LangChain</a></li>
+      <li><span class="n">7.3</span><a href="#s7-3">Designing the flow with LangGraph</a></li>
+      <li><span class="n">7.4</span><a href="#s7-4">Approval, interruption and resuming</a></li>
+      <li><span class="n">7.5</span><a href="#s7-5">Optional: connect to live data with MCP</a></li>
+      <li><span class="n">7.6</span><a href="#s7-6">What to hand in</a></li>
+    </ol>
+  </nav>
+
+
+
+  <section class="sec" id="s7-0" style="margin-bottom:44px">
+    <h2><span class="n">7.0</span>What you do in this part</h2>
+
+    <div class="prompt"><span class="tag">MISSION</span>One test is failing. Build an agent that finds the cause and fixes it.
+
+Not Cline. Your own Python.</div>
+
+    <p>Until now the agent was somebody else's product. <span class="mark">Here you write the inside of it.</span></p>
+
+    <h3><span class="n">7.0.1</span>Before you start</h3>
+
+    <p>Use the <code>vibe-chat/</code> you built in Part 6. <span class="mark">First, put it into a state where a test fails.</span></p>
+
+    <h4>How to break it</h4>
+
+    <p>Open <code>app.py</code> and <span class="mark">comment out the check that rejects an empty name.</span> The same thing you did in 5.5.</p>
+
+    <p>Then run <code>pytest</code> and confirm that it fails.</p>
+
+<pre><code>cd vibe-chat
+pytest</code></pre>
+
+    <p>Confirm the failure. <span class="mark">Investigating that failure, fixing it and getting the tests to pass is the goal you give your agent.</span></p>
+
+    <div class="note">
+      <span class="tag">Then forget what you broke</span>
+      All you tell the agent is "a test is failing, find out why and fix it". <span class="mark">You do not tell it where.</span><br><br>
+      You are watching whether it can find it on its own.
+    </div>
+
+    <h3><span class="n">7.0.2</span>What counts as finished</h3>
+
+    <table>
+      <thead><tr><th></th><th>Condition</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>The agent calls tools and edits a file</td></tr>
+        <tr><td><strong>2</strong></td><td>It runs the tests and reads the result</td></tr>
+        <tr><td><strong>3</strong></td><td>It gives up after a fixed number of attempts, rather than looping forever</td></tr>
+        <tr><td><strong>4</strong></td><td><span class="mark">It stops and waits for a human before the change is accepted</span></td></tr>
+      </tbody>
+    </table>
+
+    <p>Number 4 is the part that distinguishes this from a script. <strong>Section 7.4 builds it.</strong></p>
+  </section>
+
+  <section class="sec" id="s7-1">
+    <h2><span class="n">7.1</span>A minimal agent in plain Python</h2>
+
+    <p>No frameworks yet. <span class="mark">The loop is short enough to read in one go.</span></p>
+
+    <h3><span class="n">7.1.1</span>Put limits on the tools</h3>
+
+    <p>Before writing the loop, restrict what the tools can reach. <strong>An agent can only do what its tools allow.</strong></p>
+
+    <div class="warn">
+      <span class="tag">Write the limits first, not later</span>
+      A <code>write_file</code> that takes any path can write anywhere on your machine. <span class="mark">Adding a check afterwards is how you forget one.</span><br><br>
+      <code>_safe_path</code> below refuses anything outside the project. <strong>Every tool goes through it.</strong>
+    </div>
+
+<pre><code>import subprocess
+from pathlib import Path
+
+PROJECT_ROOT = Path.cwd().resolve()
+
+
+def _safe_path(path: str) -&gt; Path:
+    target = (PROJECT_ROOT / path).resolve()
+    if PROJECT_ROOT not in target.parents and target != PROJECT_ROOT:
+        raise ValueError("files outside the project are not allowed")
+    return target
+
+
+def read_file(path: str) -&gt; str:
+    return _safe_path(path).read_text(encoding="utf-8")[:4000]
+
+
+WRITE_ROOTS = [PROJECT_ROOT, PROJECT_ROOT / "tests"]
+
+
+def write_file(path: str, content: str) -&gt; str:
+    target = _safe_path(path)
+    if not any(root == target.parent or root in target.parents
+               for root in WRITE_ROOTS):
+        raise ValueError("only the project root and tests/ may be written")
+    if target.suffix != ".py":
+        raise ValueError("only .py files may be written")
+    target.write_text(content, encoding="utf-8")
+    return f"updated {path}"
+
+
+def run_tests() -&gt; str:
+    r = subprocess.run(
+        ["pytest"],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    return (r.stdout + r.stderr)[-4000:]
+
+
+TOOLS = {"read_file": read_file, "write_file": write_file, "run_tests": run_tests}</code></pre>
+
+    <table>
+      <thead><tr><th>Limit</th><th>What it prevents</th></tr></thead>
+      <tbody>
+        <tr><td><code>_safe_path</code></td><td>Reaching outside the project, including via <code>../</code></td></tr>
+        <tr><td><code>WRITE_ROOTS</code></td><td>Writing anywhere except the project root and <code>tests/</code></td></tr>
+        <tr><td><code>.py</code> only</td><td>Overwriting configuration or data files</td></tr>
+        <tr><td><code>timeout=120</code></td><td>A test run that never returns</td></tr>
+        <tr><td><code>[-4000:]</code></td><td>A huge output filling the context</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">7.1.2</span>The tool definitions and the loop</h3>
+
+<pre><code>import ollama
+
+MODEL = "qwen3.8:27b"
+
+SCHEMA = [
+    {"type": "function", "function": {
+        "name": "read_file",
+        "description": "read a file inside the project",
+        "parameters": {"type": "object",
+                       "properties": {"path": {"type": "string"}},
+                       "required": ["path"]}}},
+    {"type": "function", "function": {
+        "name": "write_file",
+        "description": "rewrite a .py file inside the project",
+        "parameters": {"type": "object",
+                       "properties": {"path": {"type": "string"},
+                                      "content": {"type": "string"}},
+                       "required": ["path", "content"]}}},
+    {"type": "function", "function": {
+        "name": "run_tests",
+        "description": "run pytest and return the result",
+        "parameters": {"type": "object", "properties": {}}}},
+]
+
+
+def agent(goal: str, max_steps: int = 12) -&gt; str:
+    messages = [{"role": "user", "content": goal}]
+
+    for step in range(max_steps):
+        reply = ollama.chat(model=MODEL, messages=messages, tools=SCHEMA)
+        # depending on the library version this is an object or a dict.
+        # normalise to a dict before using it.
+        msg = dict(reply["message"])
+        messages.append(msg)
+
+        calls = msg.get("tool_calls") or []
+        if not calls:
+            return msg["content"]            # nothing proposed, so stop
+
+        for call in calls:
+            fn = dict(dict(call)["function"])
+            name = fn["name"]
+            args = fn.get("arguments") or {}
+            try:
+                result = TOOLS[name](**args)   # this is where it actually happens
+            except Exception as e:
+                result = f"error: {e}"
+            messages.append({"role": "tool", "content": str(result)})
+
+    return "stopped (reached the step limit)"
+
+
+print(agent("Run pytest, find out why a test is failing, and fix it"))</code></pre>
+
+    <h3><span class="n">7.1.3</span>The core of an agent is in this loop</h3>
+
+    <p><span class="mark">Of everything in this part, <code>TOOLS[name](**args)</code> is the line to remember.</span> This is where a file gets read. Where it gets written. Where a command runs.</p>
+
+    <p>The model returned a string. <strong>Your code is what executes.</strong> When Part 1 said the model does not act directly, this line is what it meant.</p>
+
+    <div class="warn">
+      <span class="tag">Write the stopping condition yourself</span>
+      <code>max_steps</code> is the limit. Without it, a model that keeps proposing tools keeps being called. <span class="mark">It will not stop on its own.</span><br><br>
+      That costs money on a paid API, and on any API it means an agent editing files with nobody watching. <strong>If you build the agent, you write the stopping condition.</strong>
+    </div>
+
+    <table>
+      <thead><tr><th>In the loop</th><th>What it corresponds to</th></tr></thead>
+      <tbody>
+        <tr><td><code>ollama.chat(...)</code></td><td>Decide</td></tr>
+        <tr><td><code>TOOLS[name](**args)</code></td><td>Execute</td></tr>
+        <tr><td><code>messages.append(...)</code></td><td>Feed the result back</td></tr>
+        <tr><td><code>for step in range(...)</code></td><td>Repeat, with a limit</td></tr>
+      </tbody>
+    </table>
+
+    <p><span class="mark">Cline is doing the same four things, with a user interface around them.</span></p>
+  </section>
+
+  <section class="sec" id="s7-2">
+    <h2><span class="n">7.2</span>Connecting the pieces with LangChain</h2>
+
+    <p>The plain loop works, but every piece is hand-wired. <span class="mark">LangChain gives those pieces standard shapes.</span></p>
+
+    <h3><span class="n">7.2.1</span>Six ideas in LangChain</h3>
+
+    <table>
+      <thead><tr><th>Idea</th><th>Role</th><th>Where it appears here</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Model I/O</strong></td><td>Send input to a model, take output back</td><td>The travel example, and the agent's model calls</td></tr>
+        <tr><td><strong>Chain</strong></td><td>Run prompt, model and output handling in order</td><td>The structured travel output</td></tr>
+        <tr><td><strong>Agent</strong></td><td>The model chooses which tool to use next</td><td>Investigating and fixing the failing test</td></tr>
+        <tr><td><strong>Retrieval</strong></td><td>Fetch outside data and answer from it</td><td>The kitchen board in 7.5</td></tr>
+        <tr><td><strong>Memory</strong></td><td>Hold state or conversation across steps</td><td>Pausing and resuming in 7.4</td></tr>
+        <tr><td><strong>Callbacks</strong></td><td>Record or display events during a run</td><td>Named here only; not in the required code</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">You do not need all of them</span>
+      Use the pieces you need. <span class="mark">Start with Model I/O and Chain.</span> Agent, Memory and Retrieval come after that.
+    </div>
+
+    <h3><span class="n">7.2.2</span>A small exercise: a travel suggestion in a fixed shape</h3>
+
+    <p>Pulling specific fields out of free-form prose is difficult. <span class="mark">The program below forces the output into four fields:</span> name, region, how to get there, and what to see.</p>
+
+<pre><code>uv add langchain langchain-ollama pydantic</code></pre>
+
+<pre><code>from pydantic import BaseModel, Field
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama import ChatOllama
+
+
+class Destination(BaseModel):
+    name: str = Field(description="name of the destination")
+    region: str = Field(description="state or region it is in")
+    access: str = Field(description="main way to get there from the city")
+    highlight: str = Field(description="what makes it worth visiting")
+
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a travel adviser."),
+    ("human", "Suggest one destination about an hour from Mumbai."),
+])
+
+model = ChatOllama(model="qwen3.8:27b", temperature=0)
+structured_model = model.with_structured_output(Destination)
+
+# prompt -> model -> Destination, in that order
+chain = prompt | structured_model
+result = chain.invoke({})
+
+print("destination:", result.name)
+print("region:", result.region)
+print("access:", result.access)
+print("highlight:", result.highlight)</code></pre>
+
+    <h4>What to do with it</h4>
+
+    <p>Run it, then change one thing and run it again. <span class="mark">Change a <code>description</code>, add a field, or change the city in the prompt.</span></p>
+
+    <p>The point is that <strong>the output shape is fixed by your class, not by the wording of the reply.</strong></p>
+
+    <h3><span class="n">7.2.3</span>From a Chain to an Agent</h3>
+
+    <p>A Chain runs in a fixed order. <span class="mark">An Agent decides what to do next from the result.</span></p>
+
+    <table>
+      <thead><tr><th></th><th>Chain</th><th>Agent</th></tr></thead>
+      <tbody>
+        <tr><td>Order of steps</td><td>Fixed when you write it</td><td>Decided at run time</td></tr>
+        <tr><td>Tools</td><td>Not used</td><td>Chosen by the model</td></tr>
+        <tr><td>Repeats</td><td>Runs once</td><td>Loops until a condition is met</td></tr>
+        <tr><td>Good for</td><td>A known sequence</td><td>Work whose steps depend on what it finds</td></tr>
+      </tbody>
+    </table>
+
+<pre><code>from langchain.agents import create_agent
+from langchain_core.tools import tool
+from langchain_ollama import ChatOllama
+
+
+@tool
+def read_file_tool(path: str) -&gt; str:
+    &quot;&quot;&quot;Read a file inside the project. Path is relative to the repository root.&quot;&quot;&quot;
+    return read_file(path)                # the constrained function from 7.1
+
+
+@tool
+def run_tests_tool() -&gt; str:
+    &quot;&quot;&quot;Run pytest and return the result as it is.&quot;&quot;&quot;
+    return run_tests()                    # the function from 7.1
+
+
+@tool
+def write_file_tool(path: str, content: str) -&gt; str:
+    &quot;&quot;&quot;Rewrite a .py file in the project root or in tests/.&quot;&quot;&quot;
+    return write_file(path, content)      # the constrained function from 7.1
+
+
+llm = ChatOllama(model="qwen3.8:27b")
+
+agent_executor = create_agent(
+    model=llm,
+    tools=[read_file_tool, write_file_tool, run_tests_tool],
+    system_prompt=(
+        "Investigate the pytest failure and make the smallest fix. "
+        "Always run pytest after editing."
+    ),
+)</code></pre>
+
+    <table>
+      <thead><tr><th>7.1</th><th>7.2</th></tr></thead>
+      <tbody>
+        <tr><td>You write <code>SCHEMA</code> by hand</td><td><code>@tool</code> reads the signature and the docstring</td></tr>
+        <tr><td>You write the loop</td><td><code>create_agent</code> provides it</td></tr>
+        <tr><td>You dispatch on the name yourself</td><td>Handled for you</td></tr>
+        <tr><td>The safety checks are yours</td><td><span class="mark">Still yours. Nothing changed there</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">The last row is the point</span>
+      A framework gives you the loop, the schema and the dispatch. <span class="mark">It does not decide what the agent is allowed to touch.</span><br><br>
+      <code>_safe_path</code> and <code>WRITE_ROOTS</code> are still your code. <strong>Delete them and nothing else stops a write outside the project.</strong>
+    </div>
+
+    <div class="note">
+      <span class="tag">The function name may differ</span>
+      <code>create_agent</code> has been called different things across versions, including <code>create_react_agent</code>. <span class="mark">If the import fails, check the version you have installed.</span>
+    </div>
+
+    <h3><span class="n">7.2.4</span>Exercise: change a docstring and compare</h3>
+
+    <p>The docstring is not a comment. <strong>It is the description the model reads when choosing a tool.</strong></p>
+
+    <p>Change <code>read_file_tool</code>'s docstring to something vague, such as "does something with files", and run the same task again.</p>
+
+    <table>
+      <thead><tr><th>Watch for</th></tr></thead>
+      <tbody>
+        <tr><td>Does it still pick the right tool?</td></tr>
+        <tr><td>Does it call the wrong one first?</td></tr>
+        <tr><td>Does it take more steps to finish?</td></tr>
+      </tbody>
+    </table>
+
+    <p><span class="mark">Record what changed.</span> This is the same lesson as Part 2: what you write determines what the model can do.</p>
+  </section>
+
+  <section class="sec" id="s7-3">
+    <h2><span class="n">7.3</span>Designing the flow with LangGraph</h2>
+
+    <p>Next, the shape of the work. <span class="mark">Where it branches after a failure, how many retries are allowed, and where a human is asked.</span></p>
+
+    <h3><span class="n">7.3.1</span>The flow you build</h3>
+
+<div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:18px 12px">
+      <svg viewBox="0 0 720 300" style="width:100%;max-width:720px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LangGraph routing diagram">
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 z" fill="#9aa0ab"/>
+          </marker>
+        </defs>
+        <g font-family="system-ui, sans-serif" font-size="14" text-anchor="middle">
+          <g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5">
+            <rect x="16"  y="120" width="92"  height="42" rx="9"/>
+            <rect x="160" y="120" width="118" height="42" rx="9"/>
+            <rect x="330" y="120" width="92"  height="42" rx="9"/>
+            <rect x="474" y="42"  width="98"  height="42" rx="9"/>
+            <rect x="474" y="232" width="98"  height="42" rx="9"/>
+          </g>
+          <rect x="612" y="42" width="86" height="42" rx="9" fill="#eef0f2" stroke="#b9bec7" stroke-width="1.5"/>
+          <g fill="var(--ink)" font-weight="700">
+            <text x="62"  y="147">plan</text>
+            <text x="219" y="147">implement</text>
+            <text x="376" y="147">check</text>
+            <text x="523" y="69">review</text>
+            <text x="523" y="259">give up</text>
+            <text x="655" y="69">end</text>
+          </g>
+          <g stroke="#9aa0ab" stroke-width="1.6" fill="none" marker-end="url(#ah)">
+            <path d="M108,141 H152"/>
+            <path d="M278,141 H322"/>
+            <path d="M422,134 H448 V63 H466"/>
+            <path d="M572,63 H604"/>
+            <path d="M422,150 H460 V253 H466"/>
+            <path d="M376,162 V196 H219 V166"/>
+            <path d="M523,84 V104 H240 V116" stroke-dasharray="5 4"/>
+          </g>
+          <g font-size="12" fill="#6c727d" font-weight="600">
+            <rect x="424" y="86"  width="48" height="18" rx="9" fill="#fff"/><text x="448" y="99">pass</text>
+            <rect x="416" y="192" width="88" height="18" rx="9" fill="#fff"/><text x="460" y="205">fail (3rd)</text>
+            <rect x="258" y="187" width="104" height="18" rx="9" fill="#fff"/><text x="310" y="200">fail (&lt; 3)</text>
+            <rect x="556" y="24"  width="96" height="18" rx="9" fill="#fff"/><text x="604" y="37">approve / stop</text>
+            <rect x="328" y="95"  width="50" height="18" rx="9" fill="#fff"/><text x="353" y="108">revise</text>
+          </g>
+        </g>
+      </svg>
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:6px">
+        Solid lines are the normal path. The dashed line is the send-back from <code>revise</code>
+      </div>
+    </div>
+
+    <p><strong>The only place an LLM is called is <code>implement</code>.</strong> Everything else is ordinary Python.</p>
+
+<pre><code>uv add langgraph</code></pre>
+
+<pre><code>import subprocess
+from typing import TypedDict
+from langgraph.graph import StateGraph, START, END
+
+MAX_ATTEMPTS = 3
+
+
+class State(TypedDict, total=False):
+    goal: str
+    attempts: int
+    check_output: str
+    passed: bool
+    diff: str
+    decision: str
+    review_feedback: str
+
+
+def plan(state: State) -&gt; State:
+    return {**state, "attempts": 0}
+
+
+def implement(state: State) -&gt; State:
+    # the only agent call. reuses agent_executor from 7.2.
+    prompt = state["goal"]
+    if state.get("check_output"):
+        prompt += f"\n\nPrevious run:\n{state['check_output']}"
+    if state.get("review_feedback"):
+        prompt += f"\n\nFeedback from the reviewer:\n{state['review_feedback']}"
+    agent_executor.invoke({"messages": [("user", prompt)]})
+    return {**state, "attempts": state["attempts"] + 1}
+
+
+def check(state: State) -&gt; State:
+    r = subprocess.run(["pytest"], cwd=PROJECT_ROOT,
+                       capture_output=True, text=True, timeout=120)
+    return {**state,
+            "check_output": (r.stdout + r.stderr)[-4000:],
+            "passed": r.returncode == 0}
+
+
+def route_after_check(state: State) -&gt; str:
+    if state["passed"]:
+        return "review"
+    if state["attempts"] &gt;= MAX_ATTEMPTS:
+        return "give_up"
+    return "implement"
+
+
+def give_up(state: State) -&gt; State:
+    print("Three attempts, still failing. Handing back to a human.")
+    print(state["check_output"])
+    return state</code></pre>
+
+    <div class="note">
+      <span class="tag">Not assembled yet</span>
+      The nodes and the branching are in place. <span class="mark">Building the graph and calling <code>compile()</code> happens in 7.4</span>, because <code>review</code> does not exist yet.
+    </div>
+
+    <h3><span class="n">7.3.2</span>Build the stopping condition into the design</h3>
+
+    <p><code>MAX_ATTEMPTS</code> is the retry limit. After three failures the agent stops and hands the result back to a person.</p>
+
+    <p>Retrying forever is a cost problem and a safety problem. <strong>If you build the agent, you write the stopping condition.</strong></p>
+
+    <div class="warn">
+      <span class="tag">Why <code>check</code> is its own node</span>
+      Rather than letting the LLM claim it ran <code>pytest</code>, the graph runs it as a node every time. <span class="mark">This is where turning your finish conditions into tests, back in Part 5, starts paying off.</span><br><br>
+      The structure means <strong>the agent can only reach "done" when the <code>check</code> node returns success.</strong>
+    </div>
+  </section>
+
+  <section class="sec" id="s7-4">
+    <h2><span class="n">7.4</span>Approval, interruption and resuming</h2>
+
+    <p>The <code>review</code> node stops the run and waits for a human decision.</p>
+
+<pre><code>from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import StateGraph, START, END
+from langgraph.types import interrupt, Command
+
+
+def review(state: State) -&gt; State:
+    diff = subprocess.run(["git", "diff"], cwd=PROJECT_ROOT,
+                          capture_output=True, text=True).stdout
+    answer = interrupt({
+        "diff": diff[:4000],
+        "check_output": state["check_output"],
+        "question": "Accept this change?",
+        "choices": ["approve", "revise", "stop"],
+        "when_revise": "Say what you want changed",
+    })
+    return {**state,
+            "diff": diff,
+            "decision": answer["decision"],
+            "review_feedback": answer.get("feedback", "")}
+
+
+def route_after_review(state: State) -&gt; str:
+    if state["decision"] == "revise":
+        return "implement"   # send the feedback back and try again
+    return END               # approve and stop both end the run</code></pre>
+
+    <h3><span class="n">7.4.1</span>Now assemble it</h3>
+
+<pre><code>graph = StateGraph(State)
+graph.add_node("plan", plan)
+graph.add_node("implement", implement)
+graph.add_node("check", check)
+graph.add_node("review", review)
+graph.add_node("give_up", give_up)
+
+graph.add_edge(START, "plan")
+graph.add_edge("plan", "implement")
+graph.add_edge("implement", "check")
+graph.add_conditional_edges("check", route_after_check)
+graph.add_conditional_edges("review", route_after_review)
+graph.add_edge("give_up", END)
+
+app = graph.compile(checkpointer=MemorySaver())
+
+config = {"configurable": {"thread_id": "task-001"}}
+app.invoke({"goal": "Fix the failing pytest"}, config)
+# -&gt; stops at interrupt and returns the diff
+# a human reads the diff, then resumes
+
+app.invoke(Command(resume={"decision": "approve"}), config)
+
+# if you want something changed
+app.invoke(Command(resume={
+    "decision": "revise",
+    "feedback": "Fix the implementation, not the test",
+}), config)</code></pre>
+
+    <p>Choosing <code>revise</code> sends the run back to <code>implement</code>. <span class="mark">The agent tries again using the previous test output and your feedback.</span></p>
+
+    <p><strong>An approval mechanism needs a route back, and a way to carry the reason.</strong> Approve-or-nothing is not an approval mechanism.</p>
+
+    <div class="note">
+      <span class="tag">MemorySaver keeps state in memory</span>
+      With a <code>thread_id</code> you can resume a paused run <span class="mark">within the same Python process.</span><br><br>
+      End the program and the MemorySaver state is gone. To resume on another day, use a durable checkpointer such as SQLite or PostgreSQL. <strong>For this exercise, pausing and resuming within a session is enough.</strong>
+    </div>
+
+    <div class="warn">
+      <span class="tag">Put side effects after the approval</span>
+      Write any node containing <code>interrupt()</code> <span class="mark">on the assumption that it re-runs from the top when resumed.</span><br><br>
+      Put a write to the outside world before the approval and it happens again on every resume. Sending mail, charging a card, deleting a file: <strong>those go in a separate node after the approval.</strong><br><br>
+      Keeping nodes small is not only about readability.
+    </div>
+
+    <h3><span class="n">7.4.2</span>Where to put approvals</h3>
+
+    <table>
+      <thead><tr><th>Put one</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Before anything irreversible</strong></td><td>Deleting, sending, publishing, charging. Always stop before something you cannot undo</td></tr>
+        <tr><td><strong>When the blast radius grows</strong></td><td>Stop when the number of files or lines changed passes a threshold</td></tr>
+        <tr><td><strong>When the agent is stuck</strong></td><td>Handing back after three attempts is a correct ending, not a failure</td></tr>
+        <tr><td><strong>When it reaches outside</strong></td><td>Network calls, external APIs</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">Back to Exercise 0</span>
+      Remember the column headed <strong>"check a human must keep"</strong> in <a href="exercise0.html">Exercise 0</a>. <span class="mark">What you wrote there in words, you are now placing in code.</span>
+    </div>
+  </section>
+
+  <section class="sec" id="s7-5">
+    <h2><span class="n">7.5</span>Optional: connect to live data with MCP</h2>
+
+    <p>So far you wrote the tools yourself. <span class="mark">MCP is a common standard for connecting existing external tools to an agent.</span></p>
+
+    <p>In this section you build one read-only MCP tool, and confirm that <strong>a change in outside data changes what the agent decides.</strong></p>
+
+    <div class="note">
+      <span class="tag">Why go back to Cline here</span>
+      Connecting your own agent to MCP needs additional client code. <span class="mark">This section uses Cline as the MCP client.</span> The point is connecting a tool that lives in another process, through a common format. Connecting from your own agent is covered in <a href="appendix-c.html">Appendix C</a>.
+    </div>
+
+    <table>
+      <thead><tr><th>Your tools from 7.1</th><th>An MCP tool</th></tr></thead>
+      <tbody>
+        <tr><td>Functions in the same Python process</td><td>Functions provided by a separate server process</td></tr>
+        <tr><td>You write the schema</td><td>The server sends the tool definitions</td></tr>
+        <tr><td>Tied to your repository</td><td>Reusable from any MCP client</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">7.5.1</span>Start a kitchen board server</h3>
+
+<pre><code>uv add mcp</code></pre>
+
+<pre><code># tools/kitchen_board_mcp.py
+import json
+from pathlib import Path
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("Kitchen Board")
+DATA_PATH = Path(__file__).parent.parent / "data" / "kitchen_board.json"
+
+
+@mcp.tool()
+def get_kitchen_board() -&gt; list[dict]:
+    &quot;&quot;&quot;Get the current kitchen board. Use only when deciding order priority.&quot;&quot;&quot;
+    return json.loads(DATA_PATH.read_text(encoding="utf-8"))
+
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")</code></pre>
+
+<pre><code>// data/kitchen_board.json
+[
+  {"order_id": 31, "table": 12, "item": "Prawn Curry",
+   "status": "pending", "wait_minutes": 14, "allergy_alert": true},
+  {"order_id": 32, "table": 4,  "item": "Chicken Biryani",
+   "status": "pending", "wait_minutes": 11, "allergy_alert": false},
+  {"order_id": 33, "table": 8,  "item": "Masala Dosa",
+   "status": "cooking", "wait_minutes": 9,  "allergy_alert": false}
+]</code></pre>
+
+<pre><code>{
+  "mcpServers": {
+    "kitchen-board": {
+      "command": "uv",
+      "args": ["run", "python", "tools/kitchen_board_mcp.py"]
+    }
+  }
+}</code></pre>
+
+    <div class="warn">
+      <span class="tag">This configuration is for Cline</span>
+      <span class="mark">The <code>mcpServers</code> block is Cline's.</span> The agent you built in 7.3 does not read it. Your own agent would need its own MCP client.
+    </div>
+
+    <h4>Check the connection</h4>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Call the MCP tool get_kitchen_board exactly once,
+and list the three order_id values it returns.</div>
+
+    <p>If the tool name appears in the run history and three numbers come back, you are connected.</p>
+
+    <h3><span class="n">7.5.2</span>Mission: read the kitchen board</h3>
+
+    <div class="warn">
+      <span class="tag">The situation</span>
+      12:18. Orders are queued on the board. Some have been waiting a long time, one has an allergy alert, and one is already cooking.<br><br>
+      Have the agent decide <strong>the next two actions to take.</strong> <span class="mark">The order list is not inside the agent.</span> Without fetching it from MCP, it cannot decide anything.
+    </div>
+
+    <div class="prompt"><span class="tag">PROMPT</span>You are a kitchen assistant agent.
+
+Fetch the current order list from the MCP tool get_kitchen_board,
+and give the next two actions to take, each with a reason.
+
+For any order with an allergy alert, do not say "start cooking".
+Report it as needing human confirmation.</div>
+
+<pre><code>kitchen-board.get_kitchen_board({})
+  -&gt; returns the current orders
+  -&gt; Agent: "Start cooking order 32. It has waited 11 minutes
+     and carries no alert.
+     Order 31 has waited longest at 14 minutes, but it has a
+     shellfish allergy alert, so it needs human confirmation
+     rather than being started."</code></pre>
+
+    <p>Order 31 has waited the longest. <span class="mark">It also has an allergy alert.</span> So the agent does not start it, and asks a person instead.</p>
+
+    <h3><span class="n">7.5.3</span>Change the situation and ask again</h3>
+
+    <div class="warn">
+      <span class="tag">Update</span>
+      The order for table 4 has been cancelled.<br>
+      Table 15 has been waiting 18 minutes, with no allergy alert.
+    </div>
+
+    <p>Edit <code>data/kitchen_board.json</code>, then send the same question again. <strong>Do not change the agent's code or the prompt.</strong></p>
+
+    <p>The priority changes. <span class="mark">Four things to notice.</span></p>
+
+    <ol>
+      <li>The agent <strong>was not remembering</strong> the order list</li>
+      <li>It fetches <strong>the current situation</strong> through MCP every time</li>
+      <li>When the outside data changes, <strong>the decision changes</strong></li>
+      <li>The allergy call is still <span class="mark">handed back to a person</span></li>
+    </ol>
+
+    <div class="note">
+      <span class="tag">This is where MCP earns its place</span>
+      MCP gets interesting when an agent goes and gets <span class="mark">the current state of the world</span> and changes its behaviour accordingly.<br><br>
+      The agent knows nothing about the restaurant in advance. It uses a tool to find out.
+    </div>
+
+    <h3><span class="n">7.5.4</span>What is happening</h3>
+
+    <table>
+      <thead><tr><th></th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td><code>kitchen_board_mcp.py</code> runs in a separate process from the agent</td></tr>
+        <tr><td><strong>2</strong></td><td>At startup the agent receives the name, description and arguments of the available tools</td></tr>
+        <tr><td><strong>3</strong></td><td>The agent chooses <code>get_kitchen_board</code></td></tr>
+        <tr><td><strong>4</strong></td><td>The MCP server returns the current data</td></tr>
+        <tr><td><strong>5</strong></td><td>The agent reads the result and decides what to do next</td></tr>
+      </tbody>
+    </table>
+
+    <p><span class="mark">The steps are the same four as in 7.1.</span> With MCP, the tool happens to live in another process.</p>
+
+    <h3><span class="n">7.5.5</span>Where this could go</h3>
+
+    <table>
+      <thead><tr><th>Here</th><th>Next</th></tr></thead>
+      <tbody>
+        <tr><td>A JSON kitchen board</td><td>Live data from SQLite or a business API</td></tr>
+        <tr><td>Read only</td><td>Updates, behind a human approval</td></tr>
+      </tbody>
+    </table>
+
+    <p>Before you take the second row, <span class="mark">remember where you decided approvals go in 7.4.</span> The moment reading becomes writing, an irreversible operation enters the picture.</p>
+
+    <div class="warn">
+      <span class="tag">Two rules when connecting things</span>
+      <strong>Enable the smallest set of tools the work needs.</strong> Every enabled tool definition is sent to the model on every call. Turn off what you are not using.<br><br>
+      <strong>Only connect servers you trust.</strong> <span class="mark">An MCP server runs code on your machine, with whatever permissions you gave the agent.</span>
+    </div>
+
+    <p>In this part you implemented tool calling, a loop, branching, a stopping condition, human approval, interruption, resuming and fetching outside data. <strong>Part 8 applies the same structure to video production.</strong></p>
+  </section>
+
+  <section class="sec" id="s7-6">
+    <h2><span class="n">7.6</span>What to hand in</h2>
+
+    <p>Show that you actually met the conditions you set in 7.0.2.</p>
+
+    <table>
+      <thead><tr><th></th><th>What</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>The code from 7.1 to 7.4, including <code>_safe_path</code> and <code>WRITE_ROOTS</code></td></tr>
+        <tr><td><strong>2</strong></td><td>The agent's run log. How many attempts it took, and what it did along the way</td></tr>
+        <tr><td><strong>3</strong></td><td>The screen where <code>interrupt</code> paused, and the <code>git diff</code> it showed</td></tr>
+        <tr><td><strong>4</strong></td><td><strong>Use <code>revise</code> at least once.</strong> What feedback you gave, and how the second attempt differed</td></tr>
+        <tr><td><strong>5</strong></td><td>If you did 7.5: how the agent's decision changed before and after editing <code>kitchen_board.json</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">Number 4 is the centre of it</span>
+      <span class="mark">A record of sending something back scores higher than an approval on the first try.</span><br><br>
+      An approval step that only ever produces approvals is not doing anything. <strong>Its value is in being able to send work back.</strong><br><br>
+      If it passed first time, look at the diff again and find something you would genuinely want changed. Write that, and send it back.
+    </div>
+
+    <h3><span class="n">7.6.1</span>Something to think about</h3>
+
+    <p>Preparation for the next part. You do not have to write an answer.</p>
+
+    <p>The stopping condition, the approval points and the send-back route you built: <span class="mark">were they specific to fixing code?</span></p>
+
+    <p><strong>Or would they apply to completely different work?</strong></p>
+  </section>
+
+
+
+  <nav class="pager">
+    <a class="prev" href="part6.html"><span class="dir">← PREV</span><span class="ttl">PART 6　Add features without breaking things</span></a>
+    <a class="next" href="part8.html"><span class="dir">NEXT →</span><span class="ttl">PART 8　Run video production with an agent</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>
