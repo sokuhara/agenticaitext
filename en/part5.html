@@ -213,7 +213,7 @@ and an empty message are rejected.</div>
 
     <div class="note">
       <span class="tag">Being testable is the point</span>
-      In Part 4 you checked every fix by hand. <span class="mark">One fix took about an hour and twenty minutes.</span><br><br>
+      In Part 4 you could not take the agent's report at face value, <span class="mark">so in the end you checked by hand.</span><br><br>
       On the server side, "an empty name is rejected" can be checked in code. <span class="mark">One command replaces a sequence of clicks.</span> <strong>It also runs the same way every time, which a person does not.</strong>
     </div>
 
@@ -228,6 +228,20 @@ and an empty message are rejected.</div>
     └── test_app.py        the tests</code></pre>
 
     <p><span class="mark">Four files. Keeping it to four is deliberate</span>, because you have to read every one of them. The <code>index.html</code> from Part 3 moves into <code>templates/</code>.</p>
+
+    <h3>What you hand in</h3>
+
+    <p>You hand in <strong>one file</strong>: the <code>vibe-chat</code> folder as a zip. Add one file, <code>REPORT.txt</code>, to the four above. It has two entries.</p>
+
+    <pre>PART 5 REPORT
+Name / Student ID:
+
+1. The line(s) I commented out (file and what the line does):
+
+2. pytest output when that test FAILED (paste as is):
+</pre>
+
+    <p>Capture 2 <span class="mark">at the moment you break it in 5.5.</span> You cannot recreate it after you put the line back.</p>
 
     <h3><span class="n">5.1.3</span>What you use</h3>
 
@@ -280,17 +294,6 @@ and an empty message are rejected.</div>
     </table>
 
     <p>You check 1 and 2. <strong>A machine checks 3 and 4.</strong> That split is what this part is about.</p>
-
-    <h3><span class="n">5.2.2</span>Add one of your own</h3>
-
-    <p>Take the problem you found in Part 4 and make it the fifth condition.</p>
-
-    <blockquote>
-      For example: a 1,000-character message does not overflow the card<br>
-      For example: <code>&lt;h1&gt;Hello&lt;/h1&gt;</code> appears as text, not as a heading
-    </blockquote>
-
-    <p>Then answer one question about it. <span class="mark">Is this something a person has to look at, or something a machine can decide?</span> <strong>That call is yours too, and it decides whether the condition becomes a test.</strong></p>
   </section>
 
   <section class="sec" id="s5-3">
@@ -457,39 +460,44 @@ Do not edit the file yet.</div>
       Doing this systematically, with tools that introduce the changes for you, is called <span class="mark">mutation testing</span>. Here you are doing one mutation by hand.
     </div>
 
-    <h3><span class="n">5.5.3</span>Break the other one</h3>
-
-    <p>Do the same for the empty message. <strong>Confirm that both fail.</strong></p>
   </section>
 
   <section class="sec" id="s5-6">
     <h2><span class="n">5.6</span>What to hand in</h2>
 
+    <p>You hand in <strong>one zip file</strong> containing these five files.</p>
+
+    <pre><code>vibe-chat/
+├── app.py
+├── requirements.txt
+├── templates/index.html
+├── tests/test_app.py
+└── REPORT.txt      ← add this</code></pre>
+
+    <p><code>REPORT.txt</code> has two entries, nothing else.</p>
+
     <table>
-      <thead><tr><th>Item</th><th>What</th></tr></thead>
+      <thead><tr><th></th><th>Write</th></tr></thead>
       <tbody>
-        <tr><td><strong>Your conditions</strong></td><td>The five from 5.2, split into what a person checks and what a machine decides</td></tr>
-        <tr><td><strong>The plan</strong></td><td>What Cline proposed</td></tr>
-        <tr><td><strong>Your decisions</strong></td><td>Save or Reject for each of the four files, and why</td></tr>
-        <tr><td><strong>Browser</strong></td><td>A screenshot with a message posted</td></tr>
-        <tr><td><strong>Test output</strong></td><td>The output of <code>pytest</code>, passing</td></tr>
-        <tr><td><strong>Broken output</strong></td><td><span class="mark">What you commented out, and the failing test output</span></td></tr>
+        <tr><td><strong>1</strong></td><td>The line you commented out in 5.5 (file name, and what the line does)</td></tr>
+        <tr><td><strong>2</strong></td><td>The <code>pytest</code> output from when it failed, pasted as is</td></tr>
       </tbody>
     </table>
 
+    <p>Right-click the <code>vibe-chat</code> folder, compress it, name it <code>PART5_StudentID.zip</code>, and upload it here.</p>
+    <p><a href="https://forms.gle/NENs6C13u5PcsBwMA" target="_blank" rel="noopener"><strong>https://forms.gle/NENs6C13u5PcsBwMA</strong></a></p>
+
     <div class="note">
-      <span class="tag">The last one matters most</span>
+      <span class="tag">Entry 2 matters most</span>
       <span class="mark">Anyone can produce a passing test run.</span> A failing one is evidence that the test does something.<br><br>
       Which line you commented out, and which test failed. <strong>Getting that pairing right shows you understood the test.</strong>
     </div>
-
-    <p>Submission is through the same peer evaluation system as Exercise 1. Use the <strong>Assignment 3</strong> card.</p>
   </section>
 
   <section class="sec" id="s5-7">
     <h2><span class="n">5.7</span>What we know so far</h2>
 
-    <p>In Part 4 you checked every fix by hand, and one fix took about an hour and twenty minutes.</p>
+    <p>In Part 4 you had Cline run the tests, could not trust the report, and ended up checking by hand.</p>
 
     <p>Here you handed part of that over. <span class="mark">"An empty name is rejected" is now one <code>pytest</code> command.</span></p>
 
