@@ -209,7 +209,7 @@ th{background:var(--accent-soft);font-weight:700}
 
     <div class="note">
       <span class="tag">テストが書けることが目的です</span>
-      PART 4で、直ったかどうかを毎回あなたが手で確かめました。<span class="mark">1件の修正に1時間20分かかりました。</span><br><br>
+      PART 4では、Clineの報告を信じることができず、<span class="mark">結局あなたが手で確かめました。</span><br><br>
       サーバ側にすれば、「空の名前で送ると弾かれる」をコードで確かめられます。<strong>手で操作しなくても、コマンド1つで判定できます。</strong>
     </div>
 
@@ -224,6 +224,20 @@ th{background:var(--accent-soft);font-weight:700}
     └── test_app.py        テスト</code></pre>
 
     <p><span class="mark">4ファイルだけです。</span>PART 3で作った <code>index.html</code> は、<code>templates/</code> の中へ移ります。</p>
+
+    <h3>提出するもの</h3>
+
+    <p>提出は <code>vibe-chat</code> フォルダを zip にした<strong>1ファイル</strong>です。上の4ファイルに、<code>REPORT.txt</code> を1つ足します。中身は2つだけです。</p>
+
+    <pre>PART 5 REPORT
+Name / Student ID:
+
+1. The line(s) I commented out (file and what the line does):
+
+2. pytest output when that test FAILED (paste as is):
+</pre>
+
+    <p>2は、5.5でわざと壊したときに<span class="mark">そのとき控えておきます。</span>戻したあとでは作れません。</p>
 
     <h3><span class="n">5.1.3</span>使うもの</h3>
 
@@ -276,17 +290,6 @@ th{background:var(--accent-soft);font-weight:700}
     </table>
 
     <p>1と2は人間が見ます。<strong>3と4は機械が判定します。</strong>この違いが、この章の中心です。</p>
-
-    <h3><span class="n">5.2.2</span>自分で1つ足してください</h3>
-
-    <p>PART 4であなたが見つけた問題を、5番目の条件として足します。</p>
-
-    <blockquote>
-      例：1000文字を送っても、画面の枠からはみ出さない<br>
-      例：<code>&lt;h1&gt;Hello&lt;/h1&gt;</code> を送ると、タグではなく文字として表示される
-    </blockquote>
-
-    <p><span class="mark">それは人間が確かめるものですか。機械が判定できるものですか。</span>この判断も、あなたがします。</p>
   </section>
 
   <section class="sec" id="s5-3">
@@ -453,39 +456,44 @@ Do not edit the file yet.</div>
       この作業を<span class="mark">ミューテーションテスト</span>と呼びます。実務でも使われる考え方です。
     </div>
 
-    <h3><span class="n">5.5.3</span>もう1つ壊す</h3>
-
-    <p>空のメッセージ側でも、同じことをしてください。<strong>2つとも落ちることを確認します。</strong></p>
   </section>
 
   <section class="sec" id="s5-6">
     <h2><span class="n">5.6</span>提出物</h2>
 
+    <p>出すのは <strong>zip ファイル1つ</strong>です。中身は次の5ファイル。</p>
+
+    <pre><code>vibe-chat/
+├── app.py
+├── requirements.txt
+├── templates/index.html
+├── tests/test_app.py
+└── REPORT.txt      ← 追加する</code></pre>
+
+    <p><code>REPORT.txt</code> に書くのは2つだけです。</p>
+
     <table>
-      <thead><tr><th>提出物</th><th>内容</th></tr></thead>
+      <thead><tr><th></th><th>書くこと</th></tr></thead>
       <tbody>
-        <tr><td><strong>完了条件</strong></td><td>5.2で決めた5項目。人間が確かめるものと、機械が判定するものを分けて書く</td></tr>
-        <tr><td><strong>Plan</strong></td><td>Clineが提示した計画</td></tr>
-        <tr><td><strong>人間の判断</strong></td><td>4ファイルそれぞれの Save / Reject と、その理由</td></tr>
-        <tr><td><strong>ブラウザの画面</strong></td><td>メッセージを送信した状態の写真</td></tr>
-        <tr><td><strong>テスト結果</strong></td><td><code>pytest</code> の出力（通った状態）</td></tr>
-        <tr><td><strong>壊したときの結果</strong></td><td><span class="mark">コメントアウトした箇所と、落ちたテストの出力</span></td></tr>
+        <tr><td><strong>1</strong></td><td>5.5でコメントアウトした行（ファイル名と、その行が何をしているか）</td></tr>
+        <tr><td><strong>2</strong></td><td>そのとき <code>pytest</code> が落ちた出力。そのまま貼る</td></tr>
       </tbody>
     </table>
 
+    <p><code>vibe-chat</code> フォルダを右クリックして圧縮し、<code>PART5_学籍番号.zip</code> という名前で次のフォームからアップロードします。</p>
+    <p><a href="https://forms.gle/NENs6C13u5PcsBwMA" target="_blank" rel="noopener"><strong>https://forms.gle/NENs6C13u5PcsBwMA</strong></a></p>
+
     <div class="note">
-      <span class="tag">最後の項目がいちばん重要です</span>
+      <span class="tag">2番がいちばん重要です</span>
       <span class="mark">通ったテストの出力は、誰でも出せます。</span>落ちたときの出力は、テストが効いている証拠です。<br><br>
       どこをコメントアウトしたか、どのテストが落ちたか。<strong>この対応が書けていれば、テストを理解していることになります。</strong>
     </div>
-
-    <p>提出先は、演習1と同じピア評価システムです。<strong>Assignment 3</strong> のカードから提出します。</p>
   </section>
 
   <section class="sec" id="s5-7">
     <h2><span class="n">5.7</span>この章で分かったこと</h2>
 
-    <p>PART 4では、直ったかどうかを毎回あなたが手で確かめました。1件で1時間20分かかりました。</p>
+    <p>PART 4では、Clineにテストさせても報告を信じられず、結局あなたが手で確かめました。</p>
 
     <p>この章では、その一部を機械に渡しました。<span class="mark">「空の名前は登録されない」は、いま <code>pytest</code> の1コマンドで判定できます。</span></p>
 
