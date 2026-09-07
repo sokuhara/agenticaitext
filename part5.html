@@ -277,7 +277,7 @@ Name / Student ID:
       PART 4で確かめたとおり、<span class="mark">その報告は根拠になりません。</span>根拠は、あなたが決めた条件を満たしているかどうかです。
     </div>
 
-    <h3><span class="n">5.2.1</span>最低限の4項目</h3>
+    <h3><span class="n">5.2.1</span>最低限の5項目</h3>
 
     <table>
       <thead><tr><th></th><th>条件</th><th>確かめ方</th></tr></thead>
@@ -286,10 +286,11 @@ Name / Student ID:
         <tr><td><strong>2</strong></td><td>メッセージを送ると一覧に増える</td><td>人間が操作する</td></tr>
         <tr><td><strong>3</strong></td><td>空の名前は登録されない</td><td><span class="mark">テストが判定する</span></td></tr>
         <tr><td><strong>4</strong></td><td>空のメッセージは登録されない</td><td><span class="mark">テストが判定する</span></td></tr>
+        <tr><td><strong>5</strong></td><td>Deleteを押すと、そのメッセージだけが消える（再読み込みしても消えたまま）</td><td>人間が操作する</td></tr>
       </tbody>
     </table>
 
-    <p>1と2は人間が見ます。<strong>3と4は機械が判定します。</strong>この違いが、この章の中心です。</p>
+    <p>1・2・5は人間が見ます。<strong>3と4は機械が判定します。</strong>この違いが、この章の中心です。</p>
   </section>
 
   <section class="sec" id="s5-3">
@@ -312,6 +313,7 @@ Requirements:
 - Store messages in a Python list in app.py
 - POST the form to a route, then show the messages below the form
 - Reject an empty user name and an empty message
+- Keep the Delete button and the 200-character limit from the current index.html, but implement both on the server side in app.py (no JavaScript logic)
 - tests/test_app.py must test that an empty name and an empty message are rejected
 - Use Flask and pytest only
 

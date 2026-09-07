@@ -174,7 +174,7 @@ th{background:var(--accent-soft);font-weight:700}
   <div class="bridge">
     <dl>
       <dt>前章まで</dt><dd>PART 5で、Vibe ChatをFlaskアプリに変え、テストで完了条件を作りました。わざと壊して、テストが効いていることも確かめました。</dd>
-      <dt>この章</dt><dd>同じアプリに機能を2つ足します。1つ目は予定どおり、2つ目は予定外の変更要求として届きます。既存のテストを壊さずに進めます。</dd>
+      <dt>この章</dt><dd>同じアプリに、予定外の変更要求として届く機能を1つ足します。既存のテストを壊さずに進めます。</dd>
       <dt>次章へ</dt><dd>PART 7では、ここまで既製のAgentに任せていた仕組みを、自分のPythonコードで組み立てます。</dd>
     </dl>
   </div>
@@ -184,10 +184,9 @@ th{background:var(--accent-soft);font-weight:700}
     <ol>
       <li><span class="n">6.1</span><a href="#s6-1">この章で足すもの</a></li>
       <li><span class="n">6.2</span><a href="#s6-2">実装を進める5つの手順</a></li>
-      <li><span class="n">6.3</span><a href="#s6-3">機能1：削除できるようにする</a></li>
-      <li><span class="n">6.4</span><a href="#s6-4">予定外の変更要求</a></li>
-      <li><span class="n">6.5</span><a href="#s6-5">提出物</a></li>
-      <li><span class="n">6.6</span><a href="#s6-6">この章で分かったこと</a></li>
+      <li><span class="n">6.3</span><a href="#s6-3">予定外の変更要求</a></li>
+      <li><span class="n">6.4</span><a href="#s6-4">提出物</a></li>
+      <li><span class="n">6.5</span><a href="#s6-5">この章で分かったこと</a></li>
     </ol>
   </nav>
 
@@ -195,14 +194,14 @@ th{background:var(--accent-soft);font-weight:700}
   <section class="sec" id="s6-1">
     <h2><span class="n">6.1</span>この章で足すもの</h2>
 
-    <div class="prompt"><span class="tag">MISSION</span>PART 5で作ったFlask版 Vibe Chat に、機能を2つ足しなさい。
+    <div class="prompt"><span class="tag">MISSION</span>PART 5で作ったFlask版 Vibe Chat に、機能を1つ足しなさい。
 
-1つ目は最初から分かっています。2つ目は途中で届きます。
-どちらの場合も、既存のテストを1つも壊さずに進めなさい。</div>
+何を足すかは、この章の途中で届きます。
+既存のテストを1つも壊さずに進めなさい。</div>
 
     <h3><span class="n">6.1.1</span>なぜテストがあると違うのか</h3>
 
-    <p>PART 4では、機能を1つ直すたびに、Sendが動くかDeleteが動くかを手で確かめました。<span class="mark">1件で1時間20分かかりました。</span></p>
+    <p>PART 4では、直したあとにSendが動くかDeleteが動くかを、<span class="mark">あなたが手で確かめました。</span>Clineの報告は根拠にならなかったからです。</p>
 
     <p>いまはテストがあります。<strong>機能を足したあと、<code>pytest</code> を1回打つだけで、既存の動作が壊れていないか分かります。</strong></p>
 
@@ -224,7 +223,7 @@ th{background:var(--accent-soft);font-weight:700}
   <section class="sec" id="s6-2">
     <h2><span class="n">6.2</span>実装を進める5つの手順</h2>
 
-    <p>この章では、機能を足すたびに同じ5手順を繰り返します。<span class="mark">先にこれを覚えてください。</span></p>
+    <p>この章では、次の5手順で機能を足します。<span class="mark">先にこれを覚えてください。</span>6.3で、この順に進めます。</p>
 
     <div class="flow-steps">
       <p><strong>1</strong>　<strong>完了条件を書く</strong>　何ができたら終わりか</p>
@@ -255,97 +254,7 @@ th{background:var(--accent-soft);font-weight:700}
   </section>
 
   <section class="sec" id="s6-3">
-    <h2><span class="n">6.3</span>機能1：削除できるようにする</h2>
-
-    <p>各メッセージに Delete ボタンを付けます。<span class="mark">押すと、そのメッセージだけが消えます。</span></p>
-
-    <div class="note">
-      <span class="tag">PART 3の発展課題を終えている場合</span>
-      ブラウザの中だけで動く版を、すでに作っているかもしれません。<span class="mark">今回はサーバ側で削除します。</span>再読み込みしても消えたままになります。
-    </div>
-
-    <h3><span class="n">6.3.1</span>手順1：完了条件を書く</h3>
-
-    <p>紙かテキストに書いてください。<strong>Agentに投げる前です。</strong></p>
-
-    <table>
-      <thead><tr><th></th><th>条件</th><th>確かめ方</th></tr></thead>
-      <tbody>
-        <tr><td><strong>1</strong></td><td>各メッセージにDeleteボタンが出る</td><td>人間が見る</td></tr>
-        <tr><td><strong>2</strong></td><td>押すと、そのメッセージだけが消える</td><td>人間が操作する</td></tr>
-        <tr><td><strong>3</strong></td><td>再読み込みしても、消えたまま</td><td>人間が操作する</td></tr>
-        <tr><td><strong>4</strong></td><td>存在しない番号を削除しようとしても、エラーで落ちない</td><td><span class="mark">テストが判定する</span></td></tr>
-        <tr><td><strong>5</strong></td><td>既存の送信テストが通ったまま</td><td><span class="mark">テストが判定する</span></td></tr>
-      </tbody>
-    </table>
-
-    <h3><span class="n">6.3.2</span>手順2：変わる場所を予想する</h3>
-
-    <p>書いてから、次へ進んでください。</p>
-
-    <ul>
-      <li><code>app.py</code>　削除のルートが増える。リストから1件を消す処理</li>
-      <li><code>templates/index.html</code>　各メッセージにボタンが増える</li>
-      <li><code>tests/test_app.py</code>　削除のテストが増える</li>
-      <li><span class="mark">既存のテストは変わらないはず</span></li>
-    </ul>
-
-    <div class="warn">
-      <span class="tag">最後の行が重要です</span>
-      既存のテストが書き換えられていたら、<span class="mark">それは「壊れたので、テストのほうを直した」ということです。</span><br><br>
-      差分でそれを見つけたら、理由を確かめてください。<strong>正当な場合もありますが、多くは手抜きです。</strong>
-    </div>
-
-    <h3><span class="n">6.3.3</span>手順3：Planで依頼する</h3>
-
-    <div class="prompt"><span class="tag">PROMPT</span>Add a delete feature to the Flask Vibe Chat.
-
-Requirements:
-- Each message in the list has a Delete button
-- Clicking it removes only that message from the Python list
-- The message stays deleted after reloading the page
-- Deleting a non-existent message must not crash the app
-- Add a test for deleting a message
-- Add a test for deleting a non-existent message
-- Do not change the existing tests
-
-Edit app.py, templates/index.html and tests/test_app.py only.
-Keep the plan under 10 lines.
-Do not edit the file yet. Show the plan only.</div>
-
-    <p>最後から3行目が効きます。<span class="mark">これを書かないと、既存のテストを都合よく書き換えられます。</span></p>
-
-    <h3><span class="n">6.3.4</span>手順4：差分を承認する</h3>
-
-    <p>6.3.2で書いた予想と見比べてください。</p>
-
-    <table>
-      <thead><tr><th>差分の中身</th><th>判断</th></tr></thead>
-      <tbody>
-        <tr><td>予想した3ファイルだけが変わっている</td><td><strong>Save</strong></td></tr>
-        <tr><td>既存のテストが書き換えられている</td><td><span class="mark">理由を確かめる。納得できなければReject</span></td></tr>
-        <tr><td>予想していないファイルが増えている</td><td><strong>Reject</strong></td></tr>
-        <tr><td>送信の処理まで書き換えられている</td><td><strong>Reject</strong></td></tr>
-      </tbody>
-    </table>
-
-    <h3><span class="n">6.3.5</span>手順5：両方で確認する</h3>
-
-    <p><strong>テストとブラウザ、両方やります。</strong>片方だけでは足りません。</p>
-
-<pre><code>pytest</code></pre>
-
-    <p>通ったら、ブラウザで6.3.1の1から3を確かめます。</p>
-
-    <div class="warn">
-      <span class="tag">テストが通っても画面が壊れていることがあります</span>
-      テストはサーバ側だけを見ています。<span class="mark">ボタンが表示されていない、押しても反応しない。</span>これはテストでは分かりません。<br><br>
-      逆に、画面が動いてもテストが落ちることもあります。<strong>両方を確かめて、はじめて完了です。</strong>
-    </div>
-  </section>
-
-  <section class="sec" id="s6-4">
-    <h2><span class="n">6.4</span>予定外の変更要求</h2>
+    <h2><span class="n">6.3</span>予定外の変更要求</h2>
 
     <p>動くものが一度できたあとに、要件が変わります。<span class="mark">実務ではこちらが普通です。</span></p>
 
@@ -356,7 +265,7 @@ Do not edit the file yet. Show the plan only.</div>
       登録を拒否したときは、画面に理由を表示します。<span class="mark">既存の機能は1つも壊さないでください。</span>
     </div>
 
-    <h3><span class="n">6.4.1</span>まず、自分で予想する</h3>
+    <h3><span class="n">6.3.1</span>まず、自分で予想する</h3>
 
     <p>Agentに投げる前に書いてください。<span class="mark">予想を書いてから差分を見るのと、いきなり差分を見るのとでは、レビューの質がまったく違います。</span></p>
 
@@ -373,7 +282,7 @@ Do not edit the file yet. Show the plan only.</div>
       落ちないはずです。落ちるとしたら、<strong>実装が既存の処理を壊しています。</strong>
     </div>
 
-    <h3><span class="n">6.4.2</span>完了条件を書く</h3>
+    <h3><span class="n">6.3.2</span>完了条件を書く</h3>
 
     <table>
       <thead><tr><th></th><th>条件</th><th>確かめ方</th></tr></thead>
@@ -387,7 +296,7 @@ Do not edit the file yet. Show the plan only.</div>
 
     <p>2番を忘れないでください。<strong>「禁止語を弾く」だけを頼むと、全部弾く実装でもテストが通ります。</strong></p>
 
-    <h3><span class="n">6.4.3</span>依頼する</h3>
+    <h3><span class="n">6.3.3</span>依頼する</h3>
 
     <div class="prompt"><span class="tag">PROMPT</span>Add a banned-word check to the Flask Vibe Chat.
 
@@ -404,7 +313,7 @@ Edit app.py, templates/index.html and tests/test_app.py only.
 Keep the plan under 10 lines.
 Do not edit the file yet. Show the plan only.</div>
 
-    <h3><span class="n">6.4.4</span>差分を見るときに確かめること</h3>
+    <h3><span class="n">6.3.4</span>差分を見るときに確かめること</h3>
 
     <table>
       <thead><tr><th>確認</th><th>なぜ</th></tr></thead>
@@ -416,54 +325,60 @@ Do not edit the file yet. Show the plan only.</div>
       </tbody>
     </table>
 
-    <h3><span class="n">6.4.5</span>確認する</h3>
+    <h3><span class="n">6.3.5</span>確認する</h3>
 
 <pre><code>pytest</code></pre>
 
-    <p>4つ以上のテストが通るはずです。<span class="mark">既存の2つと、今回の2つ。</span>削除機能のテストも入れれば、もっと増えます。</p>
+    <p>4つのテストが通るはずです。<span class="mark">既存の2つと、今回の2つ。</span></p>
 
     <p>そのあとブラウザで、禁止語を含む投稿と含まない投稿を、それぞれ試してください。</p>
 
     <div class="note">
       <span class="tag">ここでPART 5が効いています</span>
-      機能を2つ足しましたが、<span class="mark">既存の動作が壊れていないことを、コマンド1回で確かめられました。</span><br><br>
+      機能を足しましたが、<span class="mark">既存の動作が壊れていないことを、コマンド1回で確かめられました。</span><br><br>
       テストがなければ、送信、削除、空チェック、禁止語。<strong>4つを毎回手で確かめることになります。</strong>
     </div>
   </section>
 
-  <section class="sec" id="s6-5">
-    <h2><span class="n">6.5</span>提出物</h2>
+  <section class="sec" id="s6-4">
+    <h2><span class="n">6.4</span>提出物</h2>
 
-    <p>機能2つ分をまとめて出します。</p>
+    <p>出すのは <strong>zip ファイル1つ</strong>です。PART 5と同じ <code>vibe-chat</code> フォルダに、<code>REPORT.txt</code> を書き換えて入れます。</p>
+
+    <pre><code>vibe-chat/
+├── app.py
+├── requirements.txt
+├── templates/index.html
+├── tests/test_app.py
+└── REPORT.txt      ← PART 6 用に書き直す</code></pre>
+
+    <p><code>REPORT.txt</code> に書くのは2つだけです。</p>
 
     <table>
-      <thead><tr><th>提出物</th><th>内容</th></tr></thead>
+      <thead><tr><th></th><th>書くこと</th></tr></thead>
       <tbody>
-        <tr><td><strong>完了条件</strong></td><td>機能1と機能2、それぞれの条件。人間と機械で分けて書く</td></tr>
-        <tr><td><strong>変更の予想</strong></td><td><span class="mark">依頼する前に書いたもの</span></td></tr>
-        <tr><td><strong>実際の差分</strong></td><td>変わったファイルと、その要点</td></tr>
-        <tr><td><strong>予想との違い</strong></td><td><strong>予想と違った点があれば、それは何か</strong></td></tr>
-        <tr><td><strong>人間の判断</strong></td><td>Save / Reject の理由</td></tr>
-        <tr><td><strong>テスト結果</strong></td><td><code>pytest</code> の出力。テストが何個になったか</td></tr>
-        <tr><td><strong>画面</strong></td><td>削除と、禁止語の拒否が分かる写真</td></tr>
+        <tr><td><strong>1</strong></td><td>6.3.1で依頼する前に書いた「変わる場所の予想」。そのまま貼る</td></tr>
+        <tr><td><strong>2</strong></td><td>実際の差分が予想とどう違ったか。予想どおりなら「どおりだった」でよい</td></tr>
       </tbody>
     </table>
 
+    <p><code>vibe-chat</code> フォルダを右クリックして圧縮し、<code>PART6_学籍番号.zip</code> という名前で次のフォームからアップロードします。</p>
+    <p><a href="FORM_URL_PART6" target="_blank" rel="noopener"><strong>FORM_URL_PART6</strong></a></p>
+
     <div class="note">
-      <span class="tag">「予想との違い」を書いてください</span>
+      <span class="tag">2番がいちばん重要です</span>
       予想どおりだったなら、そう書けばよいです。<span class="mark">違ったなら、なぜ違ったのかを考えてください。</span><br><br>
       あなたの予想が浅かったのか、Agentが余計なことをしたのか。<strong>この振り返りが、次の予想を正確にします。</strong>
     </div>
 
-    <p>提出先は、演習1と同じピア評価システムです。<strong>Assignment 4</strong> のカードから提出します。</p>
-  </section>
+      </section>
 
-  <section class="sec" id="s6-6">
-    <h2><span class="n">6.6</span>この章で分かったこと</h2>
+  <section class="sec" id="s6-5">
+    <h2><span class="n">6.5</span>この章で分かったこと</h2>
 
-    <p>機能を2つ足しました。<span class="mark">既存の動作が壊れていないことは、<code>pytest</code> が教えてくれました。</span></p>
+    <p>機能を1つ足しました。<span class="mark">既存の動作が壊れていないことは、<code>pytest</code> が教えてくれました。</span></p>
 
-    <p>PART 4では、1件直すのに1時間20分かかりました。この章では、2つ足して、それより短く済んだはずです。</p>
+    <p>PART 4では、直すたびにSendとDeleteをあなたが手で確かめました。この章では、それをコマンド1回で済ませました。</p>
 
     <div class="warn">
       <span class="tag">テストは正しさを保証しません</span>
@@ -471,7 +386,7 @@ Do not edit the file yet. Show the plan only.</div>
       禁止語のリストに何を入れるか。拒否したとき何を表示するか。<strong>それを決めるのは人間です。</strong>テストは、決めたことが守られているかを見ているだけです。
     </div>
 
-    <h3><span class="n">6.6.1</span>ここまでで身についたもの</h3>
+    <h3><span class="n">6.5.1</span>ここまでで身についたもの</h3>
 
     <table>
       <thead><tr><th>PART</th><th>身についたこと</th></tr></thead>
