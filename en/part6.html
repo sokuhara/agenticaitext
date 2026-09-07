@@ -174,7 +174,7 @@ th{background:var(--accent-soft);font-weight:700}
   <div class="bridge">
     <dl>
       <dt>Previously</dt><dd>In Part 5 you moved Vibe Chat to Flask and turned your finish conditions into tests. You also broke the code on purpose to check the tests were real.</dd>
-      <dt>This part</dt><dd>You add two features to the same app. The first is planned; the second arrives as an unexpected request. No existing test may break.</dd>
+      <dt>This part</dt><dd>You add one feature to the same app. It arrives as an unexpected change request. No existing test may break.</dd>
       <dt>Next</dt><dd>Part 7 builds the inside of an agent: tool calling, branching, stopping conditions and human approval, in your own Python.</dd>
     </dl>
   </div>
@@ -184,10 +184,9 @@ th{background:var(--accent-soft);font-weight:700}
     <ol>
       <li><span class="n">6.1</span><a href="#s6-1">What you add in this part</a></li>
       <li><span class="n">6.2</span><a href="#s6-2">Five steps for every change</a></li>
-      <li><span class="n">6.3</span><a href="#s6-3">Feature 1: allow deleting</a></li>
-      <li><span class="n">6.4</span><a href="#s6-4">An unplanned change request</a></li>
-      <li><span class="n">6.5</span><a href="#s6-5">What to hand in</a></li>
-      <li><span class="n">6.6</span><a href="#s6-6">What we know so far</a></li>
+      <li><span class="n">6.3</span><a href="#s6-3">An unplanned change request</a></li>
+      <li><span class="n">6.4</span><a href="#s6-4">What to hand in</a></li>
+      <li><span class="n">6.5</span><a href="#s6-5">What we know so far</a></li>
     </ol>
   </nav>
 
@@ -196,14 +195,14 @@ th{background:var(--accent-soft);font-weight:700}
   <section class="sec" id="s6-1">
     <h2><span class="n">6.1</span>What you add in this part</h2>
 
-    <div class="prompt"><span class="tag">MISSION</span>Add two features to the Flask Vibe Chat from Part 5.
+    <div class="prompt"><span class="tag">MISSION</span>Add one feature to the Flask Vibe Chat from Part 5.
 
-You know about the first one now. The second arrives partway through.
-Either way, do not break a single existing test.</div>
+What it is arrives partway through this part.
+Do not break a single existing test.</div>
 
     <h3><span class="n">6.1.1</span>What difference the tests make</h3>
 
-    <p>In Part 4, every fix meant checking Send and Delete by hand. <span class="mark">One fix took about an hour and twenty minutes.</span></p>
+    <p>In Part 4, after the fix you checked Send and Delete <span class="mark">by hand</span>, because the agent's report was not evidence.</p>
 
     <p>Now you have tests. <strong>After adding a feature, one <code>pytest</code> tells you whether the old behaviour still holds.</strong></p>
 
@@ -225,7 +224,7 @@ Either way, do not break a single existing test.</div>
   <section class="sec" id="s6-2">
     <h2><span class="n">6.2</span>Five steps for every change</h2>
 
-    <p>You repeat the same five steps for each feature. <span class="mark">Learn them first.</span></p>
+    <p>You add the feature in these five steps. <span class="mark">Learn them first.</span> 6.3 walks through them in order.</p>
 
     <div class="flow-steps">
       <p><strong>1</strong>　<strong>Write the finish conditions</strong>　what has to be true to be done</p>
@@ -256,97 +255,7 @@ Either way, do not break a single existing test.</div>
   </section>
 
   <section class="sec" id="s6-3">
-    <h2><span class="n">6.3</span>Feature 1: allow deleting</h2>
-
-    <p>Put a Delete button on each message. <span class="mark">Pressing it removes only that message.</span></p>
-
-    <div class="note">
-      <span class="tag">If you did the optional task in Part 3</span>
-      You may already have a version that deletes inside the browser. <span class="mark">This time the deletion happens on the server.</span> It stays deleted after a reload.
-    </div>
-
-    <h3><span class="n">6.3.1</span>Step 1: write the finish conditions</h3>
-
-    <p>Write these down, on paper or in a file. <strong>Before you ask the agent anything.</strong></p>
-
-    <table>
-      <thead><tr><th></th><th>Condition</th><th>Who checks</th></tr></thead>
-      <tbody>
-        <tr><td><strong>1</strong></td><td>Every message has a Delete button</td><td>A person looks</td></tr>
-        <tr><td><strong>2</strong></td><td>Pressing it removes only that message</td><td>A person tries it</td></tr>
-        <tr><td><strong>3</strong></td><td>It stays deleted after a reload</td><td>A person tries it</td></tr>
-        <tr><td><strong>4</strong></td><td>Deleting an id that does not exist does not crash the app</td><td><span class="mark">A test decides</span></td></tr>
-        <tr><td><strong>5</strong></td><td>The existing send tests still pass</td><td><span class="mark">A test decides</span></td></tr>
-      </tbody>
-    </table>
-
-    <h3><span class="n">6.3.2</span>Step 2: predict what will change</h3>
-
-    <p>Write this down before moving on.</p>
-
-    <ul>
-      <li><code>app.py</code>　a delete route, and code that removes one item from the list</li>
-      <li><code>templates/index.html</code>　a button on each message</li>
-      <li><code>tests/test_app.py</code>　tests for deleting</li>
-      <li><span class="mark">The existing tests should not change</span></li>
-    </ul>
-
-    <div class="warn">
-      <span class="tag">That last line is the important one</span>
-      If an existing test has been rewritten, <span class="mark">something broke and the test was adjusted to match.</span><br><br>
-      When you see that in a diff, ask why. <span class="mark">There are legitimate reasons: the specification genuinely changed.</span> <strong>But you should hear the reason before you accept it.</strong>
-    </div>
-
-    <h3><span class="n">6.3.3</span>Step 3: ask in Plan mode</h3>
-
-    <div class="prompt"><span class="tag">PROMPT</span>Add a delete feature to the Flask Vibe Chat.
-
-Requirements:
-- Each message in the list has a Delete button
-- Clicking it removes only that message from the Python list
-- The message stays deleted after reloading the page
-- Deleting a non-existent message must not crash the app
-- Add a test for deleting a message
-- Add a test for deleting a non-existent message
-- Do not change the existing tests
-
-Edit app.py, templates/index.html and tests/test_app.py only.
-Keep the plan under 10 lines.
-Do not edit the file yet. Show the plan only.</div>
-
-    <p>The third line from the bottom matters. <span class="mark">Without it, an existing test can be quietly rewritten to fit.</span></p>
-
-    <h3><span class="n">6.3.4</span>Step 4: approve the diff</h3>
-
-    <p>Compare it with what you wrote in 6.3.2.</p>
-
-    <table>
-      <thead><tr><th>What the diff shows</th><th>Decision</th></tr></thead>
-      <tbody>
-        <tr><td>Only the three files you predicted</td><td><strong>Save</strong></td></tr>
-        <tr><td>An existing test has been changed</td><td><span class="mark">Ask why. Reject if the answer does not convince you</span></td></tr>
-        <tr><td>A file you did not predict</td><td><strong>Reject</strong></td></tr>
-        <tr><td>The send logic has been rewritten</td><td><strong>Reject</strong></td></tr>
-      </tbody>
-    </table>
-
-    <h3><span class="n">6.3.5</span>Step 5: check both ways</h3>
-
-    <p><strong>Tests and browser. One is not enough.</strong></p>
-
-<pre><code>pytest</code></pre>
-
-    <p>Once it passes, check conditions 1 to 3 from 6.3.1 in the browser.</p>
-
-    <div class="warn">
-      <span class="tag">Tests can pass while the page is broken</span>
-      Tests only look at the server side. <span class="mark">A button that is not rendered, or does nothing when clicked, is invisible to them.</span><br><br>
-      The reverse happens too: the page works and a test fails. <strong>You are done when both agree.</strong>
-    </div>
-  </section>
-
-  <section class="sec" id="s6-4">
-    <h2><span class="n">6.4</span>An unplanned change request</h2>
+    <h2><span class="n">6.3</span>An unplanned change request</h2>
 
     <p>Requirements change after something already works. <span class="mark">In real work, this is the normal case.</span></p>
 
@@ -357,7 +266,7 @@ Do not edit the file yet. Show the plan only.</div>
       When a post is refused, show the reason on the page. <span class="mark">Do not break anything that already works.</span>
     </div>
 
-    <h3><span class="n">6.4.1</span>Predict first</h3>
+    <h3><span class="n">6.3.1</span>Predict first</h3>
 
     <p>Write this before you ask. <span class="mark">Predicting and then reading a diff is a completely different activity from reading one cold.</span></p>
 
@@ -374,7 +283,7 @@ Do not edit the file yet. Show the plan only.</div>
       They should not. <span class="mark">If they do fail, the new check has been put somewhere it interferes with the old one.</span> <strong>That is worth finding before you approve the diff.</strong>
     </div>
 
-    <h3><span class="n">6.4.2</span>Write the finish conditions</h3>
+    <h3><span class="n">6.3.2</span>Write the finish conditions</h3>
 
     <table>
       <thead><tr><th></th><th>Condition</th><th>Who checks</th></tr></thead>
@@ -388,7 +297,7 @@ Do not edit the file yet. Show the plan only.</div>
 
     <p>Do not forget number 2. <strong>Ask only for "block banned words" and an implementation that blocks everything also passes.</strong></p>
 
-    <h3><span class="n">6.4.3</span>Ask for it</h3>
+    <h3><span class="n">6.3.3</span>Ask for it</h3>
 
     <div class="prompt"><span class="tag">PROMPT</span>Add a banned-word check to the Flask Vibe Chat.
 
@@ -405,7 +314,7 @@ Edit app.py, templates/index.html and tests/test_app.py only.
 Keep the plan under 10 lines.
 Do not edit the file yet. Show the plan only.</div>
 
-    <h3><span class="n">6.4.4</span>What to look for in the diff</h3>
+    <h3><span class="n">6.3.4</span>What to look for in the diff</h3>
 
     <table>
       <thead><tr><th>Check</th><th>Why</th></tr></thead>
@@ -417,54 +326,60 @@ Do not edit the file yet. Show the plan only.</div>
       </tbody>
     </table>
 
-    <h3><span class="n">6.4.5</span>Check it</h3>
+    <h3><span class="n">6.3.5</span>Check it</h3>
 
 <pre><code>pytest</code></pre>
 
-    <p>You should have at least four passing tests. <span class="mark">The two from before, and the two from this change.</span> More if you added delete tests.</p>
+    <p>You should have four passing tests. <span class="mark">The two from before, and the two from this change.</span></p>
 
     <p>Then try both cases in the browser: a message with a banned word, and one without.</p>
 
     <div class="note">
       <span class="tag">This is where Part 5 pays off</span>
-      You added two features, and <span class="mark">one command told you the existing behaviour still holds.</span><br><br>
+      You added a feature, and <span class="mark">one command told you the existing behaviour still holds.</span><br><br>
       Without tests, this would mean checking sending, deleting, empty input and banned words by hand. <span class="mark">Four checks after every single change.</span> <strong>And the list only grows.</strong>
     </div>
   </section>
 
-  <section class="sec" id="s6-5">
-    <h2><span class="n">6.5</span>What to hand in</h2>
+  <section class="sec" id="s6-4">
+    <h2><span class="n">6.4</span>What to hand in</h2>
 
-    <p>Both features together.</p>
+    <p>You hand in <strong>one zip file</strong>: the same <code>vibe-chat</code> folder as in Part 5, with <code>REPORT.txt</code> rewritten for this part.</p>
+
+    <pre><code>vibe-chat/
+├── app.py
+├── requirements.txt
+├── templates/index.html
+├── tests/test_app.py
+└── REPORT.txt      ← rewrite for Part 6</code></pre>
+
+    <p><code>REPORT.txt</code> has two entries, nothing else.</p>
 
     <table>
-      <thead><tr><th>Item</th><th>What</th></tr></thead>
+      <thead><tr><th></th><th>Write</th></tr></thead>
       <tbody>
-        <tr><td><strong>Finish conditions</strong></td><td>For each feature, split into what a person checks and what a machine decides</td></tr>
-        <tr><td><strong>Your prediction</strong></td><td><span class="mark">What you wrote before asking</span></td></tr>
-        <tr><td><strong>The actual diff</strong></td><td>Which files changed, and the gist of each</td></tr>
-        <tr><td><strong>Prediction versus reality</strong></td><td><strong>Anything that differed, and what it was</strong></td></tr>
-        <tr><td><strong>Your decisions</strong></td><td>Reasons for Save or Reject</td></tr>
-        <tr><td><strong>Test output</strong></td><td><code>pytest</code> output, and how many tests you now have</td></tr>
-        <tr><td><strong>Screenshots</strong></td><td>Delete working, and a banned word being refused</td></tr>
+        <tr><td><strong>1</strong></td><td>The prediction of what would change that you wrote in 6.3.1, before asking. Paste it as is</td></tr>
+        <tr><td><strong>2</strong></td><td>How the actual diff differed from it. If it matched, "as predicted" is enough</td></tr>
       </tbody>
     </table>
 
+    <p>Right-click the <code>vibe-chat</code> folder, compress it, name it <code>PART6_StudentID.zip</code>, and upload it here.</p>
+    <p><a href="FORM_URL_PART6" target="_blank" rel="noopener"><strong>FORM_URL_PART6</strong></a></p>
+
     <div class="note">
-      <span class="tag">Write the "prediction versus reality" line</span>
+      <span class="tag">Entry 2 matters most</span>
       If it matched, say so. <span class="mark">If it did not, work out why.</span><br><br>
       Was your prediction too shallow, or did the agent do more than you asked? <strong>Answering that is what makes the next prediction better.</strong>
     </div>
 
-    <p>Submission is through the same peer evaluation system as Exercise 1. Use the <strong>Assignment 4</strong> card.</p>
-  </section>
+      </section>
 
-  <section class="sec" id="s6-6">
-    <h2><span class="n">6.6</span>What we know so far</h2>
+  <section class="sec" id="s6-5">
+    <h2><span class="n">6.5</span>What we know so far</h2>
 
-    <p>You added two features. <span class="mark"><code>pytest</code> told you the existing behaviour was intact.</span></p>
+    <p>You added one feature. <span class="mark"><code>pytest</code> told you the existing behaviour was intact.</span></p>
 
-    <p>In Part 4, a single fix took about an hour and twenty minutes, most of it manual checking. <span class="mark">Here the checking was one command, run twice.</span></p>
+    <p>In Part 4 you checked Send and Delete by hand after every fix. <span class="mark">Here the checking was one command.</span></p>
 
     <div class="warn">
       <span class="tag">Tests do not guarantee correctness</span>
@@ -472,7 +387,7 @@ Do not edit the file yet. Show the plan only.</div>
       What goes in the banned-word list. What to show when a post is refused. <strong>Those are decisions a person makes.</strong> The tests only confirm that what you decided is still holding.
     </div>
 
-    <h3><span class="n">6.6.1</span>What you have picked up so far</h3>
+    <h3><span class="n">6.5.1</span>What you have picked up so far</h3>
 
     <table>
       <thead><tr><th>Part</th><th>What you learned to do</th></tr></thead>

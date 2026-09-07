@@ -281,7 +281,7 @@ Name / Student ID:
       As Part 4 showed, <span class="mark">that report only tells you it stopped.</span> Whether it is done depends on conditions you wrote down first.
     </div>
 
-    <h3><span class="n">5.2.1</span>Four conditions to start from</h3>
+    <h3><span class="n">5.2.1</span>Five conditions to start from</h3>
 
     <table>
       <thead><tr><th></th><th>Condition</th><th>Who checks</th></tr></thead>
@@ -290,10 +290,11 @@ Name / Student ID:
         <tr><td><strong>2</strong></td><td>Sending a message adds it to the list</td><td>A person tries it</td></tr>
         <tr><td><strong>3</strong></td><td>An empty name is not accepted</td><td><span class="mark">A test decides</span></td></tr>
         <tr><td><strong>4</strong></td><td>An empty message is not accepted</td><td><span class="mark">A test decides</span></td></tr>
+        <tr><td><strong>5</strong></td><td>Delete removes only that message, and it stays gone after a reload</td><td>You operate it</td></tr>
       </tbody>
     </table>
 
-    <p>You check 1 and 2. <strong>A machine checks 3 and 4.</strong> That split is what this part is about.</p>
+    <p>You check 1, 2 and 5. <strong>A machine checks 3 and 4.</strong> That split is what this part is about.</p>
   </section>
 
   <section class="sec" id="s5-3">
@@ -316,6 +317,7 @@ Requirements:
 - Store messages in a Python list in app.py
 - POST the form to a route, then show the messages below the form
 - Reject an empty user name and an empty message
+- Keep the Delete button and the 200-character limit from the current index.html, but implement both on the server side in app.py (no JavaScript logic)
 - tests/test_app.py must test that an empty name and an empty message are rejected
 - Use Flask and pytest only
 
