@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PART 4 このアプリ、本当に提出できる？</title>
+<title>PART 4 Test it, then have it fixed</title>
 <style>
 :root{
   --paper:#f6f5f2;
@@ -159,105 +159,106 @@ th{background:var(--accent-soft);font-weight:700}
 </head>
 <body>
 
-<nav class="rail" aria-label="章の一覧">
-  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html" aria-current="page">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html" aria-current="page">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
 </nav>
 
 <div class="wrap">
 
   <header class="masthead">
     <div class="eyebrow">PART 4</div>
-    <h1>このアプリ、本当に提出できる？</h1>
-    <p class="lede">Agentが「完成しました」と言っても、それは完成の根拠になりません。自分で操作して確かめ、問題があれば直させます。この章ではコードを書かず、テストと承認の判断だけを行います。</p>
+    <h1>Test it, then have it fixed</h1>
+    <p class="lede">When an agent says the work is done, that is not evidence. You try it yourself, and where it falls short you have it fixed. No code is written in this part. You test, and you decide what to approve.</p>
   </header>
 
   <div class="bridge">
     <dl>
-      <dt>前章まで</dt><dd>PART 3で、Clineが自分でファイルを読み書きし、コマンドを実行してアプリを組み上げました。速さは体験できたはずです。</dd>
-      <dt>この章</dt><dd>PART 3で作ったアプリを自分でテストし、見つかった問題をClineに直させます。修正のループを1周、最後まで通します。</dd>
-      <dt>次章へ</dt><dd>PART 5では、この確認を機械にやらせます。人間が毎回やると必ず忘れるからです。</dd>
+      <dt>Previously</dt><dd>In Part 3, Cline read files, wrote them and ran commands to assemble an app. You saw how fast that is.</dd>
+      <dt>This part</dt><dd>You test the app from Part 3 yourself, and have Cline fix what you find. One full turn around the fix loop.</dd>
+      <dt>Next</dt><dd>Part 5 hands that checking to a machine, because a person doing it every time will eventually forget.</dd>
     </dl>
   </div>
 
-  <nav class="toc" aria-label="この章の目次">
-    <h2>この章の内容</h2>
+  <nav class="toc" aria-label="Contents of this part">
+    <h2>In this part</h2>
     <ol>
-      <li><span class="n">4.1</span><a href="#s4-1">6項目をすべて試させる</a></li>
-      <li><span class="n">4.2</span><a href="#s4-2">直す1件と、本来どうなるべきかを決める</a></li>
-      <li><span class="n">4.3</span><a href="#s4-3">Clineに修正させる</a></li>
-      <li><span class="n">4.4</span><a href="#s4-4">提出物</a></li>
-      <li><span class="n">4.5</span><a href="#s4-5">この章で分かったこと</a></li>
+      <li><span class="n">4.1</span><a href="#s4-1">Have all six tests run</a></li>
+      <li><span class="n">4.2</span><a href="#s4-2">Pick one, and decide what should happen</a></li>
+      <li><span class="n">4.3</span><a href="#s4-3">Have Cline fix it</a></li>
+      <li><span class="n">4.4</span><a href="#s4-4">What to hand in</a></li>
+      <li><span class="n">4.5</span><a href="#s4-5">What we know so far</a></li>
     </ol>
   </nav>
 
 
+
   <section class="sec" id="s4-0" style="margin-bottom:44px">
-    <h2><span class="n">4.0</span>この章で何をするか</h2>
+    <h2><span class="n">4.0</span>What you do in this part</h2>
 
-    <div class="prompt"><span class="tag">MISSION</span>PART 3で作った Vibe Chat を、6項目すべてテストしなさい。
+    <div class="prompt"><span class="tag">MISSION</span>Run all six tests on the Vibe Chat you built in Part 3.
 
-見つかった問題から1つ選び、Clineを使って修正し、同じテストをもう一度行いなさい。</div>
+Pick one of the problems you found, have Cline fix it, and run the same test again.</div>
 
-    <h3>3つの作業を順に行います</h3>
+    <h3>Seven steps, in order</h3>
 
     <table>
-      <thead><tr><th></th><th>やること</th><th>誰が</th><th>目安</th></tr></thead>
+      <thead><tr><th></th><th>What</th><th>Who</th><th>Roughly</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td>6項目のテストを実行させる（4.1）</td><td>Cline</td><td>10分</td></tr>
-        <tr><td><strong>2</strong></td><td>報告を読み、だめだった項目を自分でも再現する（4.1）</td><td><span class="mark">人間</span></td><td>10分</td></tr>
-        <tr><td><strong>3</strong></td><td>直す1件と、本来どうなるべきかを決める（4.2）</td><td>人間</td><td>15分</td></tr>
-        <tr><td><strong>4</strong></td><td>Planモードで修正を依頼する（4.3.1）</td><td>Cline</td><td>10分</td></tr>
-        <tr><td><strong>5</strong></td><td>Planを判断する（4.3.2）</td><td><span class="mark">人間</span></td><td>10分</td></tr>
-        <tr><td><strong>6</strong></td><td>差分を判断する（4.3.3）</td><td><span class="mark">人間</span></td><td>10分</td></tr>
-        <tr><td><strong>7</strong></td><td>再テストする（4.3.4）</td><td>人間</td><td>15分</td></tr>
+        <tr><td><strong>1</strong></td><td>Have the six tests run (4.1)</td><td>Cline</td><td>10 min</td></tr>
+        <tr><td><strong>2</strong></td><td>Read the report and reproduce the failures yourself (4.1)</td><td><span class="mark">You</span></td><td>10 min</td></tr>
+        <tr><td><strong>3</strong></td><td>Pick one, and decide what should happen (4.2)</td><td>You</td><td>15 min</td></tr>
+        <tr><td><strong>4</strong></td><td>Ask for a fix in Plan mode (4.3.1)</td><td>Cline</td><td>10 min</td></tr>
+        <tr><td><strong>5</strong></td><td>Judge the plan (4.3.2)</td><td><span class="mark">You</span></td><td>10 min</td></tr>
+        <tr><td><strong>6</strong></td><td>Judge the diff (4.3.3)</td><td><span class="mark">You</span></td><td>10 min</td></tr>
+        <tr><td><strong>7</strong></td><td>Re-test (4.3.4)</td><td>You</td><td>15 min</td></tr>
       </tbody>
     </table>
 
-    <p>およそ1時間20分です。<span class="mark">7つのうち5つが人間の作業です。</span>Agentがやるのは、試すことと直すことだけで、判断はしません。</p>
+    <p>About an hour and twenty minutes. <span class="mark">Five of the seven steps are yours.</span> The agent tries things and edits. It does not judge.</p>
 
-    <h3>使うもの</h3>
+    <h3>What you need</h3>
 
-    <p>PART 3で作った <code>index.html</code> です。<span class="mark">ブラウザで開ける状態にしておいてください。</span></p>
+    <p>The <code>index.html</code> from Part 3. <span class="mark">Have it open in a browser.</span></p>
 
-    <p><span class="mark">3.4のDeleteボタンまで実装した版を使います。</span>終わっていなければ、先に3.4を終えてください。Deleteがないと、6項目のうち2つが試せません。</p>
+    <p><span class="mark">Use the version with the Delete button from 3.4.</span> If you have not finished 3.4, do that first. Without Delete, two of the six tests cannot be run.</p>
 
-    <p>始める前に <code>index.html</code> を複製して <code>work_before_part4.html</code> という名前で保存しておきます。<strong>壊したときに戻すためです。</strong></p>
+    <p>Before you start, copy <code>index.html</code> to <code>work_before_part4.html</code>. <strong>So you can go back if something breaks.</strong></p>
 
-    <h3>作業しながら残すもの</h3>
+    <h3>What to keep as you go</h3>
 
-    <p>提出するのは <code>index.html</code> 1本です。修正後のファイルの末尾に、次の4つをコメントとして書き足します（4.4）。<span class="mark">あとから作れないものが多い</span>ので、その手順に来たときに控えておいてください。</p>
+    <p>You hand in one file: <code>index.html</code>. At the end of the fixed file you add the following four items as a comment (4.4). <span class="mark">Most of them cannot be recreated afterwards</span>, so note each one when you reach that step.</p>
 
     <table>
-      <thead><tr><th>残すもの</th><th>内容</th><th>いつ</th></tr></thead>
+      <thead><tr><th>Keep</th><th>What</th><th>When</th></tr></thead>
       <tbody>
-        <tr><td><strong>テスト結果</strong></td><td>だめだった項目の番号（自分で再現できたもの）</td><td>4.1</td></tr>
-        <tr><td><strong>問題の記録</strong></td><td>操作、実際の結果、本来どうなるべきか</td><td>4.2</td></tr>
-        <tr><td><strong>Plan</strong></td><td>Clineが出した計画を<strong>1つだけ</strong>コピーしておく。出し直させた場合はどれでもよいが、<strong>次の「判断」はこのPlanについて書く</strong></td><td>4.3.1</td></tr>
-        <tr><td><strong>人間の判断</strong></td><td><strong>上のPlanに対して</strong>、進めたかRejectしたか、その理由（1〜3行）</td><td>4.3.2</td></tr>
+        <tr><td><strong>Test results</strong></td><td>The numbers of the items that failed (the ones you reproduced yourself)</td><td>4.1</td></tr>
+        <tr><td><strong>The problem</strong></td><td>What you did, what happened, what should happen instead</td><td>4.2</td></tr>
+        <tr><td><strong>The plan</strong></td><td><strong>One</strong> plan Cline proposed, copied out. If you had it redo the plan, any one is fine, but <strong>the decision below must be about this plan</strong></td><td>4.3.1</td></tr>
+        <tr><td><strong>Your decision</strong></td><td><strong>On the plan above</strong>: did you go ahead or reject it, and why (1–3 lines)</td><td>4.3.2</td></tr>
       </tbody>
     </table>
 
     <div class="note">
-      <span class="tag">「人間の判断」がいちばん重要です</span>
-      <span class="mark">なぜSaveしたのか。なぜRejectしたのか。</span>判断は何回もしますが、書くのは<strong>提出するPlanに対する1回</strong>だけです。Planと判断が対になっていないと、読む側には分かりません。1〜3行で構いません。<br><br>
-      「差分がindex.htmlのJS数行だけで、Send機能に手を入れていなかったのでSaveした」<br>
-      「入力欄そのものを作り直す計画だったのでRejectし、200文字の判定だけを頼み直した」<br><br>
-      <strong>この判断が、この章で身につけるものです。</strong>
+      <span class="tag">"Your decision" is the important one</span>
+      <span class="mark">Why did you Save? Why did you Reject?</span> You will decide many times; write up only <strong>the decision on the plan you hand in</strong>. A plan and a decision that do not match tell the reader nothing. One to three lines is enough.<br><br>
+      "The diff was a few lines of JS in index.html and left Send alone, so I saved it."<br>
+      "The plan was to rebuild the input field, so I rejected it and asked only for the 200-character check."<br><br>
+      <strong>That judgement is the thing this part is teaching.</strong>
     </div>
 
     <div class="warn">
-      <span class="tag">仕様どおりの動作を欠陥と呼ばないこと</span>
-      再読み込みで投稿が消えるのは、<span class="mark">PART 3で「JavaScript配列だけに保持する」と指示したからです。</span>仕様どおりです。<br><br>
-      複数のタブで共有されないのも同じです。<strong>これらは不具合ではありません。</strong>この章で探すのは、指示していないのに起きてしまう問題です。
+      <span class="tag">Behaving as specified is not a defect</span>
+      Messages disappearing on reload is <span class="mark">what you asked for in Part 3, when you said to keep them in a JavaScript array only.</span> That is the specification working.<br><br>
+      The same goes for messages not being shared between tabs. <strong>Neither of those is a bug.</strong> What you are looking for here is behaviour you did not ask for.
     </div>
   </section>
 
   <section class="sec" id="s4-1">
-    <h2><span class="n">4.1</span>6項目をすべて試させる</h2>
+    <h2><span class="n">4.1</span>Have all six tests run</h2>
 
-    <p>次の6項目を、Clineに<strong>すべて</strong>実行させます。Clineはブラウザを開いて操作し、結果を報告します。<span class="mark">1つずつ選んで試すのではなく、全部です。</span></p>
+    <p>Have Cline run <strong>all six</strong>. It opens the page in a browser, operates it and reports back. <span class="mark">Not one that you pick; every one of them.</span></p>
 
-    <p><strong>Act</strong> モードで、次をそのまま送ります。ブラウザを開く操作の承認を求められたら承認します。</p>
+    <p>In <strong>Act</strong> mode, send this as it is. Approve the browser actions when asked.</p>
 
     <div class="prompt"><span class="tag">PROMPT</span>Open index.html in the browser and run these six tests one by one.
 For each test, report three things: what you did, what the page showed, and whether it looks wrong.
@@ -273,93 +274,93 @@ Do not edit any file.
 Finish with a list of the test numbers that look wrong.</div>
 
     <table>
-      <thead><tr><th></th><th>操作</th></tr></thead>
+      <thead><tr><th></th><th>What to do</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td>User name を空欄にして Send</td></tr>
-        <tr><td><strong>2</strong></td><td>Message を空欄にして Send</td></tr>
-        <tr><td><strong>3</strong></td><td>1000文字を入力して Send。<span class="mark">仕様：メッセージは200文字まで。超えたら送信せず、エラーを出す</span></td></tr>
-        <tr><td><strong>4</strong></td><td><code>&lt;h1&gt;Hello&lt;/h1&gt;</code> を入力して Send</td></tr>
-        <tr><td><strong>5</strong></td><td>メッセージを2件作り、1件目を Delete</td></tr>
-        <tr><td><strong>6</strong></td><td>Send と Delete を何度か繰り返す</td></tr>
+        <tr><td><strong>1</strong></td><td>Leave User name empty and press Send</td></tr>
+        <tr><td><strong>2</strong></td><td>Leave Message empty and press Send</td></tr>
+        <tr><td><strong>3</strong></td><td>Type 1,000 characters and press Send. <span class="mark">Spec: a message is at most 200 characters. Beyond that it must not be sent, and an error must be shown</span></td></tr>
+        <tr><td><strong>4</strong></td><td>Type <code>&lt;h1&gt;Hello&lt;/h1&gt;</code> and press Send</td></tr>
+        <tr><td><strong>5</strong></td><td>Create two messages and Delete the first</td></tr>
+        <tr><td><strong>6</strong></td><td>Alternate Send and Delete several times</td></tr>
       </tbody>
     </table>
 
     <div class="note">
-      <span class="tag">3は、ほぼ全員がだめになります</span>
-      「200文字まで」は、PART 3のプロンプトでは指示していない仕様です。<span class="mark">だから今のアプリは、長い文章をそのまま受け付けます。</span>仕様として決めた瞬間に、それは不具合になります。<br><br>
-      これで、直す1件が必ず1つはあります。<strong>ほかが全部問題なくても、この章は先へ進めます。</strong>
+      <span class="tag">Almost everyone fails 3</span>
+      "At most 200 characters" was never in the Part 3 prompt. <span class="mark">So the app you have accepts long text as it is.</span> The moment you decide it is the specification, that becomes a defect.<br><br>
+      This guarantees at least one thing to fix. <strong>Even if everything else is fine, the part goes on.</strong>
     </div>
 
     <div class="note">
-      <span class="tag">何を「おかしい」と呼ぶかは、あなたが決めます</span>
-      空欄で送れてしまう、200文字を超えても送れてしまう、タグがそのまま効く、別のメッセージが消える、件数が合わない。こうしたものです。<br><br>
-      迷ったら控えておき、4.2で「本来どうなるべきか」を考えるときに判断してください。
+      <span class="tag">You decide what counts as wrong</span>
+      Sending with an empty field, a message over 200 characters going through, a tag being rendered, the wrong message disappearing, a count that does not match. Things like that.<br><br>
+      If in doubt, note it and decide in 4.2, when you write what should happen instead.
     </div>
 
     <div class="warn">
-      <span class="tag">報告は根拠ではありません</span>
-      Clineが「おかしい」と言った項目は、<span class="mark">自分の手でも同じ操作をして確かめます。</span>「問題なし」と言った項目のうち、少なくとも3は自分でも試します。<br><br>
-      Agentはコードを読んで「動くはずだ」と結論することがあります。<strong>動いたかどうかは、画面を見た人だけが言えます。</strong>ここで控えるのは、あなたが再現できた項目です。
+      <span class="tag">The report is not evidence</span>
+      For every item Cline says is wrong, <span class="mark">do the same thing yourself and watch the screen.</span> Of the items it says are fine, try at least number 3 yourself.<br><br>
+      An agent can read the code and conclude that it should work. <strong>Whether it does is something only the person who looked at the screen can say.</strong> What you note down here is what you reproduced.
     </div>
 
-    <h3><span class="n">4.1.1</span>自分で再現するときの1000文字</h3>
+    <h3><span class="n">4.1.1</span>1,000 characters for your own re-check</h3>
 
-    <p>手で打つ必要はありません。適当な文章をコピーして、10回ほど貼り付けてください。<span class="mark">200文字を超えたときに何が起きるかが分かればよいので、正確に1000文字である必要はありません。</span></p>
+    <p>You do not need to type them. Copy any paragraph and paste it ten times. <span class="mark">You only need to see what happens beyond 200 characters, so the count does not have to be exact.</span></p>
   </section>
 
   <section class="sec" id="s4-2">
-    <h2><span class="n">4.2</span>直す1件と、本来どうなるべきかを決める</h2>
+    <h2><span class="n">4.2</span>Pick one, and decide what should happen</h2>
 
-    <h3><span class="n">4.2.0</span>1件を決める</h3>
+    <h3><span class="n">4.2.0</span>Pick one</h3>
 
-    <p>4.1で控えた項目から、この章で直す<strong>1件</strong>を決めます。</p>
+    <p>From the items you noted in 4.1, choose the <strong>one</strong> you will fix in this part.</p>
 
     <table>
-      <thead><tr><th>控えた項目</th><th>選ぶもの</th></tr></thead>
+      <thead><tr><th>What you noted</th><th>What to pick</th></tr></thead>
       <tbody>
-        <tr><td>複数ある</td><td>いちばん気になるもの1つ</td></tr>
-        <tr><td>3だけ</td><td>3（文字数の上限）</td></tr>
+        <tr><td>Several items</td><td>The one that bothers you most</td></tr>
+        <tr><td>Only 3</td><td>3, the character limit</td></tr>
       </tbody>
     </table>
 
-    <p>27Bが作ったものは意外としっかりしていて、<span class="mark">だめだったのは3だけ、という結果がいちばん多い</span>はずです。それで構いません。</p>
+    <p>A 27B model produces something more solid than you expect, so <span class="mark">"only 3 failed" will be the most common result.</span> That is fine.</p>
 
-    <h3><span class="n">4.2.1</span>本来どうなるべきかを決める</h3>
+    <h3><span class="n">4.2.1</span>Decide what should happen</h3>
 
-    <p>1と2は4.1で分かっています。<span class="mark">この節で決めるのは3だけです。</span>3つを並べると、4.3.1でClineに送る文になります。</p>
+    <p>Lines 1 and 2 you already know from 4.1. <span class="mark">The only thing you decide here is line 3.</span> Put the three together and you have the message you send to Cline in 4.3.1.</p>
 
     <table>
-      <thead><tr><th></th><th>内容</th><th>どこから</th></tr></thead>
+      <thead><tr><th></th><th>Line</th><th>Where from</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td>行った操作</td><td>4.1の項目</td></tr>
-        <tr><td><strong>2</strong></td><td>実際に起きたこと</td><td>4.1で見たこと</td></tr>
-        <tr><td><strong>3</strong></td><td><span class="mark">本来どうなるべきか</span></td><td><strong>ここで決める</strong></td></tr>
+        <tr><td><strong>1</strong></td><td>What you did</td><td>The 4.1 item</td></tr>
+        <tr><td><strong>2</strong></td><td>What actually happened</td><td>What you saw in 4.1</td></tr>
+        <tr><td><strong>3</strong></td><td><span class="mark">What should happen instead</span></td><td><strong>You decide it here</strong></td></tr>
       </tbody>
     </table>
 
-    <h3><span class="n">4.2.2</span>並べた例</h3>
+    <h3><span class="n">4.2.2</span>The three together</h3>
 
     <blockquote>
-      メッセージ欄に1000文字を入力してSendを押した。<br>
-      そのまま投稿された。<br>
-      <strong>200文字を超えるメッセージは送信されず、エラーが表示されるべきである。</strong>
+      I typed 1,000 characters into the message field and pressed Send.<br>
+      It was posted as it was.<br>
+      <strong>A message over 200 characters should not be sent; an error should be shown instead.</strong>
     </blockquote>
 
     <div class="warn">
-      <span class="tag">3番目は、あなたが決めます</span>
-      <span class="mark">「本来どうなるべきか」は、Agentには決められません。</span>仕様を決めるのは人間の仕事です。<br><br>
-      「200文字まで」は決まっていますが、その先は決まっていません。Sendを押したときに弾くのか、入力欄に201文字目を打てなくするのか、残り文字数を表示するのか、エラーの文言は何か。<strong>どれも正解になりえます。</strong>あなたが選んだものが仕様になります。<br><br>
-      ここを書かずに「長くても送れます、直して」とだけ伝えると、Agentは勝手に決めます。<strong>意図と違う直し方をされます。</strong>
+      <span class="tag">The third line is yours to decide</span>
+      <span class="mark">"What should have happened" is not something the agent can decide.</span> Setting the specification is a human job.<br><br>
+      "At most 200" is settled. The rest is not. Reject it when Send is pressed? Stop the field from accepting a 201st character? Show a remaining-characters counter? What does the error say? <strong>Any of those can be right.</strong> Whichever you choose becomes the specification.<br><br>
+      Say only "long messages go through, fix it" and the agent decides for you. <strong>You then get a fix that was never what you meant.</strong>
     </div>
 
   </section>
 
   <section class="sec" id="s4-3">
-    <h2><span class="n">4.3</span>Clineに修正させる</h2>
+    <h2><span class="n">4.3</span>Have Cline fix it</h2>
 
-    <h3><span class="n">4.3.1</span>Planモードで依頼する</h3>
+    <h3><span class="n">4.3.1</span>Ask in Plan mode</h3>
 
-    <p><strong>Plan</strong> に切り替えてから送ります。<span class="mark">4.2で書いた3つを、そのまま英語にします。</span></p>
+    <p>Switch to <strong>Plan</strong> before you send. <span class="mark">The three lines from 4.2 go straight into the prompt.</span></p>
 
     <div class="prompt"><span class="tag">PROMPT</span>A message longer than 200 characters is accepted and posted as is.
 
@@ -372,75 +373,75 @@ Edit index.html only.
 Do not change the current design or other functions.
 Do not edit the file yet.</div>
 
-    <p>上から3行目までが<strong>実際に起きたこと</strong>、`Expected result` が<strong>本来どうなるべきか</strong>です。あなたの記録に合わせて書き換えてください。</p>
+    <p>The first line is <strong>what actually happened</strong>. <code>Expected result</code> is <strong>what should have happened</strong>. Replace both with your own.</p>
 
     <div class="note">
-      <span class="tag">最後の4行は必ず入れます</span>
-      <code>Edit index.html only</code>　変更範囲を限定する<br>
-      <code>Do not change the current design or other functions</code>　巻き添えを防ぐ<br>
-      <code>Do not edit the file yet</code>　Planを読む前に実装させない<br><br>
-      <span class="mark">1つ抜けるだけで、余計な変更が混ざります。</span>
+      <span class="tag">Keep the last four lines</span>
+      <code>Edit index.html only</code>　limits the scope<br>
+      <code>Do not change the current design or other functions</code>　prevents collateral damage<br>
+      <code>Do not edit the file yet</code>　stops it building before you have read the plan<br><br>
+      <span class="mark">Each one is doing work. Drop one and you make room for changes you did not ask for.</span>
     </div>
 
-    <h3><span class="n">4.3.2</span>Planを人間が判断する</h3>
+    <h3><span class="n">4.3.2</span>You judge the plan</h3>
 
-    <p>Clineが計画を出します。<strong>読んでから次へ進みます。</strong></p>
+    <p>Cline returns a plan. <strong>Read it before you go on.</strong></p>
 
     <table>
-      <thead><tr><th>確認すること</th><th>問題があったら</th></tr></thead>
+      <thead><tr><th>Check</th><th>If it is wrong</th></tr></thead>
       <tbody>
-        <tr><td>問題と関係のある変更か</td><td>関係ない箇所を触る計画なら、指摘して出し直させる</td></tr>
-        <tr><td><code>index.html</code> 以外を変更しないか</td><td>別ファイルを作る計画なら、1ファイルで済む方法を求める</td></tr>
-        <tr><td>SendやDeleteを壊さないか</td><td>書き換える計画なら、理由を確かめる</td></tr>
-        <tr><td>不要な機能を追加していないか</td><td><span class="mark">デザインの刷新、新機能は頼んでいません</span></td></tr>
+        <tr><td>Is the change related to the problem?</td><td>If it touches unrelated code, say so and ask again</td></tr>
+        <tr><td>Does it change anything besides <code>index.html</code>?</td><td>If it plans another file, ask for a one-file approach</td></tr>
+        <tr><td>Does it break Send or Delete?</td><td>If it rewrites them, ask why</td></tr>
+        <tr><td>Has it added something you did not ask for?</td><td><span class="mark">A redesign or a new feature was not requested</span></td></tr>
       </tbody>
     </table>
 
-    <p>問題がなければ <strong>Act</strong> へ切り替えます。問題があれば、その場で指摘して計画を出し直させます。</p>
+    <p>If it looks right, switch to <strong>Act</strong>. If not, say what is wrong and ask for a new plan.</p>
 
-    <h3><span class="n">4.3.3</span>差分を人間が判断する</h3>
+    <h3><span class="n">4.3.3</span>You judge the diff</h3>
 
-    <p>Actにすると、Clineが変更を提示します。<span class="mark">SaveかRejectかを、あなたが選びます。</span></p>
+    <p>In Act mode, Cline shows you the change. <span class="mark">Save or Reject is your call.</span></p>
 
     <table>
-      <thead><tr><th>差分の中身</th><th>判断</th></tr></thead>
+      <thead><tr><th>What the diff contains</th><th>Decision</th></tr></thead>
       <tbody>
-        <tr><td>必要な変更だけ</td><td><strong>Save</strong></td></tr>
-        <tr><td>全体を書き直している</td><td><strong>Reject</strong></td></tr>
-        <tr><td>外部ライブラリを追加している</td><td><strong>Reject</strong></td></tr>
-        <tr><td>別の機能を削除している</td><td><strong>Reject</strong></td></tr>
+        <tr><td>Only the change that was needed</td><td><strong>Save</strong></td></tr>
+        <tr><td>A rewrite of the whole file</td><td><strong>Reject</strong></td></tr>
+        <tr><td>An added external library</td><td><strong>Reject</strong></td></tr>
+        <tr><td>A feature removed</td><td><strong>Reject</strong></td></tr>
       </tbody>
     </table>
 
     <div class="warn">
-      <span class="tag">差分を見ずに押さないこと</span>
-      <span class="mark">見ずにSaveを押していると、承認の意味がありません。</span>何が変わるのかを読んでから決めてください。<br><br>
-      Rejectしたら、理由を書いて出し直させます。<strong>そのやり取りが提出物になります。</strong>
+      <span class="tag">Do not press it without reading</span>
+      <span class="mark">Pressing Save without looking makes the approval meaningless.</span> Read what changes, then decide.<br><br>
+      If you Reject, say why and ask again. <strong>That exchange is part of what you hand in.</strong>
     </div>
 
-    <h3><span class="n">4.3.4</span>人間が再テストする</h3>
+    <h3><span class="n">4.3.4</span>You re-test</h3>
 
-    <p>Saveしたら、ブラウザを再読み込みします。<span class="mark">確認するのは3つです。</span></p>
+    <p>After Save, reload the browser. <span class="mark">Check three things.</span></p>
 
     <div class="flow-steps">
-      <p><strong>1</strong>　4.2で決めた操作を、もう一度行う</p>
-      <p><strong>2</strong>　<strong>Send</strong> が今までどおり動くか確認する</p>
-      <p><strong>3</strong>　<strong>Delete</strong> が今までどおり動くか確認する（実装している場合）</p>
+      <p><strong>1</strong>　Repeat the operation you chose in 4.2</p>
+      <p><strong>2</strong>　Check that <strong>Send</strong> still works</p>
+      <p><strong>3</strong>　Check that <strong>Delete</strong> still works, if you have it</p>
     </div>
 
-    <p>2と3を飛ばさないでください。<strong>直したつもりで、別のところを壊していることがあります。</strong></p>
+    <p>Do not skip 2 and 3. <span class="mark">A change made in one place can break another, and you will not notice unless you look.</span></p>
 
     <div class="note">
-      <span class="tag">Agentの「修正しました」は根拠になりません</span>
-      <span class="mark">根拠になるのは、あなたが操作して結果が変わったことだけです。</span><br><br>
-      直っていなければ、何が起きたかを伝えて再修正させます。4.3.1へ戻ってください。
+      <span class="tag">"Fixed" from the agent is not evidence</span>
+      <span class="mark">The evidence is that you did the same thing and got a different result.</span><br><br>
+      If it is not fixed, describe what happened and ask again. Go back to 4.3.1.
     </div>
   </section>
 
   <section class="sec" id="s4-4">
-    <h2><span class="n">4.4</span>提出物</h2>
+    <h2><span class="n">4.4</span>What to hand in</h2>
 
-    <p>修正後の <code>index.html</code> の末尾（<code>&lt;/html&gt;</code> の後）に、次のコメントを貼り、4.0で控えた4つを埋めます。<span class="mark">コメントなのでアプリの動作には影響しません。</span>ファイルは1本のままです。</p>
+    <p>At the very end of the fixed <code>index.html</code> (after <code>&lt;/html&gt;</code>), paste this comment and fill in the four items you noted in 4.0. <span class="mark">It is a comment, so the app is unaffected.</span> It stays one file.</p>
 
     <pre>&lt;!--
 PART 4 REPORT
@@ -460,53 +461,52 @@ Server / Model ID:
 
 --&gt;</pre>
 
-    <p>埋めたら保存し、そのファイルをフォームからアップロードします。<span class="mark">ここで新しく作るものはありません。</span>控えが揃っていなければ、該当する手順に戻って取り直してください。</p>
+    <p>Save, then upload that file through the form. <span class="mark">Nothing new is created here.</span> If a note is missing, go back to that step and capture it.</p>
 
-    <h3><span class="n">4.4.1</span>誰が何をしたか</h3>
+    <h3><span class="n">4.4.1</span>Who did what</h3>
 
-    <p>提出前に、自分の作業を振り返ってください。</p>
+    <p>Before you submit, look back at your own work.</p>
 
     <table>
-      <thead><tr><th>担当</th><th>やったこと</th></tr></thead>
+      <thead><tr><th>Who</th><th>What they did</th></tr></thead>
       <tbody>
-        <tr><td><strong>あなた</strong></td><td>問題を見つける。<span class="mark">本来どうなるべきかを決める。</span>Planを確認する。差分を承認する。最終確認をする</td></tr>
-        <tr><td><strong>Cline</strong></td><td>コードを調べる。修正案を出す。変更を適用する</td></tr>
+        <tr><td><strong>You</strong></td><td>Found the problem. <span class="mark">Decided what should happen instead.</span> Read the plan. Approved the diff. Verified the result</td></tr>
+        <tr><td><strong>Cline</strong></td><td>Investigated the code. Proposed a fix. Applied the change</td></tr>
       </tbody>
     </table>
 
-    <p><span class="mark">仕様を決めるのも、承認するのも、確認するのも人間です。</span>Agentがやったのは、調査と修正だけです。</p>
+    <p>The agent investigated and edited. <span class="mark">Setting the specification, approving the change and verifying the result were all yours.</span></p>
 
-    <p>提出は次のGoogleフォームから行います。</p>
+    <p>Submit through this Google Form:</p>
     <p><a href="https://forms.gle/j7dUyjYMSX8sUSWUA" target="_blank" rel="noopener"><strong>https://forms.gle/j7dUyjYMSX8sUSWUA</strong></a></p>
-    <p>4.4のコメントを書き足した <code>index.html</code> を1本アップロードします。<span class="mark">PART 3で出したフォームとは別</span>です。</p>
+    <p>Upload the single <code>index.html</code> with the 4.4 comment added. <span class="mark">This is a different form from the PART 3 one.</span></p>
   </section>
 
   <section class="sec" id="s4-5">
-    <h2><span class="n">4.5</span>この章で分かったこと</h2>
+    <h2><span class="n">4.5</span>What we know so far</h2>
 
-    <p>Agentが「完成しました」と言っても、<span class="mark">それは完成の根拠になりません。</span></p>
+    <p>When an agent says "done", <span class="mark">that tells you it finished, not that it works.</span></p>
 
-    <p>4.1でClineにテストさせました。報告は速く返ってきますが、<span class="mark">それをそのまま信じることはできず、結局あなたが再現しました。</span>直したあとも、Sendが動くか、Deleteが動くかを、また自分で確かめました。</p>
+    <p>In 4.1 you had Cline run the tests. The report came back fast, but <span class="mark">you could not take it at face value, so you reproduced it yourself.</span> After the fix, you checked Send and Delete by hand again.</p>
 
     <div class="warn">
-      <span class="tag">たくさん頼めば速いわけではありません</span>
-      6項目を一度に頼んでも、報告のどこまでが本当かは、人間が確かめるまで分かりません。<span class="mark">頼む量を増やすほど、確かめる量も増えます。</span><br><br>
-      「全部やっておいて」と投げて、返ってきた報告を読み、疑い、再現し、直させ、また確かめる。<strong>その時間は、Agentが速くなっても減りません。</strong>
+      <span class="tag">Asking for more does not make it faster</span>
+      Ask for six tests at once and you still do not know how much of the report is true until a person checks. <span class="mark">The more you delegate, the more you have to verify.</span><br><br>
+      Hand it "just do all of it", read the report, doubt it, reproduce it, have it fixed, check again. <strong>That time does not shrink as the agent gets faster.</strong>
     </div>
 
-    <p>減らす方法は1つです。<strong>確かめる作業そのものを、報告ではなく判定にする。</strong>「Sendが動く」を人が見るのではなく、機械が合否を出すようにします。</p>
+    <p>There is one way to shrink it. <strong>Turn the checking itself from a report into a verdict.</strong> Instead of a person looking at whether Send works, a machine returns pass or fail.</p>
 
-    <p>PART 5では、この確認を自動化します。<span class="mark">「Sendが動く」「Deleteが動く」のように機械が判定できるものは、テストになります。</span></p>
+    <p>Part 5 automates this checking. <span class="mark">Anything a machine can judge, such as "Send works" or "Delete works", becomes a test.</span></p>
 
-    <p>一方で、「本来どうなるべきか」を決めることと、差分を承認することは<strong>自動化できません。</strong>それは人間に残ります。</p>
-
-    <p>その切り分けが、次章の入り口です。</p>
+    <p>Deciding what should happen, and approving a diff, <strong>cannot be automated.</strong> Those stay with you.</p>
   </section>
 
 
+
   <nav class="pager">
-    <a class="prev" href="part3.html"><span class="dir">← PREV</span><span class="ttl">PART 3　Coding Agentを動かす</span></a>
-    <a class="next" href="part5.html"><span class="dir">NEXT →</span><span class="ttl">PART 5　テストで完了条件を作る</span></a>
+    <a class="prev" href="part3.html"><span class="dir">← PREV</span><span class="ttl">PART 3　Run a Coding Agent</span></a>
+    <a class="next" href="part5.html"><span class="dir">NEXT →</span><span class="ttl">PART 5　Turn the check into tests</span></a>
   </nav>
 
 </div>
@@ -522,14 +522,14 @@ Server / Model ID:
     var btn = document.createElement('button');
     btn.className = 'copy-btn';
     btn.type = 'button';
-    btn.textContent = 'コピー';
+    btn.textContent = 'Copy';
     btn.addEventListener('click', function () {
       var text = copyText(el);
       var done = function () {
-        btn.textContent = 'コピーしました';
+        btn.textContent = 'Copied';
         btn.classList.add('done');
         setTimeout(function () {
-          btn.textContent = 'コピー';
+          btn.textContent = 'Copy';
           btn.classList.remove('done');
         }, 1600);
       };
