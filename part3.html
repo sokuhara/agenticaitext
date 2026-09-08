@@ -357,7 +357,7 @@ th{background:var(--accent-soft);font-weight:700}
         <tr><td>API Provider</td><td><code>OpenAI Compatible</code></td></tr>
         <tr><td>Base URL</td><td>下の表のURL。<strong>末尾の <code>/v1</code> まで</strong></td></tr>
         <tr><td>OpenAI Compatible API Key</td><td><code>ollama</code>（何でもよい）</td></tr>
-        <tr><td>Model ID</td><td>講師が指定したモデル名</td></tr>
+        <tr><td>Model ID</td><td>自分のサーバに対応するもの（下の表。サーバの番号とモデルの番号は同じ）</td></tr>
         <tr><td>Custom Headers</td><td>2つ追加（下記）</td></tr>
       </tbody>
     </table>
@@ -405,21 +405,27 @@ th{background:var(--accent-soft);font-weight:700}
     <p>サーバは5台あります。<span class="mark">学籍番号の末尾の数字で、使うサーバが決まります。</span></p>
 
     <table>
-      <thead><tr><th>学籍番号の末尾</th><th>Base URL</th></tr></thead>
+      <thead><tr><th>学籍番号の末尾</th><th>Base URL</th><th>Model ID</th></tr></thead>
       <tbody>
-        <tr><td><strong>0, 1</strong></td><td><code>https://pc11.okuharalab.com/v1</code></td></tr>
-        <tr><td><strong>2, 3</strong></td><td><code>https://pc21.okuharalab.com/v1</code></td></tr>
-        <tr><td><strong>4, 5</strong></td><td><code>https://pc31.okuharalab.com/v1</code></td></tr>
-        <tr><td><strong>6, 7</strong></td><td><code>https://pc41.okuharalab.com/v1</code></td></tr>
-        <tr><td><strong>8, 9</strong></td><td><code>https://pc51.okuharalab.com/v1</code></td></tr>
+        <tr><td><strong>0, 1</strong></td><td><code>https://pc11.okuharalab.com/v1</code></td><td><code>qwen38_1:latest</code></td></tr>
+        <tr><td><strong>2, 3</strong></td><td><code>https://pc21.okuharalab.com/v1</code></td><td><code>qwen38_2:latest</code></td></tr>
+        <tr><td><strong>4, 5</strong></td><td><code>https://pc31.okuharalab.com/v1</code></td><td><code>qwen38_3:latest</code></td></tr>
+        <tr><td><strong>6, 7</strong></td><td><code>https://pc41.okuharalab.com/v1</code></td><td><code>qwen38_4:latest</code></td></tr>
+        <tr><td><strong>8, 9</strong></td><td><code>https://pc51.okuharalab.com/v1</code></td><td><code>qwen38_5:latest</code></td></tr>
       </tbody>
     </table>
+
+        <div class="warn">
+      <span class="tag">サーバとモデルの番号は連動しています</span>
+      pc11 には <code>qwen38_1</code>、pc21 には <code>qwen38_2</code>、という具合に、<span class="mark">Base URL の1桁目と Model ID の末尾の数字が同じ</span>です。<br><br>
+      組み合わせを間違えると <code>model 'qwen38_1:latest' not found</code> と出ます。<strong>そのエラーを見たら、まず Base URL と Model ID の番号を見比べてください。</strong>
+    </div>
 
     <p>1台に集中すると、全員の応答が遅くなります。<strong>自分の番号のサーバを使ってください。</strong></p>
 
     <div class="note">
       <span class="tag">値は授業開始時に配布します</span>
-      Client ID、Client Secret、Model ID。<span class="mark">これらは教材に書かれていません。</span>授業で配布されたものを使ってください。他の場所へ貼ったり共有したりしないでください。
+      Client ID と Client Secret。<span class="mark">この2つは教材に書かれていません。</span>授業で配布されたものを使ってください。他の場所へ貼ったり共有したりしないでください。
     </div>
 
     <h3><span class="n">3.1.4</span>接続を確認する</h3>
@@ -449,7 +455,7 @@ th{background:var(--accent-soft);font-weight:700}
         </tr>
         <tr>
           <td>モデルが見つからない</td>
-          <td>Model ID。講師の指定と1文字ずつ照合する</td>
+          <td>Base URL のサーバ番号と Model ID の末尾の番号が同じか（pc11 なら qwen38_1）</td>
         </tr>
         <tr>
           <td>何も起きない、反応しない</td>
@@ -1106,8 +1112,10 @@ After editing, tell me exactly what changed.</div>
     </table>
 
     <div class="note">
-      <span class="tag">提出はPART 4の終わりに</span>
-      3.1.12と3.4.5の提出物は、いまは手元に控えておくだけでよいです。PART 4で同じ <code>index.html</code> をテストして直したあと、<span class="mark">PART 4の4.4でまとめて1回提出</span>します。
+      <span class="tag">提出</span>
+      Deleteボタンまで動くようになった <code>index.html</code> を、次のフォームからアップロードします。ファイルは1本だけです。<br><br>
+      <a href="https://forms.gle/WwV8b3KQo2hsRRJB8" target="_blank" rel="noopener"><strong>https://forms.gle/WwV8b3KQo2hsRRJB8</strong></a><br><br>
+      PART 4では同じファイルを直して、<span class="mark">別のフォームにもう一度</span>出します。
     </div>
 
     <div class="note">
