@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PART 3 Coding Agentを動かす</title>
+<title>PART 3 Run a Coding Agent</title>
 <style>
 :root{
   --paper:#f6f5f2;
@@ -11,8 +11,8 @@
   --ink-soft:#565651;
   --line:#dedcd5;
   --card:#ffffff;
-  --accent:#00a86b;
-  --accent-soft:#e6f8f0;
+  --accent:#b91c1c;
+  --accent-soft:#fdeaea;
   --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -159,253 +159,252 @@ th{background:var(--accent-soft);font-weight:700}
 </head>
 <body>
 
-<nav class="rail" aria-label="章の一覧">
-  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html" aria-current="page">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+<nav class="rail" aria-label="Parts">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html" aria-current="page">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
 </nav>
 
 <div class="wrap">
 
   <header class="masthead">
     <div class="eyebrow">PART 3</div>
-    <h1>Coding Agentを動かす</h1>
-    <p class="lede">Coding Agentは、LLMにファイル操作やコマンド実行という道具を与え、結果を受け取って次の作業を続けられるようにした仕組みです。仕組みを押さえたうえで、Clineに実際のアプリを作らせます。</p>
+    <h1>Run a Coding Agent</h1>
+    <p class="lede">In Part 2 you moved the code yourself. Here an agent reads files, writes them and runs commands, and your job becomes approving each step.</p>
   </header>
 
   <div class="bridge">
     <dl>
-      <dt>前章まで</dt><dd>PART 2では、AIが出したコードをあなたが受け取り、貼り付け、動かしました。速さと同時に、その受け渡しの手間も体験しました。</dd>
-      <dt>この章</dt><dd>AIに道具を渡すと何が変わるのかを理解し、Clineでアプリを1本作らせます。そのうえで、指示の出し方と、どこまで任せるかを扱います。</dd>
-      <dt>次章へ</dt><dd>PART 4では、出来上がった成果物を、実務で使えるかという観点から点検します。</dd>
+      <dt>Previously</dt><dd>Part 2 rebuilt a street by talking to a small model. You did the pasting, saving and reloading.</dd>
+      <dt>This part</dt><dd>Cline builds a whole small app. You watch it read, write and run, and you approve each operation.</dd>
+      <dt>Next</dt><dd>Part 4 tests what the agent produced, and has it fixed where it falls short.</dd>
     </dl>
   </div>
 
-  <nav class="toc" aria-label="この章の目次">
-    <h2>この章の内容</h2>
+  <nav class="toc" aria-label="Contents of this part">
+    <h2>In this part</h2>
     <ol>
-      <li><span class="n">3.1</span><a href="#s3-1">演習：Clineにアプリを作らせる</a></li>
-      <li><span class="n">3.2</span><a href="#s3-2">なぜ同じ依頼でも結果が変わるか</a></li>
-      <li><span class="n">3.3</span><a href="#s3-3">どこまで任せるか</a></li>
-      <li><span class="n">3.4</span><a href="#s3-4">課題：削除機能を追加する</a></li>
-      <li><span class="n">3.5</span><a href="#s3-5">この章で分かったこと</a></li>
+      <li><span class="n">3.0</span><a href="#s3-0">What you do in this part</a></li>
+      <li><span class="n">3.1</span><a href="#s3-1">Exercise: let Cline build an app</a></li>
+      <li><span class="n">3.2</span><a href="#s3-2">Why the same request gives different results</a></li>
+      <li><span class="n">3.3</span><a href="#s3-3">How much to delegate</a></li>
+      <li><span class="n">3.4</span><a href="#s3-4">Task: add a delete feature</a></li>
+      <li><span class="n">3.5</span><a href="#s3-5">What we know so far</a></li>
     </ol>
   </nav>
 
 
+
   <section class="sec" id="s3-0" style="margin-bottom:44px">
-    <h2><span class="n">3.0</span>この章で何をするか</h2>
+    <h2><span class="n">3.0</span>What you do in this part</h2>
 
-    <p>この章では、<span class="mark">PART 2で人間がしていた「貼る・保存する・実行する」をAgentに渡します。</span></p>
+    <p>In this part you hand over the pasting, saving and running <span class="mark">that you did by hand in Part 2.</span></p>
 
-    <h3>この章を終えると</h3>
-    <p>Agentがアプリを1本作り上げます。ファイルを読み、書き、コマンドを実行します。<span class="mark">その過程を観察できるようになります。</span></p>
+    <h3>By the end</h3>
+    <p>An agent will build a whole small app. It reads files, writes them and runs commands. <strong>You will be able to watch that happen.</strong></p>
+    <p>You will also be able to say where a human judgement was needed.</p>
 
-    <p>あわせて、どこに人間の判断が必要かを言えるようになります。</p>
-
-    <h3>この章で繰り返す進め方</h3>
+    <h3>The order of work</h3>
 
     <div class="flow-steps">
-      <p><strong>1　動かす（3.1）</strong>　Clineでアプリを1本作らせる</p>
-      <p><strong>2　結果から学ぶ（3.2〜3.3）</strong>　指示の出し方と、任せる範囲</p>
-      <p><strong>3　課題（3.4）</strong>　削除機能を追加し、Agentの作業ループを確かめる。<span class="mark">PART 4はこれが終わっている前提で進みます</span></p>
+      <p><strong>1　Do it (3.1)</strong>　Let Cline build an app</p>
+      <p><strong>2　Learn from the result (3.2–3.3)</strong>　How to ask, and how much to delegate</p>
+      <p><strong>3　Task (3.4)</strong>　Add a delete feature and watch the agent loop. <span class="mark">Part 4 assumes this is done.</span></p>
     </div>
 
-    <p><span class="mark">先に手を動かします。</span>用語の説明は後ろに回してあります。3.1を終えてから3.4を読むと、画面で見たものと言葉が結びつきます。</p>
+    <p><span class="mark">You start by doing.</span> The vocabulary comes afterwards. Reading 3.4 after finishing 3.1 connects the words to what you saw on screen.</p>
   </section>
 
   <section class="sec" id="s3-1">
-    <h2><span class="n">3.1</span>演習：Clineにアプリを作らせる</h2>
+    <h2><span class="n">3.1</span>Exercise: let Cline build an app</h2>
 
-    <p>PART 2の演習1は、既にあるものを名前で変える作業でした。手を動かしたのはあなたです。</p>
+    <p>Exercise 1 in Part 2 changed things that already existed, by name. You did the moving. <span class="mark">Here the agent builds from nothing.</span></p>
 
-    <p>ここでは、何もないところからアプリを作らせます。<span class="mark">ただし、作るものは意図的に小さくします。</span></p>
+    <p>What it builds, though, is deliberately small. <span class="mark">A single HTML file, no server, no database.</span></p>
 
     <div class="warn">
-      <span class="tag">この演習で見たいもの</span>
-      「立派なアプリができたか」ではありません。<strong>Agentがファイルを読み、書き、コマンドを実行する過程を観察できたか</strong>です。<br><br>
-      要求を大きくすると、体験する内容が変わります。「Agentが仕事をした」ではなく、<span class="mark">「環境が壊れ続けた」</span>になります。<br><br>だからデータベース、認証、リアルタイム通信、コンテナは全部外します。
+      <span class="tag">What this exercise is for</span>
+      Not "did you produce an impressive app". <span class="mark">Did you watch an agent read files, write them and run commands.</span><br><br>
+      Ask for more and the experience changes. Instead of "the agent did some work" you get <strong>"the environment kept breaking".</strong> That is why databases, authentication, real-time messaging and containers are all excluded.
     </div>
 
     <div class="note">
-      <span class="tag">この演習の全体像</span>
-      <span class="mark">上から順に、飛ばさずに進めてください。</span><br><br>
-      フォルダを作る → VS Codeで開く → Clineを入れる → サーバに接続 → 接続テスト → <strong>Planモードにする</strong> → 課題を送る → 計画を確認 → <strong>承認方法を先に確認</strong> → <strong>Actへ切り替える</strong> → 1件ずつ承認 → ブラウザで開く → 動作確認 → 記録を残す
+      <span class="tag">The whole exercise</span>
+      Work down the list. <span class="mark">Do not skip steps.</span><br><br>
+      Make a folder → open it in VS Code → install Cline → connect to the server → test the connection → switch to Plan → send the task → read the plan → decide how you will approve → switch to Act → approve one at a time → open it in a browser → check it works → write down what happened
     </div>
 
-    <h3><span class="n">3.1.1</span>作業フォルダをVS Codeで開く</h3>
+    <h3><span class="n">3.1.1</span>Open a working folder in VS Code</h3>
 
     <ol>
-      <li>デスクトップに <code>vibe-chat</code> という名前のフォルダを作る</li>
-      <li>VS Codeを起動する</li>
-      <li><strong>File → Open Folder</strong> を選ぶ</li>
-      <li><code>vibe-chat</code> を選んで <strong>Select Folder</strong> を押す</li>
-      <li>信頼の確認が出たら <strong>Yes, I trust the authors</strong> を押す</li>
-      <li>左のExplorerに <code>vibe-chat</code> が表示されたことを確認する</li>
+      <li>Create a folder on your desktop called <code>vibe-chat</code></li>
+      <li>Start VS Code</li>
+      <li><strong>File → Open Folder</strong></li>
+      <li>Select <code>vibe-chat</code> and press <strong>Select Folder</strong></li>
+      <li>If asked about trust, press <strong>Yes, I trust the authors</strong></li>
+      <li>Check that <code>vibe-chat</code> appears in the Explorer on the left</li>
     </ol>
 
     <div class="warn">
-      <span class="tag">フォルダを開かずに始めないこと</span>
-      <span class="mark">Clineは、開いているフォルダの中でしか作業しません。</span>フォルダを開いていないと、ファイルをどこに作ればよいか分からず、動きません。
+      <span class="tag">Do not start without opening a folder</span>
+      <span class="mark">Cline works inside the folder you have open.</span> Without one, it has nowhere to put files and will not get far.
     </div>
 
-    <h3><span class="n">3.1.2</span>Clineをインストールする</h3>
+    <h3><span class="n">3.1.2</span>Install Cline</h3>
 
     <ol>
-      <li>左のアイコン列から <strong>Extensions</strong>（<code>Ctrl</code> + <code>Shift</code> + <code>X</code>）を押す</li>
-      <li>検索欄に <code>Cline</code> と入力する</li>
-      <li><span class="mark">一番上の、発行元が <strong>Cline</strong> のものを選ぶ</span></li>
-      <li><strong>Install</strong> を押す</li>
-      <li>左のアイコン列に追加されたClineのアイコンを押す</li>
+      <li>Press <strong>Extensions</strong> in the left icon column (<code>Ctrl</code> + <code>Shift</code> + <code>X</code>)</li>
+      <li>Type <code>Cline</code> in the search box</li>
+      <li><span class="mark">Pick the top result, published by Cline</span></li>
+      <li>Press <strong>Install</strong></li>
+      <li>Press the Cline icon that appears in the left column</li>
     </ol>
 
     <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
-      <img src="img/cline-install.png" alt="VS Codeの拡張機能パネルでClineを検索した結果。一番上に発行元Clineの「Cline - Autonomous coding agent」が表示され、その下に Cline Chinese、DSH Cline、Cline (Nightly)、Cline Pro、Cline Max が並んでいる" style="width:100%;max-width:560px;border-radius:8px;border:1px solid var(--line)">
-      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
-        一番上の「Cline — Autonomous coding agent」が正解
-      </div>
+      <img src="../img/cline-install.png" alt="Extensions search results for Cline, with the official one at the top and several similarly named extensions below" style="width:100%;max-width:560px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">"Cline — Autonomous coding agent", at the top, is the right one</div>
     </div>
 
     <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
-      <img src="img/cline-installed.png" alt="Clineの拡張機能ページ。発行元がCline、cline.bot、ダウンロード数5,217,516、DisableとUninstallのボタンが表示されている" style="width:100%;max-width:560px;border-radius:8px;border:1px solid var(--line)">
+      <img src="../img/cline-installed.png" alt="The Cline extension page showing publisher cline.bot and Disable and Uninstall buttons" style="width:100%;max-width:560px;border-radius:8px;border:1px solid var(--line)">
       <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
-        入ると <strong>Disable</strong> と <strong>Uninstall</strong> が出ます。<span style="color:var(--accent);font-weight:700">発行元が <code>cline.bot</code> であることも確認してください。</span>
+        Once installed you get <strong>Disable</strong> and <strong>Uninstall</strong>. <span style="color:var(--accent);font-weight:700">Check the publisher reads <code>cline.bot</code>.</span>
       </div>
     </div>
 
     <div class="warn">
-      <span class="tag">似た名前が並びます</span>
-      <span class="mark">Cline Chinese、DSH Cline、Cline (Nightly)、Cline Pro、Cline Max。</span>どれも別の拡張機能です。<br><br>
-      選ぶのは<strong>一番上の、発行元が Cline（青いチェックマーク付き）のもの</strong>です。ダウンロード数も桁が違います。
+      <span class="tag">Several similar names</span>
+      <span class="mark">Cline Chinese, DSH Cline, Cline (Nightly), Cline Pro, Cline Max.</span> All of them are different extensions.<br><br>
+      Pick <strong>the top result, published by Cline, with the blue check mark.</strong> The download count is an order of magnitude higher.
     </div>
 
-    <p>入れると、<span class="mark">左のアイコン列の一番下にロボットのアイコンが追加されます。</span>それがClineです。クリックするとパネルが開きます。</p>
+    <p>After installing, <span class="mark">a robot icon appears at the bottom of the left icon column.</span> That is Cline. Click it to open the panel.</p>
 
     <div class="warn">
-      <span class="tag">歯車は2種類あります。間違えやすいところです</span>
-      <strong>拡張機能一覧の歯車</strong>　Enable / Disable / Uninstall のメニューが出ます。<span class="mark">こちらではありません。</span><br><br>
-      <strong>Clineパネル右上の歯車</strong>　接続の設定はこちらです。左のロボットのアイコンを押してパネルを開いてから、その中の右上を見てください。
+      <span class="tag">There are two gear icons. This trips people up</span>
+      <strong>The gear in the extensions list.</strong> It opens Enable / Disable / Uninstall. <span class="mark">Not that one.</span><br><br>
+      <strong>The gear at the top right of the Cline panel.</strong> That is where the connection settings are. Open the panel from the robot icon first, then look at its top right.
     </div>
 
     <div class="note">
-      <span class="tag">この2か所を覚えてください</span>
-      <strong>右上の歯車</strong>　次の3.1.3で、接続の設定に使います。<br>
-      <strong>入力欄右下のPlan / Actボタン</strong>　3.1.6でPlanを選び、3.1.8でActへ切り替えます。<br><br>
-      <span class="mark">この2つが分かれば、あとは順に進むだけです。</span>
+      <span class="tag">Remember these two places</span>
+      <strong>The gear, top right.</strong> Used in 3.1.3 for the connection.<br>
+      <strong>The Plan / Act buttons, bottom right of the input box.</strong> You pick Plan in 3.1.6 and switch to Act in 3.1.8.<br><br>
+      <span class="mark">Know those two and the rest is just following steps.</span>
     </div>
 
-    <h3><span class="n">3.1.3</span>共有サーバへ接続する</h3>
+    <h3><span class="n">3.1.3</span>Connect to the shared server</h3>
 
     <div class="warn">
-      <span class="tag">この演習で使うのは 27B です</span>
-      <span class="mark">PART 2で使った <code>qwen3.5:4b</code> は使いません。</span>共有サーバの27Bモデルに接続します。4Bではツール呼び出しが安定せず、この演習は回りません。
+      <span class="tag">This exercise uses the 27B model</span>
+      <span class="mark">Not the <code>qwen3.5:4b</code> from Part 2.</span> You connect to the 27B model on the shared server.<br><br>An agent has to emit tool calls in a strict format, over and over, without drifting. <strong>A 4B model is not dependable enough at that for this exercise to finish.</strong>
     </div>
 
-    <h4>初回の画面を通り抜ける</h4>
+    <h4>Getting past the first screen</h4>
 
-    <p>Clineを初めて開くと、使い方を選ぶ画面が出ます。</p>
+    <p>The first time you open Cline, it asks how you intend to use it.</p>
 
     <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
-      <img src="img/cline-howuse.png" alt="How will you use Cline? の画面。Absolutely Free、ClinePass、Frontier Model、Bring my own API key の4択があり、Bring my own API key が選択されている" style="width:100%;max-width:340px;border-radius:8px;border:1px solid var(--line)">
+      <img src="../img/cline-howuse.png" alt="The How will you use Cline screen with four options, Bring my own API key selected" style="width:100%;max-width:340px;border-radius:8px;border:1px solid var(--line)">
       <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
-        <span style="color:var(--accent);font-weight:700">Bring my own API key</span> を選んで Continue
+        Choose <span style="color:var(--accent);font-weight:700">Bring my own API key</span> and press Continue
       </div>
     </div>
 
     <div class="warn">
-      <span class="tag">4番目を選びます</span>
-      <span class="mark">Absolutely Free、ClinePass、Frontier Model は選びません。</span>どれも外部のサービスに接続し、課金やアカウント作成が必要になります。下の <strong>Login to Cline</strong> も押しません。<br><br>
-      選ぶのは <strong>Bring my own API key</strong> です。
+      <span class="tag">Pick the fourth option</span>
+      <span class="mark">Not Absolutely Free, ClinePass or Frontier Model.</span> Each of those connects to an outside service and needs an account, and usually payment. Do not press <strong>Login to Cline</strong> either.<br><br>
+      Choose <strong>Bring my own API key</strong>.
     </div>
 
     <div class="note">
-      <span class="tag">この画面を終えるまで設定は開きません</span>
-      右上の <code>…</code> から Settings を選んでも反応しません。<span class="mark">先にこの画面を通り抜けてください。</span>
+      <span class="tag">Settings will not open until you clear this screen</span>
+      Choosing Settings from the <code>…</code> menu at the top right does nothing yet. <span class="mark">Get past this screen first.</span>
     </div>
 
     <div class="warn">
-      <span class="tag">「Absolutely Free」を選んでしまった場合</span>
-      無料モデルを選ぶ画面が出ます。<span class="mark">何も押さず、下の <strong>Back</strong> で戻ってください。</span>
+      <span class="tag">If you picked "Absolutely Free"</span>
+      You get a screen offering free models. <span class="mark">Press nothing. Use <strong>Back</strong> at the bottom.</span>
 
       <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px;margin-top:12px">
-        <img src="img/cline-select-model.png" alt="Select a free model の画面。無料モデルが並び、下部に Create my Account のボタンがある" style="width:100%;max-width:300px;border-radius:8px;border:1px solid var(--line)">
+        <img src="../img/cline-select-model.png" alt="The Select a free model screen with several free models and a Create my Account button" style="width:100%;max-width:300px;border-radius:8px;border:1px solid var(--line)">
       </div>
 
-      <strong>Create my Account は押しません。</strong>Clineのクラウドサービスのアカウント作成です。
+      <strong>Do not press Create my Account.</strong> That creates an account on Cline's cloud service.
     </div>
 
-    <h4>プロバイダを設定する</h4>
+    <h4>Set the provider</h4>
 
-    <p>Continueを押すと <strong>Configure your provider</strong> の画面になります。既定は <code>OpenRouter</code> です。</p>
+    <p>Pressing Continue takes you to <strong>Configure your provider</strong>. It defaults to <code>OpenRouter</code>.</p>
 
     <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
-      <img src="img/cline-provider.png" alt="Configure your provider の画面。API Provider が OpenRouter になっている" style="width:100%;max-width:340px;border-radius:8px;border:1px solid var(--line)">
+      <img src="../img/cline-provider.png" alt="Configure your provider screen with API Provider set to OpenRouter" style="width:100%;max-width:340px;border-radius:8px;border:1px solid var(--line)">
       <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
-        <span style="color:var(--accent);font-weight:700">先に API Provider を変えます</span>
+        <span style="color:var(--accent);font-weight:700">Change the API Provider first</span>
       </div>
     </div>
 
     <div class="warn">
-      <span class="tag">API Provider を変えるのが先です</span>
-      <span class="mark"><code>OpenAI Compatible</code> に変えてください。</span>変えると入力欄が切り替わり、<strong>Base URL</strong> の欄が出てきます。<br><br>
-      OpenRouterのままだと、Base URLを入れる場所がありません。Model の欄に <code>anthropic/claude-sonnet-5</code> などが入っていたら、消して入れ替えます。
+      <span class="tag">Change the provider before anything else</span>
+      <span class="mark">Set it to <code>OpenAI Compatible</code>.</span> The fields change, and a <strong>Base URL</strong> box appears.<br><br>
+      While it is still on OpenRouter there is nowhere to put the Base URL. If the Model field contains something like <code>anthropic/claude-sonnet-5</code>, clear it and replace it.
     </div>
 
-    <h4>5項目を入力する</h4>
+    <h4>Fill in five fields</h4>
 
     <table>
-      <thead><tr><th>項目</th><th>入力内容</th></tr></thead>
+      <thead><tr><th>Field</th><th>Value</th></tr></thead>
       <tbody>
         <tr><td>API Provider</td><td><code>OpenAI Compatible</code></td></tr>
-        <tr><td>Base URL</td><td>下の表のURL。<strong>末尾の <code>/v1</code> まで</strong></td></tr>
-        <tr><td>OpenAI Compatible API Key</td><td><code>ollama</code>（何でもよい）</td></tr>
-        <tr><td>Model ID</td><td>自分のサーバに対応するもの（下の表。サーバの番号とモデルの番号は同じ）</td></tr>
-        <tr><td>Custom Headers</td><td>2つ追加（下記）</td></tr>
+        <tr><td>Base URL</td><td>From the table below. <strong>Including the trailing <code>/v1</code></strong></td></tr>
+        <tr><td>OpenAI Compatible API Key</td><td><code>ollama</code> (anything works)</td></tr>
+        <tr><td>Model ID</td><td>The one that matches your server (table below; server number and model number are the same)</td></tr>
+        <tr><td>Custom Headers</td><td>Two of them, below</td></tr>
       </tbody>
     </table>
 
     <div class="warn">
-      <span class="tag">Base URL の <code>/v1</code> を忘れないこと</span>
-      <span class="mark">ここが、いちばん多い失敗です。</span><code>https://pc11.okuharalab.com</code> だけでは動きません。<br><br>
-      <code>https://pc11.okuharalab.com<strong>/v1</strong></code> と、末尾まで入れてください。<br><br>
-      忘れると <code>Response stream ended without a finish reason</code> というエラーが出ます。<strong>このエラーを見たら、まず <code>/v1</code> を疑ってください。</strong>
+      <span class="tag">Do not forget the <code>/v1</code></span>
+      <span class="mark">This is the single most common mistake here.</span> <code>https://pc11.okuharalab.com</code> on its own does not work.<br><br>
+      It has to be <code>https://pc11.okuharalab.com<strong>/v1</strong></code>.<br><br>
+      Without it you get <code>Response stream ended without a finish reason</code>. <strong>When you see that error, check the <code>/v1</code> first.</strong>
     </div>
 
     <div class="note">
-      <span class="tag">API Key は何でも構いません</span>
-      接続先のOllamaは、この値を見ません。<span class="mark">空欄だと先へ進めないことがあるので、<code>ollama</code> と入れておきます。</span><br><br>
-      本当の認証は、次のCustom Headersで行います。
+      <span class="tag">The API key can be anything</span>
+      The Ollama server at the other end never looks at it. <span class="mark">Some versions will not let you continue with an empty field, so put <code>ollama</code> in it.</span><br><br>
+      The real authentication happens in the custom headers below.
     </div>
 
-    <h4>Custom Headers を2つ追加する</h4>
+    <h4>Add two custom headers</h4>
 
-    <p><strong>Add Header</strong> を押して、2行追加します。</p>
+    <p>Press <strong>Add Header</strong> twice.</p>
 
     <table>
-      <thead><tr><th>ヘッダ名</th><th>値</th></tr></thead>
+      <thead><tr><th>Header name</th><th>Value</th></tr></thead>
       <tbody>
-        <tr><td><code>CF-Access-Client-Id</code></td><td>講師が配布したClient ID</td></tr>
-        <tr><td><code>CF-Access-Client-Secret</code></td><td>講師が配布したClient Secret</td></tr>
+        <tr><td><code>CF-Access-Client-Id</code></td><td>The Client ID your instructor gives you</td></tr>
+        <tr><td><code>CF-Access-Client-Secret</code></td><td>The Client Secret your instructor gives you</td></tr>
       </tbody>
     </table>
 
     <div class="warn">
-      <span class="tag">ヘッダ名は全選択してから打つこと</span>
-      <code>Add Header</code> を押すと、名前の欄に <code>header</code> などの文字が入っています。<span class="mark">上書きせずに打つと <code>heaCF-Access-Client-Id</code> のように壊れます。</span><br><br>
-      欄をクリックして <code>Ctrl</code> + <code>A</code> で全選択してから、打ち直してください。<strong>画面では途中までしか見えないので、壊れていても気づきません。</strong>
+      <span class="tag">Select the whole field before typing the header name</span>
+      <strong>Add Header</strong> leaves placeholder text such as <code>header</code> in the name box. <span class="mark">Type over it without selecting and you get <code>heaCF-Access-Client-Id</code>.</span><br><br>
+      Click the box, press <code>Ctrl</code> + <code>A</code>, then type. <strong>The box only shows part of the text, so a broken name is invisible.</strong>
     </div>
 
     <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
-      <img src="img/cline-settings-done.png" alt="Clineの設定画面。API Provider が OpenAI Compatible、Base URL、Model ID、Custom Headers に CF-Access-Client-Id と CF-Access-Client-Secret が入っている" style="width:100%;max-width:660px;border-radius:8px;border:1px solid var(--line)">
+      <img src="../img/cline-settings-done.png" alt="Cline settings with OpenAI Compatible, a Base URL, a Model ID and two custom headers" style="width:100%;max-width:660px;border-radius:8px;border:1px solid var(--line)">
       <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
-        入力を終えた状態。<span style="color:var(--accent);font-weight:700">この形になっていれば正解です</span>
+        Finished. <span style="color:var(--accent);font-weight:700">This is what it should look like</span>
       </div>
     </div>
 
-    <h4>使うサーバを確認する</h4>
+    <h4>Which server to use</h4>
 
-    <p>サーバは5台あります。<span class="mark">学籍番号の末尾の数字で、使うサーバが決まります。</span></p>
+    <p>There are five servers. <span class="mark">The last digit of your student number decides which one you use.</span></p>
 
     <table>
-      <thead><tr><th>学籍番号の末尾</th><th>Base URL</th><th>Model ID</th></tr></thead>
+      <thead><tr><th>Last digit</th><th>Base URL</th><th>Model ID</th></tr></thead>
       <tbody>
         <tr><td><strong>0, 1</strong></td><td><code>https://pc11.okuharalab.com/v1</code></td><td><code>qwen38_1:latest</code></td></tr>
         <tr><td><strong>2, 3</strong></td><td><code>https://pc21.okuharalab.com/v1</code></td><td><code>qwen38_2:latest</code></td></tr>
@@ -416,116 +415,122 @@ th{background:var(--accent-soft);font-weight:700}
     </table>
 
         <div class="warn">
-      <span class="tag">サーバとモデルの番号は連動しています</span>
-      pc11 には <code>qwen38_1</code>、pc21 には <code>qwen38_2</code>、という具合に、<span class="mark">Base URL の1桁目と Model ID の末尾の数字が同じ</span>です。<br><br>
-      組み合わせを間違えると <code>model 'qwen38_1:latest' not found</code> と出ます。<strong>そのエラーを見たら、まず Base URL と Model ID の番号を見比べてください。</strong>
+      <span class="tag">Server and model numbers go together</span>
+      pc11 serves <code>qwen38_1</code>, pc21 serves <code>qwen38_2</code>, and so on: <span class="mark">the first digit of the Base URL and the last digit of the Model ID are the same.</span><br><br>
+      Mix them up and you get <code>model 'qwen38_1:latest' not found</code>. <strong>When you see that error, compare the two numbers first.</strong>
     </div>
 
-    <p>1台に集中すると、全員の応答が遅くなります。<strong>自分の番号のサーバを使ってください。</strong></p>
+    <p>If everyone piles onto one server, everyone waits. <strong>Use the one for your number.</strong></p>
 
     <div class="note">
-      <span class="tag">値は授業開始時に配布します</span>
-      Client ID と Client Secret。<span class="mark">この2つは教材に書かれていません。</span>授業で配布されたものを使ってください。他の場所へ貼ったり共有したりしないでください。
+      <span class="tag">The values are handed out in class</span>
+      Client ID and Client Secret. <span class="mark">Neither is printed here.</span> Use what you are given, and do not paste them anywhere else.
     </div>
 
-    <h3><span class="n">3.1.4</span>接続を確認する</h3>
+    <h3><span class="n">3.1.4</span>Test the connection</h3>
 
-    <p>設定を保存したら、Clineのチャット画面を見てください。<span class="mark">選択中のモデル名が、講師の指定したものになっているか目で確かめます。</span></p>
+    <p>After saving, look at the Cline chat screen. <span class="mark">Check by eye that the selected model is the one your instructor specified.</span></p>
 
-    <p>そのうえで、Chatモードで送ります。</p>
+    <p>Then send this in Chat mode.</p>
 
     <div class="prompt"><span class="tag">PROMPT</span>Reply only with: Connection successful</div>
 
-    <p>返事が来れば接続できています。<strong>ここで返事が来ないまま先へ進まないでください。</strong></p>
+    <p>A reply means you are connected. <strong>Do not move on without one.</strong></p>
 
-    <h4>つながらないとき</h4>
-
-    <p>エラーの種類で、見るところが変わります。</p>
+    <h4>When it does not connect</h4>
 
     <table>
-      <thead><tr><th>症状</th><th>疑うところ</th></tr></thead>
+      <thead><tr><th>Symptom</th><th>Where to look</th></tr></thead>
       <tbody>
         <tr>
           <td><code>Response stream ended without a finish reason</code></td>
-          <td><strong>Base URL の <code>/v1</code> 抜け。</strong>または Custom Headers の名前が壊れている</td>
+          <td><strong>A missing <code>/v1</code> on the Base URL.</strong> Or a broken custom header name</td>
         </tr>
         <tr>
-          <td>認証エラー、302、ログイン画面が返る</td>
-          <td>Custom Headers の値。全選択してから打ち直したか</td>
+          <td>An auth error, a 302, or a login page comes back</td>
+          <td>The header values. Did you select all before typing?</td>
         </tr>
         <tr>
-          <td>モデルが見つからない</td>
-          <td>Base URL のサーバ番号と Model ID の末尾の番号が同じか（pc11 なら qwen38_1）</td>
+          <td>Model not found</td>
+          <td>Whether the server number in the Base URL matches the number at the end of the Model ID (pc11 goes with qwen38_1)</td>
         </tr>
         <tr>
-          <td>何も起きない、反応しない</td>
-          <td>初回の設定画面が終わっていない。3.1.3の最初へ戻る</td>
+          <td>Nothing happens at all</td>
+          <td>The first-run screen is not finished. Go back to the start of 3.1.3</td>
         </tr>
       </tbody>
     </table>
 
     <div class="note">
-      <span class="tag">サーバが悪いのか、設定が悪いのか</span>
-      切り分けの手順が<a href="appendix-a.html">付録A</a>のA.11にあります。<span class="mark">ターミナルから直接サーバを叩いて、どこまで通るかを確かめられます。</span><br><br>
-      サーバ側が正常だと分かれば、あとはClineの設定だけです。講師を呼ぶ前に、自分で判断できます。
+      <span class="tag">Is it the server or your settings?</span>
+      A way to tell them apart is in <a href="appendix-a.html">Appendix A</a>, A.11. <span class="mark">You call the server directly from a terminal and see how far you get.</span><br><br>
+      Once you know the server is fine, the problem is in Cline. You can work that out before calling the instructor over.
     </div>
 
-    <h3><span class="n">3.1.5</span>承認の範囲を決める</h3>
+    <h3><span class="n">3.1.5</span>Decide what gets approved</h3>
 
-    <p>チャット入力欄の上に <strong>Auto-approve</strong> の折りたたみがあります。開くと5つのチェックボックスが出ます。</p>
+    <p>Above the chat input there is an <strong>Auto-approve</strong> section. Open it and you get five checkboxes.</p>
 
     <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
-      <img src="img/cline-autoapprove.png" alt="ClineのAuto-approve設定。Read files、Edit files、Execute commands、Fetch web content、Use MCP servers の5つのチェックボックスがある" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
+      <img src="../img/cline-autoapprove.png" alt="Cline Auto-approve settings with Read files, Edit files, Execute commands, Fetch web content and Use MCP servers" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
       <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
-        チェックを入れた操作は、<span style="color:var(--accent);font-weight:700">確認なしで実行されます</span>
+        Anything ticked here <span style="color:var(--accent);font-weight:700">runs without asking you</span>
       </div>
     </div>
 
-    <h4>この演習での設定</h4>
+    <h4>Settings for this exercise</h4>
 
     <table>
-      <thead><tr><th>項目</th><th>設定</th><th>理由</th></tr></thead>
+      <thead><tr><th>Item</th><th>Setting</th><th>Why</th></tr></thead>
       <tbody>
-        <tr><td><code>Read files</code></td><td><strong>ON</strong></td><td>読むだけなら壊れない</td></tr>
-        <tr><td><code>Edit files</code></td><td><strong>OFF</strong></td><td><span class="mark">何が書かれるかを見るため</span></td></tr>
-        <tr><td><code>Execute commands</code></td><td><strong>OFF</strong></td><td><span class="mark">何が走るかを見るため</span></td></tr>
-        <tr><td><code>Fetch web content</code></td><td><strong>OFF</strong></td><td>この演習では使わない</td></tr>
-        <tr><td><code>Use MCP servers</code></td><td><strong>OFF</strong></td><td>PART 7で扱う</td></tr>
+        <tr><td><code>Read files</code></td><td><strong>ON</strong></td><td>Reading breaks nothing</td></tr>
+        <tr><td><code>Edit files</code></td><td><strong>OFF</strong></td><td><span class="mark">So you see what gets written</span></td></tr>
+        <tr><td><code>Execute commands</code></td><td><strong>OFF</strong></td><td><span class="mark">So you see what gets run</span></td></tr>
+        <tr><td><code>Fetch web content</code></td><td><strong>OFF</strong></td><td>Not used in this exercise</td></tr>
+        <tr><td><code>Use MCP servers</code></td><td><strong>OFF</strong></td><td>Covered in Part 7</td></tr>
       </tbody>
     </table>
 
     <div class="warn">
-      <span class="tag">既定のままにしないこと</span>
-      入れた直後は <code>Read, Edit, Web Fetch, MCP</code> がONになっています。<span class="mark">この状態では、ファイルの書き換えが確認なしで進みます。</span><br><br>
-      <strong>ONのままにしてよいのは <code>Read files</code> だけです。</strong>残り4つのチェックを外してください。
+      <span class="tag">Do not leave the defaults</span>
+      Straight after installing, <code>Read, Edit, Web Fetch, MCP</code> are all on. <span class="mark">In that state, files get rewritten without asking you.</span><br><br>
+      <strong>The only one that should stay on is <code>Read files</code>.</strong> Untick the other four.
     </div>
 
-    <h3><span class="n">3.1.6</span>Planモードにしてから課題を送る</h3>
+    <h3><span class="n">3.1.6</span>Switch to Plan, then send the task</h3>
 
     <div class="warn">
-      <span class="tag">送る前にモードを変えます</span>
-      Clineの入力欄の<strong>右下</strong>に <strong>Plan / Act</strong> の切り替えボタンがあります。<span class="mark">先に左側の <strong>Plan</strong> を押してください。</span>Actが青く選択されたまま送ると、計画を見る前に実装が始まります。
+      <span class="tag">Change the mode before you send</span>
+      The <strong>Plan / Act</strong> toggle sits at the <span class="mark">bottom right of the Cline input box.</span> Press <strong>Plan</strong>, on the left, first.<br><br>
+      Send while Act is still highlighted and implementation starts before you have seen a plan.
     </div>
 
-    <h4>Planモードへの切り替え方</h4>
+    <h4>How to switch to Plan</h4>
 
     <ol>
-      <li>VS Code左側の<strong>Clineアイコン</strong>を押し、Clineのチャット画面を開く</li>
-      <li>画面下部のメッセージ入力欄を見る</li>
-      <li>入力欄の右下に並んでいる <strong>Plan</strong> と <strong>Act</strong> を見つける</li>
-      <li>左側の<strong>Plan</strong>を1回押す</li>
-      <li><strong>Plan側に色が付き、Act側の色が消えたこと</strong>を確認する</li>
+      <li>Press the <strong>Cline icon</strong> on the left to open the chat</li>
+      <li>Look at the message input box at the bottom</li>
+      <li>Find <strong>Plan</strong> and <strong>Act</strong> at its bottom right</li>
+      <li>Press <strong>Plan</strong> once</li>
+      <li>Check that <strong>Plan is highlighted and Act is not</strong></li>
     </ol>
 
-    <div class="note">
-      <span class="tag">Planモードでは何をさせるのか</span>
-      Planモードは、実装前に<strong>何を作るか、どのファイルを作るか、何を実行して確かめるか</strong>を相談するために使います。<span class="mark">この段階では、ファイルを作らせることが目的ではありません。</span><br><br>
-      Clineがフォルダの中を読んだり、質問を返したりすることはあります。これは計画に必要な情報を集めている動作です。
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
+      <img src="../img/cline-plan-act.png" alt="The Cline input area with Auto-approve set to Read only, and the Plan and Act buttons at the bottom right" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
+        <strong>Plan / Act</strong> at the bottom right. Auto-approve reads <span style="color:var(--accent);font-weight:700">Read</span> only
+      </div>
     </div>
 
-    <h4>作るもの</h4>
+    <div class="note">
+      <span class="tag">What Plan mode is for</span>
+      Plan mode is for agreeing, before anything is built, on <span class="mark">what to make, which files to create, and how you will check it.</span><br><br>
+      The goal at this stage is not to get files created. Cline may read the folder or ask you questions. That is it gathering what it needs for the plan.
+    </div>
 
-    <p>1画面だけの投稿フォームです。<strong>AIチャットではありません。</strong></p>
+    <h4>What you are building</h4>
+
+    <p>A one-page posting form. <strong>Not an AI chat.</strong></p>
 
 <pre><code>User name: [ Asha              ]
 Status:    [ Present         v ]
@@ -536,7 +541,7 @@ Messages
 Asha — Present
 Hello everyone!</code></pre>
 
-    <h4>送るプロンプト</h4>
+    <h4>The prompt to send</h4>
 
     <div class="prompt"><span class="tag">PROMPT</span>Create a simple one-page message board in one file named index.html.
 
@@ -564,147 +569,145 @@ Do not use:
 
 The workspace is empty. Do not inspect it.
 Keep the plan under 10 lines.
-Do not create or edit files yet.
-Show the plan only.</div>
+Do not create or edit files yet. Show the plan only.</div>
 
-    <p>この章では、Coding Agentの基本操作に集中するため、<span class="mark"><code>index.html</code>だけを作ります。</span>PythonとFlaskを使うWebアプリは、次の独立課題で扱います。</p>
+    <p>This part builds <code>index.html</code> only, so that you can concentrate on operating a coding agent. <span class="mark">A Python and Flask web app comes in a later part.</span></p>
 
-    <p>禁止事項が重要です。書かないとAgentは親切にサーバ、データベース、リアルタイム通信、複数ファイルを追加し、演習が長くなります。</p>
+    <p>The list of exclusions matters. Without it, the agent tends to be helpful and add a server, a database, real-time messaging and several files. <span class="mark">Every one of those is another thing that can break in front of you.</span></p>
 
-    <h4>計画を読む</h4>
+    <h4>Read the plan</h4>
 
-    <p>プロンプトを送ると、Clineが内容を整理して実装計画を返します。<strong>ここではまだActへ切り替えず、一度止めて計画を読んでください。</strong></p>
+    <p>Cline replies with an implementation plan. <span class="mark">Do not switch to Act yet. Stop and read it.</span></p>
 
     <ul>
-      <li>作るファイルが <code>index.html</code> の1つだけか</li>
-      <li>HTML、CSS、JavaScriptをその1ファイルに入れる計画か</li>
-      <li>メッセージをJavaScriptの配列だけに保存するか</li>
-      <li>ユーザー入力の表示に <code>textContent</code> を使うか</li>
-      <li>Python、Node.js、外部ライブラリなどが入っていないか</li>
+      <li>Is <code>index.html</code> the only file it will create?</li>
+      <li>Does it put the HTML, CSS and JavaScript in that one file?</li>
+      <li>Does it keep messages only in a JavaScript array?</li>
+      <li>Does it use <code>textContent</code> for user input?</li>
+      <li>Has anything crept in: Python, Node.js, an external library?</li>
     </ul>
 
-    <p>計画に余計なものが入っている、または必要な確認が抜けている場合は、<strong>Planモードのまま</strong>修正を頼みます。</p>
+    <p>If something extra appeared, or a needed check is missing, ask for a fix <strong>while still in Plan mode.</strong></p>
 
-    <div class="prompt"><span class="tag">計画を直すときの例</span>Revise the plan to follow the requirements exactly.
+    <div class="prompt"><span class="tag">PROMPT</span>Revise the plan to follow the requirements exactly.
 Use only one file: index.html.
 Do not add any unrequested features.
 Show the revised plan only.</div>
 
-    <p><span class="mark">すぐにActへ移らず、修正後の計画をもう一度読みます。</span>計画に納得できるまで、このやり取りを繰り返してください。</p>
+    <p>Read the revised plan before moving on. <span class="mark">Repeat until you are satisfied with it.</span></p>
 
     <div class="note">
-      <span class="tag">Plan完了の判断</span>
-      次の4点を自分の言葉で答えられたらPlanは完了です。<strong>①何を作るか、②作るファイルは何か、③データをどこに置くか、④何をもって完成と判断するか。</strong>
+      <span class="tag">When the plan is done</span>
+      The plan is finished when you can answer these four in your own words.<br><br>
+      <strong>1.</strong> What are we building? <strong>2.</strong> Which files? <strong>3.</strong> Where does the data live? <strong>4.</strong> What will make it finished?
     </div>
 
-    <h4>Planモードで実際に起こりやすい失敗</h4>
+    <h4>Two things that go wrong in Plan mode</h4>
 
-    <p>Planモードにしただけで、必ず正しい計画が出るわけではありません。次の2つは、今回の演習でも起こりやすい失敗です。</p>
+    <p>Switching to Plan does not guarantee a good plan. <span class="mark">Both of these are common in this exercise.</span></p>
 
     <div class="warn">
-      <span class="tag">失敗1　同じフォルダ確認を繰り返す</span>
-      Clineが <code>Get-ChildItem</code> などの一覧取得コマンドを、書き方を変えながら何度も提案することがあります。作業フォルダが空だと既に分かっており、新しい情報が得られないなら、<strong>回数ではなく目的の重複を理由にRejectし、人間が停止条件を伝えます。</strong>
+      <span class="tag">Failure 1: it keeps checking the folder</span>
+      Cline may propose <code>Get-ChildItem</code> and similar listing commands over and over, each time worded slightly differently. <span class="mark">If it already knows the folder is empty, another listing tells it nothing new.</span><br><br>
+      Reject it because the purpose is duplicated, not because of the number of attempts, and tell it to stop.
     </div>
 
-    <div class="prompt"><span class="tag">調査を止める指示</span>The workspace is empty, and directory inspection is complete.
+    <div class="prompt"><span class="tag">PROMPT</span>The workspace is empty, and directory inspection is complete.
 Do not run any more directory-listing commands.
-Now show the implementation plan only. Do not create or edit files yet.</div>
-
-    <p>日本語で伝える場合は、次を送ります。</p>
-
-    <div class="prompt"><span class="tag">調査を止める指示（日本語）</span>作業フォルダは空で、フォルダの確認は完了しています。
-これ以上、一覧取得コマンドを実行しないでください。
-まだファイルを作成・編集せず、実装計画だけを示してください。</div>
+Now show the implementation plan only.
+Do not create or edit files yet.</div>
 
     <div class="warn">
-      <span class="tag">失敗2　1ファイルの依頼を大きなシステムへ変える</span>
-      <code>index.html</code>だけと指定しても、Clineが <code>package.json</code>、<code>server.js</code>、Express、React、WebSocket、Pythonサーバなどを含む計画を出すことがあります。<span class="mark">もっともらしく詳しい計画でも、依頼に従っているとは限りません。</span><br><br>
-      この場合はActへ進まず、Planモードのまま計画を小さく戻します。
+      <span class="tag">Failure 2: one file turns into a system</span>
+      Even when you specify <code>index.html</code> only, Cline may come back with a plan involving <code>package.json</code>, <code>server.js</code>, Express, React, WebSocket or a Python server.<br><br>
+      <span class="mark">A detailed, convincing plan is not necessarily a plan that follows your request.</span> Do not move to Act. Shrink it back while still in Plan mode.
     </div>
 
-    <div class="prompt"><span class="tag">技術構成を直す指示</span>This plan does not follow the requirements.
-
+    <div class="prompt"><span class="tag">PROMPT</span>This plan does not follow the requirements.
 Use only one file: index.html.
 Put the HTML, CSS, and JavaScript in that file.
 Store messages only in a JavaScript array.
-Do not use Python, Node.js, Express, React, Vite, WebSocket, fetch, polling, a database, or external libraries.
-
+Do not use Python, Node.js, Express, React, Vite, WebSocket,
+fetch, polling, a database, or external libraries.
 Keep the revised plan under 10 lines.
 Do not create or edit files yet. Show the revised plan only.</div>
 
     <div class="note">
-      <span class="tag">ここがPlanモードを使う理由です</span>
-      誤った計画をActモードで実行すると、不要なファイルやパッケージが作られます。Planモードなら、<strong>ファイルを変更する前に、人間が逸脱を発見して修正できます。</strong>
+      <span class="tag">This is why Plan mode exists</span>
+      Run a bad plan in Act mode and you get files and packages you did not want. In Plan mode, <span class="mark">a human can spot the drift and correct it before a single file changes.</span>
     </div>
 
-    <h3><span class="n">3.1.7</span>Actを押す前に、承認方法を確認する</h3>
+    <h3><span class="n">3.1.7</span>Before pressing Act, decide how you will approve</h3>
 
-    <p>次の3.1.8でActを押すと、すぐに実装が始まります。<strong>先にこの節を最後まで読み、どの操作を許可し、どの操作を拒否するか確認してください。</strong></p>
+    <p>Pressing Act in 3.1.8 starts the implementation immediately. <span class="mark">Read this section to the end first,</span> and decide which operations you will allow and which you will refuse.</p>
 
-    <p>3.1.5で <code>Edit files</code> と <code>Execute commands</code> をOFFにしました。そのため、Act開始後はAgentが操作の許可を求めてきます。</p>
+    <p>You turned <code>Edit files</code> and <code>Execute commands</code> off in 3.1.5. That means the agent has to ask you each time.</p>
 
-    <h4>判断の基準</h4>
+    <h4>What to decide</h4>
 
     <table>
-      <thead><tr><th>Clineが求めてくるもの</th><th>どうするか</th></tr></thead>
+      <thead><tr><th>What Cline asks for</th><th>What to do</th></tr></thead>
       <tbody>
-        <tr><td><code>index.html</code>の新規作成</td><td>右側の差分を確認して<strong>Save</strong></td></tr>
-        <tr><td><code>index.html</code>への必要な追記</td><td>差分を見てから<strong>Save</strong></td></tr>
-        <tr><td>別ファイルの作成</td><td><strong>Reject</strong></td></tr>
-        <tr><td>フォルダやファイルの一覧表示</td><td>空だと伝えてあるため<strong>Reject</strong></td></tr>
-        <tr><td><code>pip install</code> / <code>npm install</code></td><td>この演習では不要なので<strong>Reject</strong></td></tr>
-        <tr><td>ファイルの削除</td><td><strong>Reject</strong></td></tr>
-        <tr><td>成果物や情報を外部へ送信する操作</td><td><strong>Reject</strong></td></tr>
+        <tr><td>Creating <code>index.html</code></td><td>Read the diff on the right, then <strong>Save</strong></td></tr>
+        <tr><td>A needed addition to <code>index.html</code></td><td>Read the diff, then <strong>Save</strong></td></tr>
+        <tr><td>Creating another file</td><td><strong>Reject</strong></td></tr>
+        <tr><td>Listing files or folders</td><td><strong>Reject.</strong> You already told it the folder is empty</td></tr>
+        <tr><td><code>pip install</code> / <code>npm install</code></td><td><strong>Reject.</strong> Not needed here</td></tr>
+        <tr><td>Deleting a file</td><td><strong>Reject</strong></td></tr>
+        <tr><td>Sending anything outside</td><td><strong>Reject</strong></td></tr>
       </tbody>
     </table>
 
-    <div class="warn">
-      <span class="tag">ボタン名は操作によって変わります</span>
-      ファイルの作成・編集は<strong>Save</strong>、コマンドは<strong>Run Command</strong>、拒否は<strong>Reject</strong>と表示されます。すべてを機械的に許可せず、<span class="mark">何を、どこに対して行う操作なのか</span>を先に確認してください。
-    </div>
-
     <div class="note">
-      <span class="tag">この演習に実行コマンドは不要です</span>
-      <code>index.html</code>はブラウザで直接開きます。<code>Get-ChildItem</code>は一覧表示であり、アプリを動かすコマンドではありません。<code>pip install</code>、<code>npm install</code>、サーバ起動も必要ありません。Clineがコマンドを提案したら、目的を確認し、この演習に不要ならRejectします。
+      <span class="tag">The button names change</span>
+      File creation and edits show <strong>Save</strong>. Commands show <strong>Run Command</strong>. Refusing is always <strong>Reject</strong>.<br><br>
+      Do not approve mechanically. <span class="mark">Check what the operation is, and what it is being done to.</span>
     </div>
-
-    <h3><span class="n">3.1.8</span>Actモードへ切り替え、1件ずつ承認する</h3>
-
-    <p>計画と承認方法を確認したら、入力欄の右下にある<strong>Act</strong>を1回押します。<span class="mark">切り替えた瞬間に、Planモードで作った計画を引き継いで実装が始まります。</span></p>
 
     <div class="warn">
-      <span class="tag">Actを押す前が最後の確認です</span>
-      Actへ切り替えた後に、改めて「実装を開始してください」と送る必要はありません。<strong>Actを押す操作そのものが、計画を実行させる合図です。</strong><br><br>
-      計画に間違いが残っている場合は、Actを押さず、Planモードのまま修正させてください。
+      <span class="tag">No commands are needed in this exercise</span>
+      You open <code>index.html</code> directly in a browser. <code>Get-ChildItem</code> lists files; it does not run the app. <span class="mark">No <code>pip install</code>, no <code>npm install</code>, no server.</span><br><br>
+      If Cline proposes a command, ask what it is for. If this exercise does not need it, Reject.
     </div>
 
-    <p>画面から目を離さず、Clineが求める操作を1件ずつ確認します。<span class="mark">上の表を基準に、必要な操作だけを許可してください。</span>3.5で説明するAgentのループが、そのまま画面に流れます。</p>
+    <h3><span class="n">3.1.8</span>Switch to Act and approve one at a time</h3>
+
+    <p>Once the plan and your approval policy are settled, press <strong>Act</strong> at the bottom right. <span class="mark">The moment you switch, it carries the plan over and starts building.</span></p>
+
+    <div class="warn">
+      <span class="tag">Pressing Act is your last checkpoint</span>
+      You do not need to send "please start" after switching. <strong>Pressing Act is the signal.</strong><br><br>
+      If anything in the plan is still wrong, do not press it. Fix the plan in Plan mode first.
+    </div>
+
+    <p>Watch the screen and approve each request in turn, using the table above. <span class="mark">The agent loop described in 3.5 plays out in front of you.</span></p>
 
     <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
-      <img src="img/cline-create-index.png" alt="Clineがindex.htmlの新規作成についてSaveまたはRejectを求めている画面" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
+      <img src="../img/cline-create-index.png" alt="Cline asking to create index.html, with the diff on the right and Save and Reject buttons" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
       <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
-        対象が <code>index.html</code> だけで、差分が計画どおりなら<strong>Save</strong>
+        Target is <code>index.html</code> and the diff matches the plan. <strong>Read it, then Save</strong>
       </div>
     </div>
 
     <div class="note">
-      <span class="tag">1ファイルでも複数回のSaveが出ることがあります</span>
-      長いファイルでは、Clineが最初にHTMLとCSSを作り、次にJavaScriptを追記することがあります。<strong>回数だけでRejectしません。</strong>毎回差分を開き、まだない必要な部分を追加しているならSave、同じ内容の重複や計画外の変更ならRejectします。
+      <span class="tag">One file can still mean several Saves</span>
+      For a long file, Cline may write the HTML and CSS first and append the JavaScript afterwards. <span class="mark">Do not reject on count alone.</span><br><br>
+      Open each diff. Save if it adds a necessary part that is not there yet. Reject a duplicate, or a change that is not in the plan.
     </div>
 
     <div class="warn">
-      <span class="tag">見た目が完成していても、ボタンが動くとは限りません</span>
-      JavaScriptの追記をRejectすると、画面はきれいに表示されてもSendが動きません。ブラウザで試して動かなければ、Clineへ次の指示を送り、欠けているJavaScriptだけを追加させます。
+      <span class="tag">Looking finished is not the same as working</span>
+      Reject the JavaScript append and the page will render beautifully while Send does nothing. Try it in the browser, and if it does not work, ask Cline to add only the missing JavaScript.
     </div>
 
     <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
-      <img src="img/cline-vibe-chat-before-fix.png" alt="Vibe Chatの画面は表示されているが、Sendを押してもMessagesが0のままの未完成例" style="width:100%;max-width:620px;border-radius:8px;border:1px solid var(--line)">
+      <img src="../img/cline-vibe-chat-before-fix.png" alt="The Vibe Chat page rendered with a form and Messages showing 0" style="width:100%;max-width:520px;border-radius:8px;border:1px solid var(--line)">
       <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
-        画面が表示されたことと、機能が動くことは別
+        <span style="color:var(--accent);font-weight:700">A page appearing and a feature working are different things</span>
       </div>
     </div>
 
-    <div class="prompt"><span class="tag">Sendが動かない場合</span>The Send button does not work because the JavaScript is missing.
+    <div class="prompt"><span class="tag">PROMPT</span>The Send button does not work because the JavaScript is missing.
 
 Edit index.html only.
 Add only the missing JavaScript immediately before &lt;/body&gt;.
@@ -722,298 +725,295 @@ Requirements:
 - Do not create another file</div>
 
     <div class="note">
-      <span class="tag">画面右上の $0.0000 と 6.1k / 128.0k</span>
-      <code>$0.0000</code> はClineが表示している利用料金です。今回の共有Qwenサーバでは0ドルと表示されます。<code>6.1k / 128.0k</code> は料金ではなく、会話履歴として使っているトークン量です。<br><br>
-      会話が長くなるほど応答が遅くなり、古い指示を見失いやすくなります。<span class="mark">同じ確認を繰り返し始めたら、人間が止めて次の作業を明示します。</span>
+      <span class="tag">The <code>$0.0000</code> and <code>6.1k / 128.0k</code> at the top right</span>
+      <code>$0.0000</code> is the cost Cline is reporting. On the shared Qwen server it stays at zero.<br><br>
+      <code>6.1k / 128.0k</code> is not money. <span class="mark">It is how much of the context window the conversation is using.</span> The longer it gets, the slower the replies and the more easily older instructions are lost. If it starts repeating the same checks, stop it and say what to do next.
     </div>
 
-    <h4>通信が途中で切れたら</h4>
+    <h4>If the connection drops</h4>
 
     <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
-      <img src="img/cline-socket-error.png" alt="ClineでUND_ERR_SOCKETが発生し、RetryとStart New Taskが表示された画面" style="width:100%;max-width:760px;border-radius:8px;border:1px solid var(--line)">
+      <img src="../img/cline-socket-error.png" alt="A SocketError message with Retry and Start New Task buttons" style="width:100%;max-width:700px;border-radius:8px;border:1px solid var(--line)">
       <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
-        通信切断後は、<strong>Retry</strong>と<strong>Start New Task</strong>のどちらかを選ぶ
+        After a dropped connection, choose <strong>Retry</strong> or <strong>Start New Task</strong>
       </div>
     </div>
 
 <pre><code>terminated: SocketError: other side closed (UND_ERR_SOCKET)</code></pre>
 
-    <p>これは作成中のアプリのエラーではありません。<strong>ClineとLLMサーバの通信が途中で切れた</strong>という意味です。共有サーバの混雑、応答時間の超過、長すぎる出力などで発生します。</p>
+    <p>This is not an error in the app you are building. <span class="mark">It means the connection between Cline and the model server was cut.</span> A busy shared server, a long response or a very large output can all cause it.</p>
 
     <table>
-      <thead><tr><th>状況</th><th>選ぶもの</th></tr></thead>
+      <thead><tr><th>Situation</th><th>Choose</th></tr></thead>
       <tbody>
-        <tr><td>計画が正しく、通信だけが一時的に切れた</td><td><strong>Retry</strong></td></tr>
-        <tr><td>誤った計画、長い思考、同じ確認の繰り返しが履歴に残っている</td><td><strong>Start New Task</strong></td></tr>
-        <tr><td>どこまでファイルを作ったか分からない</td><td><strong>Start New Task</strong>後、<code>index.html</code>だけを確認させる</td></tr>
+        <tr><td>The plan was fine and the connection simply dropped</td><td><strong>Retry</strong></td></tr>
+        <tr><td>A bad plan, long reasoning or repeated checks are in the history</td><td><strong>Start New Task</strong></td></tr>
+        <tr><td>You do not know which files were created</td><td><strong>Start New Task</strong>, then have it look at <code>index.html</code> only</td></tr>
       </tbody>
     </table>
 
     <div class="warn">
-      <span class="tag">今回の例ではStart New Task</span>
-      大きすぎる誤った計画、複数回のフォルダ確認、長い修正履歴が残っている場合、Retryすると同じ履歴を使って再開します。再び切断したり、古い誤案へ戻ったりする可能性があるため、<strong>上部の＋またはStart New Taskで新しいタスクを開始します。</strong>
-    </div>
-
-    <div class="prompt"><span class="tag">新しいタスクで最初に送る指示</span>Create a simple one-page message board in one file named index.html.
-
-Use HTML, CSS, and vanilla JavaScript in that one file.
-Use a JavaScript array for messages and textContent for user input.
-Do not use Python, Node.js, React, fetch, polling, WebSocket, a database, or external libraries.
-The workspace is empty. Do not inspect it.
-Keep the plan under 10 lines.
-Do not create files yet. Show the plan only.</div>
-
-    <div class="note">
-      <span class="tag">面倒ですが、それが目的です</span>
-      何度も確認を求められます。<span class="mark">Agentが何を実行しようとしているかを、画面で見ることが演習の中身です。</span><br><br>
-      全部を自動承認にすると速く終わりますが、<strong>何が起きたか分からないまま終わります。</strong>あとで作業ログを読むときに、何も語れません。
+      <span class="tag">In the case shown above, Start New Task</span>
+      When the history holds an oversized plan, several folder checks and a long correction thread, Retry resumes from all of it. <span class="mark">That makes another drop, or a return to the earlier wrong plan, more likely.</span> Starting a new task from the <code>+</code> at the top is usually the better choice.
     </div>
 
     <div class="note">
-      <span class="tag">エラーが出たら</span>
-      画面のエラー文や、実際に操作して起きたことを<strong>そのままClineへ渡します。</strong>PART 2で身につけた「1回1変更・現状を伝える」は、ここでもそのまま効きます。
+      <span class="tag">It is tedious, and that is the point</span>
+      You will be asked to approve many times. <span class="mark">Seeing what the agent is about to do is the exercise.</span><br><br>
+      Auto-approving everything finishes faster. <span class="mark">It also means you never see what the agent chose to do.</span> <strong>Section 3.1.11 asks you to describe exactly that</strong>, so the approvals are where the material comes from.
     </div>
 
-    <h3><span class="n">3.1.9</span>ブラウザで開く</h3>
+    <div class="note">
+      <span class="tag">When you hit an error</span>
+      Paste the error text, or what you saw when you tried it, <strong>straight back to Cline.</strong> "One change at a time, and show the current state" from Part 2 works here too.
+    </div>
 
-    <p>この演習ではサーバを使いません。VS Code左側のExplorerで <code>index.html</code> を右クリックし、<strong>Reveal in File Explorer</strong>を選びます。表示された <code>index.html</code> をダブルクリックすると、既定のブラウザで開きます。</p>
+    <h3><span class="n">3.1.9</span>Open it in a browser</h3>
 
-    <p>ファイルを編集した後は、ブラウザで <code>Ctrl</code> + <code>R</code> を押して再読み込みしてください。</p>
+    <p>No server is involved. In the VS Code Explorer, right-click <code>index.html</code> and choose <strong>Reveal in File Explorer</strong>. Double-click the file there and it opens in your default browser.</p>
 
-    <h3><span class="n">3.1.10</span>動作を確認する</h3>
+    <p>After every edit, press <code>Ctrl</code> + <code>R</code> in the browser to reload.</p>
 
-    <p>次の順で操作してください。</p>
+    <h3><span class="n">3.1.10</span>Check that it works</h3>
 
     <ol>
-      <li>User name に <code>Asha</code> と入力する</li>
-      <li>Status を <code>Present</code> にする</li>
-      <li>Message に <code>Hello everyone!</code> と入力する</li>
-      <li><strong>Send</strong> を押す</li>
-      <li>Messagesが <code>0</code> から <code>1</code> になり、「Asha」「Present」「Hello everyone!」が表示されることを確認する</li>
-      <li>ブラウザを再読み込みして、<span class="mark">投稿が消えることを確認する</span></li>
+      <li>Type <code>Asha</code> in User name</li>
+      <li>Set Status to <code>Present</code></li>
+      <li>Type <code>Hello everyone!</code> in Message</li>
+      <li>Press <strong>Send</strong></li>
+      <li>Check that Messages goes from <code>0</code> to <code>1</code> and shows "Asha", "Present" and "Hello everyone!"</li>
+      <li>Reload the browser and <span class="mark">check that the message disappears</span></li>
     </ol>
 
-    <p>6番目が消えるのは正常です。<strong>データを保存しない設計にしたからです。</strong>これはPART 4で「足りないもの」として数えます。</p>
+    <p>Step 6 is correct behaviour. <strong>You designed it not to store anything.</strong> Part 4 counts that as one of the missing pieces.</p>
 
     <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:14px">
-      <img src="img/cline-vibe-chat-complete.png" alt="Vibe ChatでAshaのHello everyoneメッセージが表示され、Messagesが1になった完成画面" style="width:100%;max-width:620px;border-radius:8px;border:1px solid var(--line)">
+      <img src="../img/cline-vibe-chat-complete.png" alt="Vibe Chat with one message posted, Messages showing 1, Asha Present Hello everyone" style="width:100%;max-width:520px;border-radius:8px;border:1px solid var(--line)">
       <div style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">
-        Agentの完了報告ではなく、<strong>人間がSendを押して確認した結果</strong>が完成の根拠
+        The agent's report is not the evidence. <span style="color:var(--accent);font-weight:700">You pressing Send and seeing the result is.</span>
       </div>
     </div>
 
-    <h4>追加の2テスト</h4>
+    <h4>Two more tests</h4>
 
     <ol>
-      <li>名前またはMessageを空にしてSendを押し、投稿されずエラーが出ることを確認する</li>
-      <li>Messageに <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> と入力し、警告が実行されず文字として表示されることを確認する</li>
+      <li>Leave the name or the message empty and press Send. Check that nothing is posted and an error appears</li>
+      <li>Type <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> as the message. Check that no alert runs and it shows as plain text</li>
     </ol>
 
     <div class="note">
-      <span class="tag">不要な最終検査はRejectできる</span>
-      Clineがファイルを再度読み、文字列検索や行数確認、一覧表示だけを行うコマンドを提案することがあります。それではSendの動作を確認できません。<span class="mark">既に読んだ内容の確認を繰り返すだけならRejectし、ブラウザを自分で操作します。</span><br><br>安全なコマンドでも、<strong>目的に不要ならRejectできます。</strong>承認は「危険かどうか」だけでなく、「必要かどうか」でも判断します。
+      <span class="tag">You can reject an unnecessary final check</span>
+      Cline may propose commands that re-read the file, search for a string, count lines or list files. <span class="mark">None of those tell you whether Send works.</span><br><br>
+      If it only repeats a check it has already done, Reject and use the browser yourself.<br><br>
+      Even a harmless command can be rejected when it is not needed. <strong>Approval is about "is this necessary", not only "is this dangerous".</strong>
     </div>
 
-
-    <h4>完成の目安</h4>
+    <h4>What counts as done</h4>
 
     <table>
-      <thead><tr><th>できていること</th><th>できていなくてよいこと</th></tr></thead>
+      <thead><tr><th>Should work</th><th>Does not need to work</th></tr></thead>
       <tbody>
-        <tr><td>ブラウザで画面が表示される</td><td>ログイン</td></tr>
-        <tr><td>送信すると一覧に増える</td><td>再読み込み後もデータが残ること</td></tr>
-        <tr><td>名前と状態が表示される</td><td>複数人での同時利用</td></tr>
-        <tr><td>手でコードを書いていない</td><td>見た目の作り込み</td></tr>
+        <tr><td>The page opens in a browser</td><td>Login</td></tr>
+        <tr><td>Sending adds to the list</td><td>Data surviving a reload</td></tr>
+        <tr><td>Name and status are shown</td><td>Several people at once</td></tr>
+        <tr><td>You did not write code by hand</td><td>A polished design</td></tr>
       </tbody>
     </table>
 
-    <p>右の列は、<span class="mark">PART 4で「足りないもの」として数える対象です。</span>いま作らなくて構いません。</p>
+    <p>The right-hand column is <span class="mark">what Part 4 counts as missing.</span> You do not need to build it now.</p>
 
-    <h3><span class="n">3.1.11</span>作業ログを読む</h3>
+    <h3><span class="n">3.1.11</span>Read the work log</h3>
 
-    <p>いま動かしたばかりのCline画面が、そのまま教材です。作業ログを上までさかのぼって、次の4点を記録してください。</p>
+    <p>The Cline panel you have just been using is the teaching material. Scroll back up and record these four things.</p>
 
     <ol>
-      <li><strong>Agentが最初に行った操作は何か。</strong>フォルダの確認、ファイル作成、コマンド実行のどれだったか。</li>
-      <li><strong>変更したファイルはどれか。</strong>いくつあるか。</li>
-      <li><strong>Save、Run Command、Rejectをどう判断したか。</strong>最低1件について理由を書く。</li>
-      <li><strong>「完了」と判断した根拠は何か。</strong>Clineの報告ではなく、自分で行った操作を書く。</li>
+      <li><strong>What did the agent do first?</strong> Check the folder, create a file, or run a command?</li>
+      <li><strong>Which files changed?</strong> How many?</li>
+      <li><strong>How did you decide on Save, Run Command and Reject?</strong> Give a reason for at least one</li>
+      <li><strong>What made you call it done?</strong> Write what you did, not what Cline reported</li>
     </ol>
 
-    <p>そのうえで、<span class="mark">この作業のどこで人間の確認が必要だったかを1つ挙げてください。</span></p>
+    <p>Then name <span class="mark">one point in the process where a human check was required.</span></p>
 
-    <div class="note">
-      <span class="tag">4番目が肝心です</span>
-      Agentはファイルを読み、文字列を検索しただけで「確認しました」と報告することがあります。しかし、Sendが実際に動くこととは別です。<span class="mark">完成の根拠は、人間がブラウザで送信を試し、表示結果を確認したことです。</span>
+    <div class="warn">
+      <span class="tag">The fourth one is the point</span>
+      An agent can read a file, search for a string and report "verified". <span class="mark">None of that shows whether Send works.</span><br><br>
+      <strong>The evidence is that a person pressed Send in a browser and looked at the result.</strong> Part 5 replaces some of that manual checking with tests.
     </div>
 
-    <h3><span class="n">3.1.12</span>提出物</h3>
+    <h3><span class="n">3.1.12</span>What to hand in</h3>
 
     <table>
-      <thead><tr><th></th><th>出すもの</th></tr></thead>
+      <thead><tr><th></th><th>What</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td>できたアプリの画面（1枚でよい）</td></tr>
-        <tr><td><strong>2</strong></td><td>3.1.11の4点の記録。最初の操作、変更したファイル、承認判断、完了と判断した根拠</td></tr>
-        <tr><td><strong>3</strong></td><td>人間の確認が必要だった箇所を1つと、その理由</td></tr>
-        <tr><td><strong>4</strong></td><td>Agentが失敗・反復・逸脱した場面を1つ。なければ、Rejectを検討した場面と判断を書く</td></tr>
+        <tr><td><strong>1</strong></td><td>A screenshot of the working app (one is enough)</td></tr>
+        <tr><td><strong>2</strong></td><td>The four notes from 3.1.11: first action, files changed, approval decisions, evidence of completion</td></tr>
+        <tr><td><strong>3</strong></td><td>One point where a human check was needed, and why</td></tr>
+        <tr><td><strong>4</strong></td><td>One place where the agent failed, repeated itself or drifted. If none, a place where you considered rejecting, and what you decided</td></tr>
       </tbody>
     </table>
 
     <div class="note">
-      <span class="tag">失敗を無理に作らない</span>
-      問題なく完成した場合、余計な機能を追加して失敗を起こす必要はありません。別ファイルの作成、不要な一覧確認、依存関係の追加など、<strong>Rejectを検討した場面と、その判断理由</strong>を記録してください。
+      <span class="tag">Do not manufacture a failure</span>
+      If it went smoothly, you do not need to add features until something breaks. <span class="mark">Write about a moment you considered rejecting, and why you decided as you did.</span>
     </div>
   </section>
 
   <section class="sec" id="s3-2">
-    <h2><span class="n">3.2</span>なぜ同じ依頼でも結果が変わるか</h2>
+    <h2><span class="n">3.2</span>Why the same request gives different results</h2>
 
-    <p>いま演習で、指示の出し方によって結果が変わるのを見たはずです。Agentの失敗は、能力不足だけで起こるわけではありません。<span class="mark">必要な情報が渡っていないときにも起こります。</span></p>
+    <p>You have just seen the result change with the way you asked. <span class="mark">Agents do not only fail because they are not capable enough.</span> They also fail when they were not given what they needed.</p>
 
-    <p>たとえば「ログイン画面を修正して」とだけ頼んでも、Agentには次のことが分かりません。</p>
+    <p>Ask only "fix the login screen" and the agent does not know:</p>
 
     <ul>
-      <li>どの画面が対象か</li>
-      <li>何を変更してよいか</li>
-      <li>既存の設計ルールは何か</li>
-      <li>実装後に何を確認すべきか</li>
+      <li>Which screen you mean</li>
+      <li>What it is allowed to change</li>
+      <li>What the existing design rules are</li>
+      <li>What to check once it is done</li>
     </ul>
 
-    <p>分からないまま進めば、それらしい何かが出来上がります。PART 1の1.2.3で見た「もっともらしい誤り」が、そのままコードとして現れる形です。</p>
+    <p>Left without those, it produces something plausible. <strong>The confident wrong answer from Part 1, section 1.2.3, arriving as code.</strong></p>
 
-    <p><strong>Context Engineering</strong>とは、<span class="mark">必要な情報を、必要な時点で渡すこと</span>です。Agentが判断できるようにするために行います。</p>
+    <p><strong>Context engineering</strong> means <span class="mark">giving the right information at the right moment</span>, so the agent can make a decision.</p>
 
-    <p>長い説明文を一度に渡すことではありません。</p>
+    <p>It does not mean handing over a long document all at once.</p>
 
-    <h3><span class="n">3.2.1</span>4種類のコンテキスト</h3>
+    <h3><span class="n">3.2.1</span>Four kinds of context</h3>
 
     <table>
-      <thead><tr><th>種類</th><th>例</th></tr></thead>
+      <thead><tr><th>Kind</th><th>Example</th></tr></thead>
       <tbody>
-        <tr><td><strong>作業の目的</strong></td><td>「メールアドレス形式を検証する」</td></tr>
-        <tr><td><strong>制約</strong></td><td>「既存APIは変更しない」「変更は最小限にする」</td></tr>
-        <tr><td><strong>プロジェクトのルール</strong></td><td>コーディング規約、使用ライブラリ、テストの実行方法</td></tr>
-        <tr><td><strong>現在の状態</strong></td><td>対象ファイル、エラーログ、テスト結果、未解決の課題</td></tr>
+        <tr><td><strong>The goal</strong></td><td>"Validate the email address format"</td></tr>
+        <tr><td><strong>Constraints</strong></td><td>"Do not change the existing API." "Keep the change minimal."</td></tr>
+        <tr><td><strong>Project rules</strong></td><td>Coding conventions, which libraries, how to run tests</td></tr>
+        <tr><td><strong>Current state</strong></td><td>The file in question, error logs, test results, open issues</td></tr>
       </tbody>
     </table>
 
-    <h3><span class="n">3.2.2</span>渡し方で結果が変わる</h3>
+    <h3><span class="n">3.2.2</span>How you hand it over changes the result</h3>
 
-    <p>次の指示は、作業の目的しか伝えていません。</p>
+    <p>This instruction gives only the goal.</p>
 
-    <div class="prompt"><span class="tag">POOR</span>バリデーションを直して。</div>
+    <div class="prompt" style="border-color:#d97706"><span class="tag" style="background:#d97706">POOR</span>Fix the validation.</div>
 
-    <p>4種類を揃えると、Agentが判断できるようになります。</p>
+    <p>With all four, the agent can decide.</p>
 
-    <div class="prompt"><span class="tag">BETTER</span>src/user.py のメールアドレス検証を修正してください。
-APIの戻り値は変更しないでください。
-tests/test_user.py の失敗しているテストを通し、既存テストも実行してください。
-修正前に、原因と変更予定を簡潔に説明してください。</div>
+    <div class="prompt"><span class="tag">BETTER</span>Fix the email validation in src/user.py.
+Do not change the API return values.
+Make the failing tests in tests/test_user.py pass, and run the existing tests too.
+Before editing, briefly explain the cause and what you intend to change.</div>
 
-    <p>1行目が対象、2行目が制約、3行目が確認方法、4行目が進め方の指定です。<span class="mark">同じ依頼でも、渡し方を変えれば結果が変わります。</span></p>
+    <p>Line 1 is the target, line 2 the constraint, line 3 how to verify, line 4 how to proceed. <span class="mark">Same request, different handover, different result.</span></p>
 
     <div class="warn">
-      <span class="tag">情報は多ければよいわけではありません</span>
-      古い仕様、大量の無関係なファイル、矛盾した指示。<strong>どれもAgentの判断を悪くします。</strong>PART 1の1.2.1で見たとおり、コンテキストは有限で、真ん中の情報は取りこぼされます。<br><br>
-      <span class="mark">必要な情報を、必要な範囲で、矛盾なく渡す。</span>これがContext Engineeringの基本です。
+      <span class="tag">More information is not automatically better</span>
+      Stale specifications, piles of unrelated files, contradictory instructions. <strong>All of them make the agent's judgement worse.</strong><br><br>
+      As section 1.2.1 showed, context is finite and the middle gets dropped. <span class="mark">Give what is needed, in the amount needed, without contradictions.</span>
     </div>
   </section>
 
   <section class="sec" id="s3-3">
-    <h2><span class="n">3.3</span>どこまで任せるか</h2>
+    <h2><span class="n">3.3</span>How much to delegate</h2>
 
-    <p>Coding Agentが向いているのは、<span class="mark">条件が明確で、実行結果を確認できる作業</span>です。</p>
+    <p>Coding agents suit work where <span class="mark">the conditions are clear and the result can be checked.</span></p>
 
-    <p>逆は向きません。条件が曖昧で、結果を機械的に確かめられない作業です。</p>
+    <p>The opposite does not suit them: vague conditions, and results no machine can verify.</p>
 
     <table>
-      <thead><tr><th>任せやすい作業</th><th>人間の判断が必要な作業</th></tr></thead>
+      <thead><tr><th>Easy to delegate</th><th>Needs a human</th></tr></thead>
       <tbody>
-        <tr><td>関連ファイルを探す</td><td>何を作るべきかを決める</td></tr>
-        <tr><td>既存コードの構造を調べる</td><td>要件の優先順位を決める</td></tr>
-        <tr><td>小さな機能を実装する</td><td>設計方針を決める</td></tr>
-        <tr><td>テストを追加・実行する</td><td>変更範囲を決める</td></tr>
-        <tr><td>エラーを読んで修正を試す</td><td>本番環境への反映を承認する</td></tr>
-        <tr><td>定型的なリファクタリングを行う</td><td>セキュリティ・法務・利用者への影響を判断する</td></tr>
+        <tr><td>Finding related files</td><td>Deciding what to build</td></tr>
+        <tr><td>Working out how existing code is structured</td><td>Ordering the requirements</td></tr>
+        <tr><td>Implementing a small feature</td><td>Choosing the design approach</td></tr>
+        <tr><td>Adding and running tests</td><td>Deciding the scope of a change</td></tr>
+        <tr><td>Reading an error and trying a fix</td><td>Approving a release to production</td></tr>
+        <tr><td>Routine refactoring</td><td>Judging security, legal and user impact</td></tr>
       </tbody>
     </table>
 
-    <h3><span class="n">3.3.1</span>「任せる」の意味</h3>
+    <h3><span class="n">3.3.1</span>What "delegate" means</h3>
 
-    <p><span class="mark">「任せる」は、確認なしで自由に実行させることではありません。</span></p>
+    <p><span class="mark">It does not mean letting it run unchecked.</span></p>
 
-    <p>Agentには、最初は狭い範囲だけを任せます。たとえば次のような制約を置きます。</p>
+    <p>You start by giving the agent a narrow area. For example:</p>
 
     <ul>
-      <li>このフォルダの中だけを変更してよい</li>
-      <li>テストの実行は許可するが、外部へ送信する操作は許可しない</li>
-      <li>設定ファイルや認証情報には触れさせない</li>
-      <li>変更はプルリクエスト経由にし、直接反映はさせない</li>
+      <li>It may only change things inside this folder</li>
+      <li>Running tests is allowed; sending anything outside is not</li>
+      <li>Config files and credentials are off limits</li>
+      <li>Changes go through a pull request, never straight in</li>
     </ul>
 
-    <p>PART 4以降では、<strong>任せられる範囲を安全に広げます。</strong>使うのはテスト、Linter、CI、承認手順です。</p>
+    <p>From Part 4 onwards you <strong>widen that area safely</strong>, using tests, linters, CI and approval steps.</p>
 
-    <p>ただし、範囲を広げる判断そのものは、最後まで人間の仕事です。</p>
+    <p>Deciding to widen it, though, stays a human job to the end.</p>
 
-    <h3><span class="n">3.3.2</span>自律性の段階</h3>
+    <h3><span class="n">3.3.2</span>Degrees of autonomy</h3>
 
-    <p>自律性は0か1かではなく、段階です。<span class="mark">演習0で挙げた3つの仕事が、それぞれどの段階を必要とするかを考えながら読んでください。</span></p>
+    <p>Autonomy is not on or off. It comes in steps.</p>
+
+    <p><span class="mark">As you read, think about which step each of your three jobs from Exercise 0 would need.</span></p>
 
     <table>
-      <thead><tr><th>段階</th><th>機械がやること</th><th>人がやること</th><th>この教材での位置</th></tr></thead>
+      <thead><tr><th>Step</th><th>The machine</th><th>The human</th><th>Where it appears here</th></tr></thead>
       <tbody>
-        <tr><td><strong>補完</strong></td><td>次の数行を予測する</td><td>常時。1行ずつ受け入れる</td><td>―</td></tr>
-        <tr><td><strong>チャット</strong></td><td>質問に答え、コード例を出す</td><td>コピーして貼り、実行する</td><td>PART 2の演習1</td></tr>
-        <tr><td><strong>副操縦士</strong></td><td>具体的な変更を提案する</td><td>1件ずつ承認する</td><td>―</td></tr>
-        <tr><td><strong>エージェント</strong></td><td>計画し、ツールを使い、実行し、自分で結果を確かめ、繰り返す</td><td>目標を与え、要所で承認する</td><td>3.1の演習2、PART 5以降</td></tr>
-        <tr><td><strong>自律</strong></td><td>依頼を受け取り、完了まで走る</td><td>結果だけを見る</td><td>扱わない</td></tr>
+        <tr><td>Completion</td><td>Predicts the next few lines</td><td>Constantly. Accepts line by line</td><td>—</td></tr>
+        <tr><td>Chat</td><td>Answers and shows code</td><td>Copies, pastes, runs</td><td>Exercise 1, Part 2</td></tr>
+        <tr><td>Copilot</td><td>Proposes concrete changes</td><td>Approves one at a time</td><td>—</td></tr>
+        <tr><td><strong>Agent</strong></td><td>Plans, uses tools, executes, checks its own result, repeats</td><td>Sets the goal, approves at key points</td><td><strong>3.1, and Part 5 onwards</strong></td></tr>
+        <tr><td>Autonomous</td><td>Takes a request and runs to completion</td><td>Looks only at the result</td><td>Not covered</td></tr>
       </tbody>
     </table>
 
-    <p><span class="mark">下へ行くほど速く、下へ行くほど間違いに気づくのが遅れます。</span>PART 2とこの章で速さを体験します。PART 4でその代償を数えます。PART 5以降で承認とテストとCIを挟み直します。<br><br>この教材の構成そのものが、この表を上下する運動です。</p>
+    <p>Further down the table is faster. <span class="mark">Further down also means a mistake is likely to reach you later, and larger.</span></p>
 
+    <p>Part 2 and this part are the speed. Part 4 counts the cost. Part 5 onwards puts approval and tests back in. <strong>The shape of this course is a movement up and down that table.</strong></p>
 
-    <h3><span class="n">3.3.3</span>Agentを使うときの基本手順</h3>
+    <h3><span class="n">3.3.3</span>The basic loop when using an agent</h3>
 
-    <p>いま演習で通った流れを、手順として名前を付けておきます。</p>
+    <p>The flow you just went through, with names attached.</p>
 
-    <div class="flow-steps">
-      <p><strong>Plan</strong>　目的、変更範囲、確認方法を整理する。すぐに編集させない。</p>
-      <p><strong>Act</strong>　Agentにファイル探索、実装、テスト実行を任せる。</p>
-      <p><strong>Review</strong>　変更差分、テスト結果、意図しない変更の有無を確認する。</p>
-      <p><strong>Accept or Reject</strong>　変更を採用するか、修正を続けるか、人間が決める。</p>
-    </div>
+    <table>
+      <thead><tr><th></th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Plan</strong></td><td>Settle the goal, the scope and how you will check. Do not let it edit yet</td></tr>
+        <tr><td><strong>Act</strong></td><td>Let the agent search, implement and run tests</td></tr>
+        <tr><td><strong>Review</strong></td><td>Look at the diff, the test results, and anything changed that should not have been</td></tr>
+        <tr><td><strong>Accept or Reject</strong></td><td>A human decides whether to take the change or keep working</td></tr>
+      </tbody>
+    </table>
 
-    <p>この4段階は、特定のツールの機能ではありません。<span class="mark">基本的な作業手順です。</span></p>
+    <p>Plan, Act, Review, Accept or Reject. <span class="mark">These are not buttons in one product. They are the working procedure underneath.</span></p>
 
-    <p>Clineでも、CLI型のAgentでも同じです。将来まったく別のAgentを使うときも、この4段階は要ります。</p>
+    <p>The same holds in Cline, in a command-line agent, and in whatever tool replaces both.</p>
 
     <div class="note">
-      <span class="tag">Agentの提供形態</span>
-      Coding Agentには3つの形があります。エディタに統合されるもの（Cline、Cursorなど）。ターミナルから使うもの（Claude Codeなど）。クラウド上で独立して動くもの（Devin、Julesなど）。<br><br><span class="mark">見た目と操作方法は違います。しかし3.4のループと、この4段階は共通です。</span>この教材ではClineを使います。
+      <span class="tag">Agents come in three shapes</span>
+      Built into an editor (Cline, Cursor). Used from a terminal (Claude Code). Running independently in the cloud (Devin, Jules).<br><br>
+      <span class="mark">They look and feel different. The loop in 3.5 and these four steps are the same in all of them.</span> This course uses Cline.
     </div>
-
-    
   </section>
 
   <section class="sec" id="s3-4">
-    <h2><span class="n">3.4</span>課題：削除機能を追加する</h2>
+    <h2><span class="n">3.4</span>Task: add a delete feature</h2>
+
+    <div class="prompt"><span class="tag">TASK</span>Add the following to the Vibe Chat you built in 3.1.
+
+Put a Delete button on every message.
+Pressing it removes only that message and updates the count.
+
+Edit index.html only. Keep the current design and the Send feature.</div>
 
     <div class="note">
-      <span class="tag">課題</span>
-      3.1で作成したVibe Chatに、次の機能を追加してください。<br><br>
-      <strong>各メッセージにDeleteボタンを付けます。ボタンを押すと、そのメッセージだけが消え、Messagesの件数も変わるようにしてください。</strong><br><br>
-      編集するファイルは <code>index.html</code> だけです。現在のデザインとSend機能は残してください。
+      <span class="tag">What is new here</span>
+      The agent reads an existing file. It proposes a change. A human reads the diff and approves. A human checks the result in a browser. If it is wrong, the agent fixes it again.<br><br>
+      <span class="mark">That cycle is what we mean by the agent loop.</span>
     </div>
 
-    <div class="note">
-      <span class="tag">この課題で新しく体験すること</span>
-      Agentは既存ファイルを読みます。Agentは変更を提案します。人間は差分を確認して承認します。人間はブラウザで結果を確認します。問題があれば、Agentが再度修正します。この一連の処理をAgentの作業ループと呼びます。
-    </div>
+    <h3><span class="n">3.4.1</span>A hint</h3>
 
-    <h3><span class="n">3.4.1</span>ヒント</h3>
-
-    <p>まず、自分でClineへの指示を考えてください。困った場合は、次のプロンプトを参考にしてください。最初はPlanモードを使います。</p>
+    <p>Write your own instruction first. If you get stuck, this is a starting point. <strong>Begin in Plan mode.</strong></p>
 
     <div class="prompt"><span class="tag">PROMPT</span>Improve the existing Vibe Chat in index.html.
 
@@ -1030,117 +1030,121 @@ Requirements:
 
 Do not edit the file yet. Show the plan only.</div>
 
-    <h4>Planを確認するヒント</h4>
+    <h4>Reading the plan</h4>
 
     <ul>
-      <li>変更するファイルは <code>index.html</code> だけですか。</li>
-      <li>現在の送信機能とデザインを残しますか。</li>
-      <li>削除後にMessagesの件数を更新しますか。</li>
-      <li>外部ライブラリや別ファイルを追加していませんか。</li>
+      <li>Is <code>index.html</code> the only file it changes?</li>
+      <li>Does it keep the current design and the Send behaviour?</li>
+      <li>Does it update the count after a delete?</li>
+      <li>Has it added an external library or another file?</li>
     </ul>
 
-    <p>Planに問題がなければ、Actへ切り替えます。差分を確認し、SaveまたはRejectを判断してください。</p>
+    <h3><span class="n">3.4.2</span>What counts as finished</h3>
 
-    <h3><span class="n">3.4.2</span>完成条件</h3>
-
-    <p>次のすべてを満たせば完成です。ブラウザで確認してください。</p>
+    <p>All of the following, checked in a browser.</p>
 
     <ol>
-      <li><code>Ctrl</code> + <code>R</code> を押して、ブラウザを再読み込みします。</li>
-      <li>メッセージを2件送ります。</li>
-      <li>1件目のDeleteを押します。</li>
-      <li>1件目だけが消えることを確認します。</li>
-      <li>2件目が残ることを確認します。</li>
-      <li>Messagesの件数が <code>2</code> から <code>1</code> になることを確認します。</li>
-      <li>新しいメッセージを送信できることを確認します。</li>
+      <li>Press <code>Ctrl</code> + <code>R</code> to reload</li>
+      <li>Send two messages</li>
+      <li>Press Delete on the first one</li>
+      <li>Check that only the first disappears</li>
+      <li>Check that the second is still there</li>
+      <li>Check that the count goes from <code>2</code> to <code>1</code></li>
+      <li>Check that you can still send a new message</li>
     </ol>
 
     <div class="warn">
-      <span class="tag">Deleteが動いても、Sendを壊していたら不合格</span>
-      Deleteだけを確認してはいけません。Sendも確認してください。Agentは、変更を依頼していない機能を壊すことがあります。
+      <span class="tag">Delete working while Send is broken is a fail</span>
+      Do not check only Delete. <span class="mark">Check Send as well.</span> Agents sometimes break a feature you never asked them to touch.
     </div>
 
-    <h3><span class="n">3.4.3</span>うまく動かない場合のヒント</h3>
+    <h3><span class="n">3.4.3</span>If it does not work</h3>
 
-    <p>問題があれば、実際に起きたことをClineへ伝えます。例えば、Deleteを押しても消えない、別のメッセージが消える、件数が変わらない、などです。</p>
+    <p>Tell Cline what actually happened. Delete does nothing, the wrong message vanishes, the count does not change, and so on.</p>
 
-    <div class="prompt"><span class="tag">修正依頼の例</span>I created two messages and clicked Delete on the first message.
+    <div class="prompt"><span class="tag">PROMPT</span>I created two messages and clicked Delete on the first message.
 The first message did not disappear, and the count stayed at 2.
 
 Inspect index.html and fix only this problem.
 Do not redesign the page or add files.
 After editing, tell me exactly what changed.</div>
 
-    <p>差分を確認してSaveします。その後、同じテストをもう一度行います。<span class="mark">テスト結果を次の修正に使います。これがAgentの作業ループです。</span></p>
-
-    <div class="flow-steps">
-      <p><strong>1　読む</strong>　Agentが既存の <code>index.html</code> を読む</p>
-      <p><strong>2　判断する</strong>　メッセージ配列と表示処理の変更箇所を決める</p>
-      <p><strong>3　提案する</strong>　Clineが変更差分とSave / Rejectを表示する</p>
-      <p><strong>4　実行する</strong>　人間がSaveすると、Clineがファイルへ書き込む</p>
-      <p><strong>5　観察する</strong>　人間がブラウザでDeleteとSendを試す</p>
-      <p><strong>6　修正する</strong>　失敗した結果をAgentへ戻し、必要なら2へ戻る</p>
-    </div>
-
-    <h3><span class="n">3.4.4</span>その間、誰が何をしたか</h3>
+    <p>Read the diff, Save, then run the same test again. <span class="mark">The test result feeds the next fix. That is the agent loop.</span></p>
 
     <table>
-      <thead><tr><th>担当</th><th>この課題で行ったこと</th></tr></thead>
+      <thead><tr><th></th><th></th><th></th></tr></thead>
       <tbody>
-        <tr><td><strong>LLM</strong></td><td>ファイルを読むことや、削除機能の変更内容を提案した</td></tr>
-        <tr><td><strong>Cline</strong></td><td>ファイル内容をLLMへ渡し、差分を表示し、承認後に書き込んだ</td></tr>
-        <tr><td><strong>人間</strong></td><td>目標を決め、Planと差分を確認し、Save / Rejectを判断し、ブラウザで検証した</td></tr>
+        <tr><td><strong>1</strong></td><td>Read</td><td>The agent reads the existing <code>index.html</code></td></tr>
+        <tr><td><strong>2</strong></td><td>Decide</td><td>It works out what to change in the array and the rendering</td></tr>
+        <tr><td><strong>3</strong></td><td>Propose</td><td>Cline shows the diff with Save / Reject</td></tr>
+        <tr><td><strong>4</strong></td><td>Execute</td><td>You press Save and Cline writes the file</td></tr>
+        <tr><td><strong>5</strong></td><td>Observe</td><td>You try Delete and Send in the browser</td></tr>
+        <tr><td><strong>6</strong></td><td>Correct</td><td>You feed the failure back, and it returns to step 2 if needed</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">3.4.4</span>Who did what</h3>
+
+    <table>
+      <thead><tr><th>Who</th><th>What they did in this task</th></tr></thead>
+      <tbody>
+        <tr><td><strong>The LLM</strong></td><td>Proposed reading the file, and proposed the change for the delete feature</td></tr>
+        <tr><td><strong>Cline</strong></td><td>Passed the file contents to the LLM, showed the diff, wrote the file after approval</td></tr>
+        <tr><td><strong>You</strong></td><td>Set the goal, read the plan and the diff, decided Save or Reject, verified in a browser</td></tr>
       </tbody>
     </table>
 
     <div class="warn">
-      <span class="tag">モデル自身がファイルを書いたわけではありません</span>
-      LLMは操作を提案します。Clineがファイルを操作します。Auto-approveがOFFの場合、人間が承認するまで操作は実行されません。
+      <span class="tag">The model did not write the file</span>
+      The LLM proposes operations. Cline performs them. <span class="mark">With auto-approve off, nothing runs until a human approves it.</span>
     </div>
 
-    <h3><span class="n">3.4.5</span>提出物</h3>
+    <h3><span class="n">3.4.5</span>What to hand in</h3>
 
     <table>
-      <thead><tr><th></th><th>出すもの</th></tr></thead>
+      <thead><tr><th></th><th>What</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td>Deleteボタンと2件のメッセージが見える画面</td></tr>
-        <tr><td><strong>2</strong></td><td>1件を削除し、Messagesが1になった変更後の画面</td></tr>
-        <tr><td><strong>3</strong></td><td>Planの内容と、SaveまたはRejectを1回判断した理由</td></tr>
-        <tr><td><strong>4</strong></td><td>LLM、Cline、人間がそれぞれ何をしたかを1文ずつ</td></tr>
-        <tr><td><strong>5</strong></td><td>問題が起きた場合は、現象、修正指示、再確認の結果</td></tr>
+        <tr><td><strong>1</strong></td><td>A screenshot showing the Delete buttons and two messages</td></tr>
+        <tr><td><strong>2</strong></td><td>A screenshot after deleting one, with the count at 1</td></tr>
+        <tr><td><strong>3</strong></td><td>The plan, and your reason for one Save or Reject decision</td></tr>
+        <tr><td><strong>4</strong></td><td>One sentence each on what the LLM, Cline and you did</td></tr>
+        <tr><td><strong>5</strong></td><td>If something went wrong: the symptom, your fix instruction, and the re-check</td></tr>
       </tbody>
     </table>
 
     <div class="note">
-      <span class="tag">提出</span>
-      Deleteボタンまで動くようになった <code>index.html</code> を、次のフォームからアップロードします。ファイルは1本だけです。<br><br>
+      <span class="tag">Hand in</span>
+      Upload the <code>index.html</code> with the working Delete button through this form. One file only.<br><br>
       <a href="https://forms.gle/WwV8b3KQo2hsRRJB8" target="_blank" rel="noopener"><strong>https://forms.gle/WwV8b3KQo2hsRRJB8</strong></a><br><br>
-      PART 4では同じファイルを直して、<span class="mark">別のフォームにもう一度</span>出します。
+      In PART 4 you fix the same file and <span class="mark">submit it again, to a different form.</span>
     </div>
 
     <div class="note">
-      <span class="tag">27Bモデルを使う理由</span>
-      Clineで使うモデルは、ファイル操作を正しい形式で提案する必要があります。この章では、講師が指定した27Bモデルを使います。MCPはPART 7で学びます。
+      <span class="tag">Why a 27B model</span>
+      The model behind Cline has to propose file operations in a strict format. <span class="mark">This part uses the 27B model your instructor specifies.</span> MCP comes in Part 7.
     </div>
   </section>
 
   <section class="sec" id="s3-5">
-    <h2><span class="n">3.5</span>この章で分かったこと</h2>
+    <h2><span class="n">3.5</span>What we know so far</h2>
 
-    <p>Clineは目標を受け取ります。Clineはファイルを読み、変更を提案します。人間が承認すると、Clineはコードを書きます。人間がコードをコピーして貼り付ける必要はありません。</p>
+    <p>Cline takes a goal. It reads files and proposes changes. Once you approve, it writes the code. <span class="mark">You no longer copy and paste anything.</span></p>
 
-    <p><span class="mark">今回のアプリは練習用です。</span>ページを再読み込みすると、データは消えます。複数の利用者はデータを共有できません。自動テストもありません。アプリが動くことと、実際の仕事で使えることは同じではありません。</p>
+    <p>What you built is practice. Reload the page and the data is gone. Two people cannot share it. There are no automated tests.</p>
 
-    <p>次のPARTでは、AIが作った成果物を、実務で使えるかという観点から点検します。</p>
+    <div class="warn">
+      <span class="tag">Working is not the same as usable</span>
+      <span class="mark">An app that runs and an app you would hand to someone else are different things.</span> Part 4 measures that distance on the app you just built.
+    </div>
+
+    <p>In the next part you inspect what the AI produced, and ask whether you would actually ship it.</p>
   </section>
 
 
-  
-
 
   <nav class="pager">
-    <a class="prev" href="part2.html"><span class="dir">← PREV</span><span class="ttl">PART 2　Vibe Codingを試してみよう</span></a>
-    <a class="next" href="part4.html"><span class="dir">NEXT →</span><span class="ttl">PART 4　このアプリ、本当に提出できる？</span></a>
+    <a class="prev" href="part2.html"><span class="dir">← PREV</span><span class="ttl">PART 2　Try Vibe Coding</span></a>
+    <a class="next" href="part4.html"><span class="dir">NEXT →</span><span class="ttl">PART 4　Test it, then have it fixed</span></a>
   </nav>
 
 </div>
@@ -1156,14 +1160,14 @@ After editing, tell me exactly what changed.</div>
     var btn = document.createElement('button');
     btn.className = 'copy-btn';
     btn.type = 'button';
-    btn.textContent = 'コピー';
+    btn.textContent = 'Copy';
     btn.addEventListener('click', function () {
       var text = copyText(el);
       var done = function () {
-        btn.textContent = 'コピーしました';
+        btn.textContent = 'Copied';
         btn.classList.add('done');
         setTimeout(function () {
-          btn.textContent = 'コピー';
+          btn.textContent = 'Copy';
           btn.classList.remove('done');
         }, 1600);
       };
