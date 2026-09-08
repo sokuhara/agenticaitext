@@ -167,464 +167,527 @@ th{background:var(--accent-soft);font-weight:700}
 
   <header class="masthead">
     <div class="eyebrow">PART 8</div>
-    <h1>Run video production with an agent</h1>
-    <p class="lede">The agent you built has state, tools, branching and approval. Here you apply the same design to work that is not coding. Video is the subject; the design is the point.</p>
+    <h1>Running video production with agentic AI</h1>
+    <p class="lede">The final assignment. You are the producer of a small production team. In VS Code on your own machine, you run a production agent that finishes a short video meant to bring the world to Mumbai, using several tools and stopping twice for your approval. What you build is not a video. It is the way a video gets made.</p>
   </header>
 
   <div class="bridge">
     <dl>
-      <dt>Previously</dt><dd>In Part 7 you built tool calling, branching, stopping conditions, human approval, interruption and resuming with your own hands.</dd>
-      <dt>This part</dt><dd>You apply the same design to non-coding work: concept, fact check, script, material, assembly, evaluation, correction. You approve the concept, the facts and the publish decision.</dd>
-      <dt>Next</dt><dd>Releasing and operating an agent is covered in Appendix C.</dd>
+      <dt>So far</dt><dd>In Part 7 you assembled an agent yourself: tool calls, branching, a stop condition, human approval, interrupt and resume.</dd>
+      <dt>This part</dt><dd>The same design applied to work that is not coding: planning, approval, material, assembly, checks, revision. Humans approve the plan and the release.</dd>
+      <dt>After</dt><dd>Releasing and operating an agent is covered in Appendix C.</dd>
     </dl>
   </div>
 
-  <nav class="toc" aria-label="Contents of this part">
+  <nav class="toc" aria-label="Contents">
     <h2>In this part</h2>
     <ol>
-      <li><span class="n">8.1</span><a href="#s8-1">Break video production into stages</a></li>
-      <li><span class="n">8.2</span><a href="#s8-2">Set up state and tools in Colab</a></li>
-      <li><span class="n">8.3</span><a href="#s8-3">Hand concept through storyboard to the agent</a></li>
-      <li><span class="n">8.4</span><a href="#s8-4">After approval, assemble the video</a></li>
-      <li><span class="n">8.5</span><a href="#s8-5">Evaluate, and run the correction loop</a></li>
-      <li><span class="n">8.6</span><a href="#s8-6">Reasons you might not publish</a></li>
+      <li><span class="n">8.1</span><a href="#s8-1">Breaking video production into a flow</a></li>
+      <li><span class="n">8.2</span><a href="#s8-2">For reference: running Wan2.1 yourself (optional)</a></li>
+      <li><span class="n">8.3</span><a href="#s8-3">Rules for material</a></li>
+      <li><span class="n">8.4</span><a href="#s8-4">The real thing: running the production agent</a></li>
+      <li><span class="n">8.5</span><a href="#s8-5">Why you still cannot publish</a></li>
+      <li><span class="n">8.6</span><a href="#s8-6">Hand-in and peer evaluation</a></li>
     </ol>
   </nav>
 
 
-
   <section class="sec" id="s8-0" style="margin-bottom:44px">
-    <h2><span class="n">8.0</span>What you do in this part</h2>
+    <h2><span class="n">8.0</span>What this part does</h2>
 
-    <h3>What this part is about</h3>
+    <p>The agent you built in Part 7 had <strong>state, tools, branching and approval</strong>. <span class="mark">Now that design moves to work that is not coding.</span> The subject is video production.</p>
 
-    <p>The agent you built in Part 7 had <strong>state, tools, branching and approval.</strong> <span class="mark">Here you move that design to work that is not coding.</span></p>
+    <div class="prompt"><span class="tag">FINAL MISSION</span>AGEWEC Mumbai.
+Finish one video of at most 60 seconds whose purpose is to bring people from around the world to Mumbai.
+You do not finish it. The production agent you run does.
+It drafts the plan, waits for your approval, assembles the video once the material is in place, checks it, and stops for your decision to publish.</div>
 
-    <p>Video production is the subject. The purpose is twofold: break multi-stage work into pieces, and <strong>separate what a machine can judge from what a person must judge.</strong></p>
+    <h3>What you do</h3>
 
-    <h3>By the end</h3>
-    <p>You will be able to design a production workflow that runs from concept to a publish decision, and build a notebook that includes a correction loop.</p>
+    <p>Finish one video of at most 60 seconds with the production agent. You make the material yourself, within the rules in 8.3. Plan, approve, material, edit, check, release decision: about 90 minutes.</p>
 
-    <h3>The loop you repeat</h3>
-
-    <div class="flow-steps">
-      <p><strong>1</strong>　Break the work into stages</p>
-      <p><strong>2</strong>　Decide the state and the tools</p>
-      <p><strong>3</strong>　Decide where a human approves</p>
-      <p><strong>4</strong>　Run it</p>
-      <p><strong>5</strong>　When it fails, send it back</p>
-    </div>
-
-    <p>The same shape as <code>plan → implement → check → branch</code> in Part 7. <span class="mark">There are more stages, and nothing else changes.</span></p>
-
-    <h3><span class="n">8.0.1</span>The final assignment</h3>
-
-    <div class="prompt"><span class="tag">FINAL MISSION</span>Pick one theme: something local that students should know,
-something genuinely useful about university life,
-or a social issue close to you.
-
-Build a production agent that completes a one-minute explainer video.
-
-The agent plans the structure, checks the facts, writes the script,
-specifies the material, assembles the video, reads the check result
-and corrects it.
-
-You approve the concept, verify the facts, and decide on publishing.</div>
+    <p>8.2 is for reference. It is for anyone who wants to run a video model with their own hands once; skipping it has no effect on the assignment.</p>
 
     <div class="warn">
-      <span class="tag">This is not a video contest</span>
-      <span class="mark">You are not being marked on how the video looks.</span> You are being marked on how you divided the work, where you put the human checks, and how you sent it back when it failed.<br><br>
-      A polished video can still score low, <strong>if the flow runs straight through with no approval and no retry.</strong><br><br>
-      Text and still images are perfectly acceptable. <span class="mark">With a fact-checking node and a threshold that hands over to a person, that is a good submission.</span>
+      <span class="tag">Looks are not graded</span>
+      What is graded: how the work is split into steps, where approval sits, where the loop goes back to, and where the material came from. <span class="mark">Someone who stopped at approval, failed a check and went back scores higher than someone who produced one pretty video.</span><br><br>
+      Audience reaction (is it interesting, do I want to go) is collected separately, in the peer evaluation in 8.6.
     </div>
 
-    <h3><span class="n">8.0.2</span>Why Colab</h3>
+    <h3>Setup</h3>
 
-    <table>
-      <thead><tr><th></th><th>Reason</th></tr></thead>
-      <tbody>
-        <tr><td><strong>You can borrow a GPU</strong></td><td>Your own machine's specification stops mattering. Everyone runs under the same conditions</td></tr>
-        <tr><td><strong>The tools are there</strong></td><td>Python, ffmpeg, image and audio handling, all in one notebook</td></tr>
-        <tr><td><strong>The stages are visible</strong></td><td>Each cell can show plan, run, check separately</td></tr>
-        <tr><td><strong>Easy to hand in</strong></td><td>The <code>.mp4</code> and the notebook go out as they are</td></tr>
-      </tbody>
-    </table>
+    <p>The production agent runs in VS Code on your machine. The folder has the same shape as Part 7.</p>
 
-    <h3><span class="n">8.0.3</span>Connecting to Colab from VS Code</h3>
+    <p><a href="../starter/part8/agewec-mumbai-starter.zip" download><strong>Download agewec-mumbai-starter.zip</strong></a></p>
 
-    <p>Colab works in a browser, but <span class="mark">you can connect to it from VS Code.</span> Same environment as Part 3 onwards, borrowing only the GPU.</p>
+<pre><code>agewec-mumbai/
+├── agent/
+│   ├── config.py          where to connect. Same four values as Part 7
+│   ├── video_tools.py     ffmpeg operations (normalize, join, subtitles, narration)
+│   ├── edit_tools.py      the tools handed to the editing agent. Each call is logged
+│   ├── agent_video.py     the production agent (LangGraph)
+│   └── requirements.txt
+├── assets/
+│   └── SOURCES.txt        the source log. One line per cut
+└── README.md</code></pre>
 
-    <table>
-      <thead><tr><th></th><th>Colab in a browser</th><th>Connected from VS Code</th></tr></thead>
-      <tbody>
-        <tr><td>Editing</td><td>The Colab editor</td><td><span class="mark">VS Code, with Cline available</span></td></tr>
-        <tr><td>Git</td><td>Awkward</td><td>Works as usual</td></tr>
-        <tr><td>Mounting Drive</td><td>Needed</td><td>Not needed</td></tr>
-        <tr><td>Moving files</td><td>Through the browser</td><td>Right-click to send or fetch</td></tr>
-      </tbody>
-    </table>
+<pre><code>pip install -r agent/requirements.txt</code></pre>
 
-    <h4>How to connect</h4>
-
-    <ol>
-      <li>In the extensions panel (<code>Ctrl</code> + <code>Shift</code> + <code>X</code>), search for <strong>Colab</strong> and install <span class="mark">the one published by Google</span></li>
-      <li>Create an <code>.ipynb</code> file in your working folder</li>
-      <li>Press <strong>Select Kernel</strong> at the top right</li>
-      <li>Choose <strong>Colab</strong></li>
-      <li>Choose <strong>New Colab Server (CPU, GPU or TPU)</strong></li>
-      <li>Press <strong>Allow</strong> when asked about your Google account</li>
-      <li>Follow the instructions in the browser window that opens</li>
-      <li>Back in VS Code, choose <strong>GPU</strong></li>
-      <li>Pick <strong>T4 GPU</strong> from the accelerator list</li>
-    </ol>
-
-    <h4>Check that it connected</h4>
-
-<pre><code>import torch
-
-print("GPU available:", torch.cuda.is_available())
-print("GPU name:", torch.cuda.get_device_name(0)
-      if torch.cuda.is_available() else "No GPU")</code></pre>
-
-    <p>Success looks like this.</p>
-
-<pre><code>GPU available: True
-GPU name: Tesla T4</code></pre>
-
-    <h4>Moving files</h4>
-
-    <table>
-      <thead><tr><th>What you want</th><th>How</th></tr></thead>
-      <tbody>
-        <tr><td>Send a local file to Colab</td><td>Right-click in the explorer → <strong>Upload to Colab</strong></td></tr>
-        <tr><td>Bring a Colab file back</td><td>Open the <strong>Colab</strong> tab, right-click the file → <strong>download</strong></td></tr>
-      </tbody>
-    </table>
-
-    <div class="warn">
-      <span class="tag">Disconnecting deletes the files</span>
-      An <code>.mp4</code> you created on the Colab side <span class="mark">disappears when the runtime stops.</span> It is not saved to Drive.<br><br>
-      <strong>Download it as soon as the work is done.</strong> Build your submission first, then disconnect.
-    </div>
-
-    <div class="note">
-      <span class="tag">If you cannot connect from VS Code</span>
-      You can work in the browser instead. <span class="mark">In that case you have to enable the GPU yourself.</span> The steps are in <a href="appendix-a.html">Appendix A</a>, A.12.<br><br>
-      <strong>This part assumes the VS Code connection.</strong>
-    </div>
-
-    <div class="note">
-      <span class="tag">Colab does not assume local Ollama</span>
-      The 27B model you have used since Part 3 <span class="mark">does not run reliably on Colab.</span> The runtime is temporary and the GPU allocation is not guaranteed.<br><br>
-      So this part splits into two routes.
-    </div>
-
-    <table>
-      <thead><tr><th>Route</th><th>What you build</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Standard</strong></td><td>A <strong>production workflow</strong> with state, tools, branching and approval. No LLM; templates and rules carry the stages</td></tr>
-        <tr><td><strong>Extended</strong></td><td>A <strong>production agent</strong>, with an LLM connected to the concept, script and storyboard nodes</td></tr>
-      </tbody>
-    </table>
-
-    <p>The standard route is enough to meet the aim of this part. <span class="mark">Not having access to a video generation API costs you no marks.</span></p>
-
-    <p>Strictly, a standard-route submission is not an "AI agent". <strong>It is the skeleton of an agentic workflow.</strong> The design problem is identical. What differs is that the judgement sits with people and rules.</p>
+    <p>ffmpeg comes bundled with <code>imageio-ffmpeg</code>, so nothing else needs installing. Fill in <code>agent/config.py</code> with the same four values as Part 7 (Base URL, Model ID, Client ID, Client Secret). <span class="mark">config.py is never handed in.</span></p>
   </section>
+
 
   <section class="sec" id="s8-1">
-    <h2><span class="n">8.1</span>Break video production into stages</h2>
+    <h2><span class="n">8.1</span>Breaking video production into a flow</h2>
 
-    <p>First, split the work into stages. <span class="mark">The same thing you did in Exercise 0.</span></p>
-
-    <p>Repetitive, multi-step, currently done by people. Break that apart.</p>
+    <p>"Make a video" is not one job. Split, it looks like this.</p>
 
     <table>
-      <thead><tr><th>Stage</th><th>What it does</th></tr></thead>
+      <thead><tr><th>Step</th><th>Who</th><th>What is decided</th></tr></thead>
       <tbody>
-        <tr><td><strong>Concept</strong></td><td>Narrow the theme down to three points worth making</td></tr>
-        <tr><td><strong>Fact check</strong></td><td>Confirm each point is true. Keep the source</td></tr>
-        <tr><td><strong>Script</strong></td><td>Write text that fits one minute (roughly 150 words)</td></tr>
-        <tr><td><strong>Storyboard</strong></td><td>Say what appears in each shot</td></tr>
-        <tr><td><strong>Material</strong></td><td>Prepare images, audio and subtitles</td></tr>
-        <tr><td><strong>Assembly</strong></td><td>Combine into one video with ffmpeg</td></tr>
-        <tr><td><strong>Evaluation</strong></td><td>Check length, subtitle timing, volume, errors</td></tr>
+        <tr><td>1　Key points</td><td><span class="mark">Human</span></td><td>The three things the video says. Not the agent's call</td></tr>
+        <tr><td>2　Storyboard and script</td><td>Agent (27B)</td><td>6–8 cuts. For each: the generation prompt, seconds, subtitle. The narration</td></tr>
+        <tr><td>3　<strong>Approval</strong></td><td><span class="mark">Human</span></td><td>Read every prompt. Stop <strong>before</strong> any material is made</td></tr>
+        <tr><td>4　Material</td><td><span class="mark">Human</span> + outside tools</td><td>Generate each cut within the rules in 8.3, put it in <code>assets/</code>, log the source</td></tr>
+        <tr><td>5　Editing</td><td><span class="mark">Agent (27B + tools)</span></td><td>Looks at the clips that came back and decides order, trims, transitions and subtitle timing, calling the tools itself</td></tr>
+        <tr><td>6　Check</td><td>Machine</td><td>Length, key points in subtitles, source log, narration length</td></tr>
+        <tr><td>7　<strong>Release decision</strong></td><td><span class="mark">Human</span></td><td>Watch it. Approve or stop</td></tr>
       </tbody>
     </table>
 
-    <p>The same shape as <code>plan → implement → check</code> in Part 7. Two things differ: the number of stages, and <span class="mark">the fact that <code>check</code> cannot decide everything mechanically.</span></p>
+    <p>The model is called in steps 2 and 5, but <span class="mark">they are different kinds of work.</span> Step 2 writes: text in, JSON out, no tools. Step 5 orchestrates: it looks at the material and decides for itself which tools to call, in what order, with what values. It is the tool-using agent from Part 7, pointed at a different job.</p>
 
-    <p>A test passes or fails. <strong>"Is this video any good" has no automated answer.</strong></p>
+    <p>Step 4 stays in human hands because the means of making material lie outside the agent. Wan2.1 on Colab takes minutes per clip, generation services spend credits, and shooting it yourself means going there. <span class="mark">Whichever way, one run gives a few seconds, and making several of them is human logistics.</span> An agent left to loop over it burns time and credits without judgement. A person makes the cuts by the means in 8.3 while the agent waits.</p>
 
-    <h3><span class="n">8.1.1</span>So split the checking in two</h3>
+    <h3>Fixed procedure versus orchestration</h3>
+
+    <p>There are two ways to put tools together.</p>
 
     <table>
-      <thead><tr><th>A machine can judge</th><th>A person must judge</th></tr></thead>
+      <thead><tr><th></th><th>Fixed procedure (a script)</th><th>Orchestration (an agent)</th></tr></thead>
       <tbody>
-        <tr><td>Whether the length is between 55 and 65 seconds</td><td>Whether the concept matches the brief</td></tr>
-        <tr><td>Whether the subtitle character count matches the script</td><td>Whether it is factually correct</td></tr>
-        <tr><td>Whether audio and subtitle timecodes line up</td><td>Whether anything is misleading</td></tr>
-        <tr><td>Whether the output file plays</td><td>Whether it should be published</td></tr>
+        <tr><td>Who decides the order</td><td>Whoever wrote it. Same every time</td><td>The model. Depends on the situation</td></tr>
+        <tr><td>Suits</td><td>Inputs of a known shape, where the same result is required</td><td>Inputs that vary, go missing, or come in surplus</td></tr>
+        <tr><td>In this part</td><td>The check (6). The <strong>tools themselves</strong>: normalize, join, and so on</td><td>Editing (5). <strong>How the tools are used</strong></td></tr>
+        <tr><td>Risk</td><td>Breaks on unexpected input</td><td>Hard to see what happened. Hence the <strong>log</strong></td></tr>
       </tbody>
     </table>
 
-    <p>The left column becomes your <code>check</code> node. The right column becomes an <code>interrupt</code>.</p>
+    <p>The clips come from three services, differ in length and orientation, and some cuts failed to generate. <span class="mark">"cut3 is missing, use a different part of cut1"; "the portrait one, keep short"</span>: these are decided on the spot, and a fixed procedure cannot list them in advance. So editing is orchestrated, and it is wrapped on both sides by a fixed check and a human decision. <strong>A zone of free judgement, enclosed by layers that do not judge.</strong> That is the shape carried over from Part 7.</p>
 
-    <p><span class="mark">That split is the design work in this assignment.</span></p>
+    <h3>What one generation cannot make</h3>
+
+    <p>A video model returns two to five seconds per run. The next run knows nothing about the last one. <span class="mark">A sequence in time, like a train slowing to a stop, doors opening, the view changing, cannot come out of one run.</span> You split it into cuts, decide order and length, and join them. That is the flow. You will see it as soon as you start making material.</p>
   </section>
+
 
   <section class="sec" id="s8-2">
-    <h2><span class="n">8.2</span>Set up state and tools in Colab</h2>
+    <h2><span class="n">8.2</span>For reference: running Wan2.1 yourself (optional)</h2>
 
-<pre><code>!apt-get -qq install ffmpeg
-!pip -q install langgraph pydantic</code></pre>
+    <p><strong>Optional.</strong> If you want to see what happens behind a generation service, run the video model Wan2.1 (1.3B) once on a Colab GPU (T4). One sentence in, about two seconds of 480p video out. GPUs are not always available and a run takes 5–10 minutes, so <span class="mark">do this in your own time, not during class</span>.</p>
 
-<pre><code>from typing import TypedDict
+    <p><a href="../starter/part8/part8_practice_wan.ipynb" download><strong>Download part8_practice_wan.ipynb</strong></a> → open it in Colab (the browser, or the Google Colab extension in VS Code). Choose the <strong>T4 GPU</strong> runtime.</p>
 
-
-class VideoState(TypedDict, total=False):
-    theme: str
-    points: list[str]        # the three points
-    sources: list[str]       # where each point came from
-    script: str
-    shots: list[dict]        # storyboard
-    caption_only: bool       # build with subtitles and no audio
-    audio_path: str
-    subtitle_path: str
-    video_path: str
-    check_report: dict
-    attempts: int
-    approved: bool</code></pre>
-
-    <p>Structurally the same as <code>State</code> in Part 7. <span class="mark">There are more stages. The thinking is unchanged.</span></p>
-
-    <div class="note">
-      <span class="tag">Use the starter notebook</span>
-      Calling ffprobe, generating subtitles, assembling with ffmpeg, and a skeleton graph. <span class="mark">All of that is in the starter notebook (<a href="../part8_starter.ipynb">part8_starter.ipynb</a>).</span><br><br>
-      Written from scratch, you will spend the session debugging video processing and never reach the point of this part.
+    <div class="flow-steps">
+      <p><strong>1</strong>　Cell 1 installs the libraries (2–3 min)</p>
+      <p><strong>2</strong>　In cell 2, make <code>PROMPT</code> one sentence about a train window approaching a station. <span class="mark">This is the only line you decide</span></p>
+      <p><strong>3</strong>　Run cells 3–4. Downloading the weights and generating takes <strong>5–10 min</strong></p>
+      <p><strong>4</strong>　Watch <code>practice_cut.mp4</code></p>
+      <p><strong>5</strong>　Change <code>SEED</code> and run again. <strong>It is not the same train</strong></p>
     </div>
 
-    <p>There are only four things you design and rewrite.</p>
+    <p>Three things to notice.</p>
 
     <table>
-      <thead><tr><th></th><th></th></tr></thead>
+      <thead><tr><th></th><th>What you see</th><th>What the flow does about it</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td>The state: what <code>VideoState</code> holds</td></tr>
-        <tr><td><strong>2</strong></td><td>The approval points: where you <code>interrupt</code></td></tr>
-        <tr><td><strong>3</strong></td><td>The send-back targets: which stage a failure returns to</td></tr>
-        <tr><td><strong>4</strong></td><td>The check conditions: what the machine decides</td></tr>
+        <tr><td>Length</td><td>Two seconds per run. Sixty seconds is 20–30 runs</td><td>Split into cuts with set lengths</td></tr>
+        <tr><td>Consistency</td><td>A new seed gives a different train, different light</td><td>The storyboard fixes the style; approval checks it</td></tr>
+        <tr><td>Control</td><td>You decided one sentence. Camera, pacing, content: the model decided</td><td>A human reads the prompts before anything is generated</td></tr>
       </tbody>
     </table>
 
-    <h3><span class="n">8.2.1</span>The tools</h3>
-
-    <table>
-      <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr><td><code>make_subtitles</code></td><td>Generate an SRT subtitle file from the script</td></tr>
-        <tr><td><code>make_audio</code></td><td>Produce audio from the script (TTS, or silence plus subtitles)</td></tr>
-        <tr><td><code>make_slide</code></td><td>Generate a still image per shot (drawing with PIL is fine)</td></tr>
-        <tr><td><code>assemble_video</code></td><td>Combine images, audio and subtitles with ffmpeg</td></tr>
-        <tr><td><code>inspect_video</code></td><td>Read length and resolution with ffprobe, and run the machine checks</td></tr>
-      </tbody>
-    </table>
-
-    <p>Same shape as <code>@tool</code> in Part 7. <strong>Write the docstrings carefully.</strong></p>
+    <p>You may use the clip as one cut of your final video. Log it as <code>Colab Wan2.1 (course notebook)</code>.</p>
   </section>
+
 
   <section class="sec" id="s8-3">
-    <h2><span class="n">8.3</span>Hand concept through storyboard to the agent</h2>
+    <h2><span class="n">8.3</span>Rules for material</h2>
 
-    <p>These stages produce text: concept, fact check, script, storyboard, in that order.</p>
+    <p>Material for the final video comes from these four ways only.</p>
 
-    <p>Start by deciding, in one sentence, <span class="mark">who should do what after watching this.</span> Leave that vague and the agent simply adds plausible-looking footage.</p>
+    <table>
+      <thead><tr><th></th><th>How</th><th>How to log it</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>The course Colab notebook (Wan2.1)</td><td><code>Colab Wan2.1 (course notebook)</code></td></tr>
+        <tr><td><strong>2</strong></td><td>A video or image generation service, on <strong>your own account</strong>. <span class="mark">Follow that service's terms of use</span></td><td>The service name</td></tr>
+        <tr><td><strong>3</strong></td><td>Photos or video you shot yourself</td><td><code>own photo</code> / <code>own video</code></td></tr>
+        <tr><td><strong>4</strong></td><td>Free stock sites with explicit terms (Pexels, Pixabay, etc.), items marked free for commercial use, no attribution required</td><td>Site name and the item's URL</td></tr>
+      </tbody>
+    </table>
 
-    <div class="warn">
-      <span class="tag">Do not skip the fact-checking node</span>
-      Have an LLM write a script and <strong>plausible numbers and proper nouns appear in it.</strong> <span class="mark">They read as naturally as the true parts, which is what makes them hard to catch.</span><br><br>
-      This is section 1.2.3 from Part 1. Marking <code>*guess</code> in Exercise 0 was practice for exactly this.<br><br>
-      Keep a source in <code>sources</code> for each point, and <strong>do not let a point without a source reach the script.</strong> Implement that as a node. "Be careful about it" is not an implementation.
-    </div>
+    <p>The instructor does not name a service and does not hold an account for you. <span class="mark">Which one you use is your decision, after reading its terms.</span></p>
 
-    <p>On the standard route, <span class="mark">you supply the three sources yourself.</span> The workflow does not manufacture facts by searching the web.</p>
+    <h3>The source log, SOURCES.txt</h3>
 
-    <p><strong>On the extended route</strong>, you may gather candidates with search, MCP or an external API. <span class="mark">The final verification is still done by a person.</span></p>
+    <p>In <code>assets/SOURCES.txt</code>, <strong>one line per cut</strong>.</p>
 
-    <p>Once the storyboard exists, put in <strong>the first human approval.</strong></p>
+<pre><code>cut1 | Colab Wan2.1 (course notebook) | slow pan over a Mumbai suburban train at dawn, wide shot | 2026-09-10
+cut2 | Kling | Marine Drive at night from above, streetlights curving along the bay | 2026-09-10
+cut3 | own video | - | 2026-09-08
+cut4 | Pexels: https://www.pexels.com/video/... | - | 2026-09-10</code></pre>
 
-<pre><code>def review_plan(state: VideoState) -&gt; VideoState:
-    decision = interrupt({
-        "points": state["points"],
-        "sources": state["sources"],
-        "script": state["script"],
-        "question": "Is the concept sound and are the facts checked? (approve / revise)",
-    })
-    return {**state, "approved": decision == "approve"}</code></pre>
-
-    <p>You stop here because <span class="mark">what follows is hard to undo.</span> Speech synthesis and video encoding cost time and money. Carry a wrong script forward and the amount you have to redo grows sharply.</p>
-
-    <p>This is the "before anything irreversible" rule from 7.4.</p>
+    <p>The check (8.4.4) fails any cut without a line here. <span class="mark">Material you cannot log is material you cannot use.</span></p>
   </section>
+
 
   <section class="sec" id="s8-4">
-    <h2><span class="n">8.4</span>After approval, assemble the video</h2>
+    <h2><span class="n">8.4</span>The real thing: running the production agent</h2>
 
-    <p>Once approved, build the material and combine it.</p>
+    <h3><span class="n">8.4.1</span>Decide the three key points (human)</h3>
 
-<pre><code>ffmpeg -y \
-  -f concat -safe 0 -i shots.txt \
-  -i narration.wav \
-  -vf "subtitles=subtitles.srt" \
-  -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest \
-  output.mp4</code></pre>
+    <p>Open the top of <code>agent/agent_video.py</code>.</p>
 
-    <p>You can let the agent write this, but <strong>read the command yourself.</strong></p>
+<pre><code>THEME = &quot;AGEWEC Mumbai: why the world should come and see Mumbai&quot;
+# Each key point: (the statement, the words that must appear in a subtitle for it to count)
+KEY_POINTS = [
+    (&quot;The suburban railway carries about 7 million passengers a day&quot;, &quot;7 million&quot;),
+    (&quot;Marine Drive at night, the &#x27;Queen&#x27;s Necklace&#x27;&quot;, &quot;marine drive&quot;),
+    (&quot;Street food: vada pav and pav bhaji&quot;, &quot;vada pav&quot;),
+]
+MAX_SECONDS = 60          # the check: the video must be at most this long
+MIN_SECONDS = 20          # and at least this long
+NUM_CUTS = 6              # 5 to 8 works well
+MAX_ROUNDS = 3            # how many times the loop may go back to draft</code></pre>
 
-    <p><span class="mark">Wrong ffmpeg options often produce a different result rather than an error.</span> Do not rely on it stopping to tell you something is wrong.</p>
+    <p>Replace <code>KEY_POINTS</code> with your three. Each is a pair: the statement, and the words that must appear in a subtitle. <span class="mark">The check looks for the second part.</span> Short proper nouns or numbers work best.</p>
 
     <div class="warn">
-      <span class="tag">Where it usually goes wrong</span>
-      Images at different resolutions between shots. Audio at inconsistent sample rates. Subtitles not encoded as UTF-8. A missing frame rate that changes the length.<br><br>
-      <span class="mark">ffmpeg happily runs in all of those cases.</span> <strong>That is why 8.5 needs <code>inspect_video</code>.</strong>
+      <span class="tag">Facts need sources</span>
+      If a key point is a number like "7 million a day", keep one source for it. The facts in the narration are checked in 8.5. <strong>Invented tourist information is the worst thing a PR video can carry.</strong>
+    </div>
+
+    <h3><span class="n">8.4.2</span>Read the flow</h3>
+
+<pre><code>&quot;&quot;&quot;PART 8 — A production workflow for a short PR video.
+
+    draft ──► approve_storyboard ──► wait_for_clips ──► edit ──► check ──pass──► review ──► END
+                     │ (interrupt)         │ (interrupt)   ▲         │ fail
+                     └─ revise ─────────►draft             └─────────┘ (back to edit, MAX_ROUNDS)
+
+Two nodes talk to the model, and they are different kinds of node:
+
+  draft  — the model WRITES a plan (storyboard, narration). Plain text in, JSON out. No tools.
+  edit   — the model ORCHESTRATES: it looks at the clips that actually came back, decides the
+           order, the trims, the transitions and the subtitle timing, and calls the editing
+           tools itself. This is the agent from PART 7, pointed at a different job.
+
+Everything else is fixed code or a human decision.
+
+Run from the agewec-mumbai folder:   python agent/agent_video.py
+&quot;&quot;&quot;</code></pre>
+
+    <p>The Part 7 shape with three interrupts: <strong>storyboard approval</strong>, <strong>waiting for material</strong>, <strong>release decision</strong>. The second is the agent waiting for human work. And <code>edit</code>, like <code>implement</code> in Part 7, is a node with <span class="mark">a tool-using agent running inside it.</span></p>
+
+    <h3><span class="n">8.4.3</span>Plan and approval</h3>
+
+<pre><code>def draft(state: State) -&gt; State:
+    &quot;&quot;&quot;The model writes the storyboard and the narration. It does not touch any file.&quot;&quot;&quot;
+    feedback = state.get(&quot;feedback&quot;, &quot;&quot;)
+    prompt = f&quot;&quot;&quot;You are planning a PR video of at most {MAX_SECONDS} seconds.
+Theme: {THEME}
+Key points that MUST appear, each in at least one subtitle:
+{chr(10).join(&#x27;- &#x27; + k for k, _ in KEY_POINTS)}
+
+Return ONLY a JSON object with:
+- &quot;storyboard&quot;: a list of exactly {NUM_CUTS} cuts. Each cut: {{&quot;cut&quot;: n, &quot;seconds&quot;: 5-10, &quot;prompt&quot;: &quot;a text-to-video prompt for this shot, one sentence, no real people&#x27;s faces, no logos&quot;, &quot;subtitle&quot;: &quot;one short line shown on screen&quot;}}
+- &quot;narration&quot;: the voice-over for the whole video, at most {int(MAX_SECONDS * 2.3)} words, plain English.
+{(&#x27;Feedback from the human reviewer, apply it: &#x27; + feedback) if feedback else &#x27;&#x27;}&quot;&quot;&quot;
+    text = model.invoke(prompt).content
+    m = re.search(r&quot;\{.*\}&quot;, text, re.S)
+    data = json.loads(m.group(0))
+    return {**state, &quot;storyboard&quot;: data[&quot;storyboard&quot;], &quot;narration&quot;: data[&quot;narration&quot;],
+            &quot;round&quot;: state.get(&quot;round&quot;, 0) + 1}
+
+
+def approve_storyboard(state: State) -&gt; State:
+    &quot;&quot;&quot;Interrupt 1: the human reads every prompt before any clip is generated.&quot;&quot;&quot;
+    lines = [f&quot;cut{c[&#x27;cut&#x27;]}  {c[&#x27;seconds&#x27;]}s  subtitle: {c[&#x27;subtitle&#x27;]}\n        prompt: {c[&#x27;prompt&#x27;]}&quot;
+             for c in state[&quot;storyboard&quot;]]
+    answer = interrupt({
+        &quot;storyboard&quot;: &quot;\n&quot;.join(lines),
+        &quot;narration&quot;: state[&quot;narration&quot;],
+        &quot;question&quot;: &quot;Approve this storyboard? (approve / revise / stop)&quot;,
+    })
+    return {**state, &quot;decision&quot;: answer[&quot;decision&quot;], &quot;feedback&quot;: answer.get(&quot;feedback&quot;, &quot;&quot;)}</code></pre>
+
+    <p><code>draft</code> is the only node that calls the model. It returns the storyboard and script as JSON and touches no file. The run stops at <code>approve_storyboard</code>, and <span class="mark">you read every prompt.</span> What to look for:</p>
+
+    <ul>
+      <li>Do the three key points appear in some cut's subtitle?</li>
+      <li>Do any prompts contain faces, celebrities or logos (8.3)?</li>
+      <li>Do the seconds add up to more than 60? <strong>If so, send it back with revise</strong></li>
+    </ul>
+
+    <p>If something is off, type <code>revise</code> and one line of what should change. The model rewrites with your feedback.</p>
+
+    <h3><span class="n">8.4.4</span>Waiting for material</h3>
+
+<pre><code>def wait_for_clips(state: State) -&gt; State:
+    &quot;&quot;&quot;Interrupt 2: the human generates the clips with the allowed tools and puts them in assets/.&quot;&quot;&quot;
+    expected = [f&quot;assets/cut{c[&#x27;cut&#x27;]}.mp4&quot; for c in state[&quot;storyboard&quot;]]
+    answer = interrupt({
+        &quot;instruction&quot;: &quot;Generate each cut with the allowed tools, save them as the files below, &quot;
+                       &quot;and write one line per cut in assets/SOURCES.txt. Missing cuts are fine; &quot;
+                       &quot;the editor will work with what is there. Then type: done&quot;,
+        &quot;files&quot;: expected,
+    })
+    return {**state, &quot;decision&quot;: answer[&quot;decision&quot;]}</code></pre>
+
+    <p>While the run waits, you make each cut by one of the means in 8.3, save it as <code>assets/cut1.mp4 …</code>, and write one line per cut in <code>SOURCES.txt</code>. <span class="mark">They do not all have to be there.</span> The editing agent builds with what exists, knowing what is missing. Type <code>done</code> to continue.</p>
+
+    <h3><span class="n">8.4.5</span>Editing: orchestration</h3>
+
+    <p>The tools handed to the editing agent. Each is small, makes no judgement, and logs every call.</p>
+
+<pre><code>@tool
+def list_assets() -&gt; str:
+    &quot;&quot;&quot;List the clips in assets/ with their length in seconds, width and height, and whether SOURCES.txt has a line for them.&quot;&quot;&quot;
+    sources = vt.read_sources()
+    rows = []
+    for p in sorted(vt.ASSETS.glob(&quot;cut*.mp4&quot;)):
+        n = int(p.stem[3:])
+        w, h = vt.probe_size(p)
+        rows.append({&quot;cut&quot;: n, &quot;file&quot;: p.name, &quot;seconds&quot;: round(vt.probe_duration(p), 1),
+                     &quot;width&quot;: w, &quot;height&quot;: h, &quot;has_source&quot;: n in sources})
+    _log(f&quot;list_assets -&gt; {len(rows)} clips&quot;)
+    return json.dumps(rows)
+
+
+@tool
+def contact_sheet() -&gt; str:
+    &quot;&quot;&quot;Make one image with a frame from each clip (first, middle, last) so you can see what each cut shows. Returns the image path.&quot;&quot;&quot;
+    paths = sorted(vt.ASSETS.glob(&quot;cut*.mp4&quot;))
+    vt.BUILD.mkdir(exist_ok=True)
+    tiles = []
+    for p in paths:
+        d = vt.probe_duration(p)
+        for k, t in enumerate((0.2, d / 2, max(0.2, d - 0.3))):
+            out = vt.BUILD / f&quot;sheet_{p.stem}_{k}.png&quot;
+            vt.frame_at(p, t, out)
+            tiles.append(Image.open(out).resize((320, 180)))
+    cols = 3
+    rows = (len(tiles) + cols - 1) // cols
+    sheet = Image.new(&quot;RGB&quot;, (320 * cols, 180 * rows), &quot;black&quot;)
+    for i, im in enumerate(tiles):
+        sheet.paste(im, ((i % cols) * 320, (i // cols) * 180))
+    out = vt.BUILD / &quot;contact_sheet.png&quot;
+    sheet.save(out)
+    _log(&quot;contact_sheet -&gt; build/contact_sheet.png&quot;)
+    return str(out)
+
+
+@tool
+def add_to_timeline(cut: int, seconds: float, start: float = 0.0) -&gt; str:
+    &quot;&quot;&quot;Append a clip to the timeline: cut number, how many seconds to use, and where in the clip to start (seconds). Clips are normalized to 1280x720 here.&quot;&quot;&quot;
+    src = vt.ASSETS / f&quot;cut{cut}.mp4&quot;
+    if not src.exists():
+        return f&quot;ERROR: {src.name} does not exist&quot;
+    dst = vt.BUILD / f&quot;t{len(_timeline) + 1}_cut{cut}.mp4&quot;
+    vt.normalize_clip(src, dst, seconds, start=start)
+    _timeline.append({&quot;cut&quot;: cut, &quot;seconds&quot;: seconds, &quot;start&quot;: start, &quot;file&quot;: str(dst)})
+    _log(f&quot;add_to_timeline(cut={cut}, seconds={seconds}, start={start})&quot;)
+    return f&quot;timeline now has {len(_timeline)} clips, total {sum(c[&#x27;seconds&#x27;] for c in _timeline):.1f}s&quot;
+
+
+@tool
+def clear_timeline() -&gt; str:
+    &quot;&quot;&quot;Empty the timeline to start the order again.&quot;&quot;&quot;
+    _timeline.clear()
+    _log(&quot;clear_timeline&quot;)
+    return &quot;timeline cleared&quot;
+
+
+@tool
+def join_timeline(fade: float = 0.6) -&gt; str:
+    &quot;&quot;&quot;Join the timeline clips in order with a crossfade of `fade` seconds between each pair. Writes build/joined.mp4 and returns its length.&quot;&quot;&quot;
+    if not _timeline:
+        return &quot;ERROR: timeline is empty&quot;
+    vt.concat_with_crossfade([c[&quot;file&quot;] for c in _timeline], vt.BUILD / &quot;joined.mp4&quot;, fade=fade)
+    d = vt.probe_duration(vt.BUILD / &quot;joined.mp4&quot;)
+    _log(f&quot;join_timeline(fade={fade}) -&gt; {d:.1f}s&quot;)
+    return f&quot;joined.mp4 is {d:.1f}s&quot;
+
+
+@tool
+def add_subtitles(subtitles_json: str) -&gt; str:
+    &quot;&quot;&quot;Burn subtitles onto build/joined.mp4. subtitles_json is a JSON list of {&quot;start&quot;: seconds, &quot;end&quot;: seconds, &quot;text&quot;: &quot;...&quot;}. Writes build/subtitled.mp4.&quot;&quot;&quot;
+    subs = json.loads(subtitles_json)
+    LAST_SUBTITLES[:] = [s[&quot;text&quot;] for s in subs]
+    vt.burn_subtitles(vt.BUILD / &quot;joined.mp4&quot;, vt.BUILD / &quot;subtitled.mp4&quot;, subs)
+    _log(f&quot;add_subtitles({len(subs)} lines)&quot;)
+    return f&quot;{len(subs)} subtitles burned&quot;
+
+
+@tool
+def add_narration(text: str) -&gt; str:
+    &quot;&quot;&quot;Turn the narration text into speech and put it under build/subtitled.mp4. Writes output.mp4 and returns the audio and video lengths.&quot;&quot;&quot;
+    audio_len = vt.narrate(text, vt.BUILD / &quot;narration.mp3&quot;)
+    vt.mux_audio(vt.BUILD / &quot;subtitled.mp4&quot;, vt.BUILD / &quot;narration.mp3&quot;, vt.PROJECT_ROOT / &quot;output.mp4&quot;)
+    video_len = vt.probe_duration(vt.PROJECT_ROOT / &quot;output.mp4&quot;)
+    _log(f&quot;add_narration({len(text.split())} words) -&gt; audio {audio_len:.1f}s, video {video_len:.1f}s&quot;)
+    return f&quot;output.mp4 written. audio {audio_len:.1f}s, video {video_len:.1f}s&quot;
+
+
+EDIT_TOOLS = [list_assets, contact_sheet, add_to_timeline, clear_timeline, join_timeline, add_subtitles, add_narration]</code></pre>
+
+    <p>The agent itself is the same <code>create_react_agent</code> as in Part 7. What differs is the tools, the instructions, and that <strong>the first message contains an image</strong>. The 27B on the shared server can read images, so it is shown a sheet with the first, middle and last frame of every clip (<code>contact_sheet</code>) before it decides anything.</p>
+
+<pre><code>EDITOR_SYSTEM = f&quot;&quot;&quot;You are the editor of a short PR video. You have tools to inspect the clips and to build the video.
+Work like this:
+1. Call list_assets, then contact_sheet, and look at the sheet before deciding anything.
+2. Decide the order and the length of each clip. Follow the storyboard where the clips allow it;
+   if a clip is missing, too short, or does not show what its prompt asked for, say so and adapt
+   (reorder, reuse a good clip for two beats, drop a cut).
+3. Build the timeline with add_to_timeline, then join_timeline, then add_subtitles, then add_narration.
+4. The finished video must be between {MIN_SECONDS} and {MAX_SECONDS} seconds.
+   Each of these phrases must appear in some subtitle: {&#x27;, &#x27;.join(repr(w) for _, w in KEY_POINTS)}.
+   The narration must not be longer than the video: cut words before you cut clips.
+5. Finish with a short summary of the decisions you made and why, especially where you departed from the storyboard.
+Never invent clip numbers that list_assets did not return.&quot;&quot;&quot;
+
+editor = create_react_agent(model, et.EDIT_TOOLS, prompt=EDITOR_SYSTEM)
+
+
+def edit(state: State) -&gt; State:
+    et.LOG.clear()
+    et._timeline.clear()
+    brief = {&quot;storyboard&quot;: state[&quot;storyboard&quot;], &quot;narration&quot;: state[&quot;narration&quot;]}
+    text = &quot;Storyboard and narration as approved:\n&quot; + json.dumps(brief, indent=1)
+    if state.get(&quot;feedback&quot;):
+        text += &quot;\n\nThe last attempt failed the check. Fix these:\n&quot; + state[&quot;feedback&quot;]
+    # The contact sheet is made first so the model can SEE the clips in its first message.
+    sheet = et.contact_sheet.invoke({})
+    msg = HumanMessage(content=[{&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: text}, et.image_message(sheet)])
+    result = editor.invoke({&quot;messages&quot;: [msg]}, {&quot;recursion_limit&quot;: 40})
+    summary = result[&quot;messages&quot;][-1].content
+    return {**state, &quot;edit_summary&quot;: summary, &quot;edit_rounds&quot;: state.get(&quot;edit_rounds&quot;, 0) + 1}</code></pre>
+
+    <p>The instructions (<code>EDITOR_SYSTEM</code>) do not say what order to use. <span class="mark">They say: look before you decide, explain any departure from the storyboard, obey these constraints, summarize your decisions at the end.</span> The order itself is decided by the agent, after looking at the material.</p>
+
+    <div class="note">
+      <span class="tag">Follow what it did through the log</span>
+      The weakness of orchestration is that it is hard to see what happened. So the tools keep the log. Lines like <code>add_to_timeline(cut=1, seconds=8, start=0.5)</code> accumulate in order, and <span class="mark">at the release decision (8.4.7) they are shown to you together with the agent's own summary.</span> When the run ends they are written to <code>EDIT_LOG.txt</code>.
+    </div>
+
+    <h3><span class="n">8.4.6</span>The check</h3>
+
+<pre><code>def check(state: State) -&gt; State:
+    problems = []
+    out = vt.PROJECT_ROOT / &quot;output.mp4&quot;
+    if not out.exists():
+        problems.append(&quot;output.mp4 was not written: the editor did not finish the tool sequence&quot;)
+    else:
+        dur = vt.probe_duration(out)
+        if not (MIN_SECONDS &lt;= dur &lt;= MAX_SECONDS):
+            problems.append(f&quot;length is {dur:.1f}s, must be between {MIN_SECONDS} and {MAX_SECONDS}s&quot;)
+        narr = vt.BUILD / &quot;narration.mp3&quot;
+        if narr.exists() and vt.probe_duration(narr) &gt; dur + 0.5:
+            problems.append(&quot;narration is longer than the video: shorten the narration&quot;)
+        subs_text = &quot; &quot;.join(et.LAST_SUBTITLES).lower()      # the subtitles the editor actually burned
+        for statement, words in KEY_POINTS:
+            if words.lower() not in subs_text:
+                problems.append(f&quot;no subtitle mentions &#x27;{words}&#x27; (key point: {statement})&quot;)
+        sources = vt.read_sources()
+        for c in et._timeline:
+            if c[&quot;cut&quot;] not in sources:
+                problems.append(f&quot;cut{c[&#x27;cut&#x27;]} is on the timeline but has no line in assets/SOURCES.txt&quot;)
+    text = &quot;OK&quot; if not problems else &quot;\n&quot;.join(&quot;- &quot; + p for p in problems)
+    print(&quot;\nCHECK:&quot;, text)
+    return {**state, &quot;check_output&quot;: text, &quot;passed&quot;: not problems, &quot;feedback&quot;: &quot;&quot; if not problems else text}</code></pre>
+
+    <p>The check is a fixed procedure. Whatever the editing agent decided, it is measured here with the same ruler. Failures come out as sentences and go back to <code>edit</code> as <code>feedback</code>, up to <code>MAX_ROUNDS</code> times.</p>
+
+    <table>
+      <thead><tr><th>Check</th><th>What the editing agent does on failure</th></tr></thead>
+      <tbody>
+        <tr><td>output.mp4 exists</td><td>Redo the tool sequence</td></tr>
+        <tr><td>Length between 20 and 60 s</td><td>Trim or extend clips</td></tr>
+        <tr><td>Narration no longer than the video</td><td>Cut words, then regenerate the audio</td></tr>
+        <tr><td>Key-point words in the subtitles</td><td>Fix the subtitles</td></tr>
+        <tr><td>A source line for every cut used</td><td>Only a human can fix this: write it in <code>SOURCES.txt</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">8.4.7</span>Run it</h3>
+
+<pre><code>python agent/agent_video.py</code></pre>
+
+    <p><code>draft</code> takes some tens of seconds at first (waiting for the 27B). After you place the clips and type <code>done</code>, you see the editing agent calling tools as <code>[tool] …</code> lines. At the end, <code>output.mp4</code>, the agent's summary of its decisions and the tool log are shown, and the run stops for the release decision.</p>
+
+    <div class="note">
+      <span class="tag">Revise at least once</span>
+      Even if the first storyboard is fine, find one thing to say and send it back. <span class="mark">The point is to confirm the route back works.</span> As in Part 7, an approval step is built so that things can be sent back.
     </div>
   </section>
+
 
   <section class="sec" id="s8-5">
-    <h2><span class="n">8.5</span>Evaluate, and run the correction loop</h2>
+    <h2><span class="n">8.5</span>Why you still cannot publish</h2>
 
-    <p>Inspect the finished video. <span class="mark">The left column of 8.1.1, turned into code.</span></p>
+    <p><code>output.mp4</code> exists. The check passed. <span class="mark">You still cannot publish it as it is.</span> The check only looked at shape.</p>
 
-<pre><code>def check_video(state: VideoState) -&gt; VideoState:
-    info = ffprobe(state["video_path"])
-    report = {
-        "duration_ok": 55 &lt;= info["duration"] &lt;= 65,
-        "has_audio": info["has_audio"],
-        "subtitle_chars": count_chars(state["subtitle_path"]),
-        "script_chars": len(state["script"]),
-    }
-    report["passed"] = (
-        report["duration_ok"]
-        and (info["has_audio"] or state["caption_only"])
-    )
-    return {**state, "check_report": report}</code></pre>
+    <table>
+      <thead><tr><th>What a human confirms before release</th><th>Why a machine cannot</th></tr></thead>
+      <tbody>
+        <tr><td>Are the facts in the narration right (numbers, places, history)?</td><td>The 27B writes facts that sound right. It holds no evidence</td></tr>
+        <tr><td>Are the sources real, and within the terms?</td><td>The check can see that a line exists, not whether it is true</td></tr>
+        <tr><td>Would someone who lives in Mumbai feel uncomfortable watching it?</td><td>The prejudice on the flip side of "charm" is invisible to a machine</td></tr>
+        <tr><td>Do the key points work as a reason to come?</td><td>A word in a subtitle is not the same as a message that lands</td></tr>
+      </tbody>
+    </table>
 
-    <p><code>caption_only</code> exists so that a run with no audio can still pass. <span class="mark">You can finish with subtitles alone.</span> A standard-route submission without TTS does not fail the check.</p>
-
-    <p>When it fails, decide which stage it returns to. <strong>Not back to the beginning.</strong></p>
-
-    <p>Too long goes back to the script. No audio goes back to the material. Misaligned subtitles go back to assembly.</p>
-
-<pre><code>def route(state: VideoState) -&gt; str:
-    r = state["check_report"]
-    if r["passed"]:
-        return "review_final"
-    if state["attempts"] &gt;= 3:
-        return "give_up"
-    if not r["duration_ok"]:
-        return "script"      # back to the script
-    return "assemble"        # only redo the assembly</code></pre>
-
-    <p><strong>Submission requirement: run the correction loop at least once.</strong></p>
-
-    <div class="warn">
-      <span class="tag">The first run always fails</span>
-      The starter notebook is configured so that <span class="mark">the video comes out at about 70 seconds.</span> That misses the 55-to-65 second window, so the first check fails. <strong>This is deliberate, so that everyone goes round the correction loop at least once.</strong><br><br>
-      Design where it goes from there. Back to the script to shorten the points, or back to the storyboard to trim seconds off a shot?<br><br>
-      <strong>What this assignment is looking at is what happens when something fails.</strong>
-    </div>
+    <p>Confirm these four, then press <code>approve</code>. That is the producer's job. <strong>What the agent did was write, look at the material and join it, and measure.</strong> You handed the joining decisions to the agent, but they are in the log, they were measured by the check, and you looked last.</p>
   </section>
+
 
   <section class="sec" id="s8-6">
-    <h2><span class="n">8.6</span>Reasons you might not publish</h2>
+    <h2><span class="n">8.6</span>Hand-in and peer evaluation</h2>
 
-    <p>A finished video is not the same as one you should publish. Check these before the final approval.</p>
+    <p>There are two hand-ins. <strong>The video goes to the audience; the process goes to the instructor.</strong></p>
 
     <table>
-      <thead><tr><th>Concern</th><th>What to check</th></tr></thead>
+      <thead><tr><th>What</th><th>Where</th><th>Who sees it</th><th>Lens</th></tr></thead>
       <tbody>
-        <tr><td><strong>Wrong information</strong></td><td>Does each of the three points have a source? Does the source actually say that?</td></tr>
-        <tr><td><strong>Copyright</strong></td><td>Licence terms for images, music and fonts. Any issue with what the generator was trained on</td></tr>
-        <tr><td><strong>Likeness</strong></td><td>Does a real person appear? Does anything resemble one?</td></tr>
-        <tr><td><strong>Disclosure</strong></td><td>Is this a context where AI generation has to be stated?</td></tr>
-        <tr><td><strong>Cost</strong></td><td>What did one video cost? How many times did you rebuild it?</td></tr>
-        <tr><td><strong>Logs</strong></td><td>Can you trace afterwards what ran at which stage?</td></tr>
+        <tr><td><code>output.mp4</code> uploaded to Google Drive, shared with "anyone with the link", and that URL</td><td>The <strong>Assignment 2</strong> card in nmims2026</td><td>Seven classmates</td><td>Q1–Q8: as a viewer from anywhere in the world, does it make you want to go to Mumbai?</td></tr>
+        <tr><td>A zip of the <code>agewec-mumbai</code> folder (without <code>config.py</code>; with <code>assets/</code>, <code>SOURCES.txt</code>, <code>EDIT_LOG.txt</code> and <code>REPORT.txt</code>)</td><td>Google Form</td><td>Instructor</td><td>Steps, approval, the way back, sources</td></tr>
       </tbody>
     </table>
 
-    <h3><span class="n">8.6.1</span>What to hand in</h3>
-
-    <div class="prompt"><span class="tag">SUBMISSION</span>Upload the final assignment to the nmims2026 system.
-
-https://github.com/shunokuhara/nmims/tree/main/nmims2026</div>
-
-    <div class="warn">
-      <span class="tag">Check before you upload</span>
-      <span class="mark">No API keys, tokens or personal data left in the notebook.</span> Check the output cells too, not only the code.<br><br>
-      <strong>The moment before something goes to a public place is your last chance to catch it.</strong>
-    </div>
-
-    <p>Submit the following.</p>
+    <h3>REPORT.txt</h3>
 
     <table>
-      <thead><tr><th></th><th>What</th></tr></thead>
+      <thead><tr><th></th><th>Write</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td>The finished <code>.mp4</code></td></tr>
-        <tr><td><strong>2</strong></td><td>The notebook, with the graph, nodes, tools and approval points readable</td></tr>
-        <tr><td><strong>3</strong></td><td>A log of the stages: where it failed, where it went back to, how many rounds it took</td></tr>
-        <tr><td><strong>4</strong></td><td>Where you approved or rejected, and why</td></tr>
-        <tr><td><strong>5</strong></td><td>Your findings for each row of the 8.6 table</td></tr>
+        <tr><td><strong>1</strong></td><td>The one line you gave with <code>revise</code> at storyboard approval, and how the storyboard changed</td></tr>
+        <tr><td><strong>2</strong></td><td>One place where the editing agent departed from the storyboard (from the decision summary in <code>EDIT_LOG.txt</code>), and whether you agreed with it</td></tr>
+        <tr><td><strong>3</strong></td><td>One fact from the narration that you verified, and its source</td></tr>
+        <tr><td><strong>4</strong></td><td>If a check failed: its sentence and how the agent fixed it. If none failed, say so</td></tr>
       </tbody>
     </table>
 
-    <h3><span class="n">8.6.2</span>Evaluating other people's work</h3>
+    <p>Right-click the <code>agewec-mumbai</code> folder, compress it, name it <code>PART8_StudentID.zip</code>, and upload it here.</p>
+    <p><a href="FORM_URL_PART8" target="_blank" rel="noopener"><strong>FORM_URL_PART8</strong></a></p>
 
-    <p>Submitting is not the end. <span class="mark">You review the classmates assigned to you</span>, as in Exercise 1.</p>
+    <h3>Peer evaluation</h3>
 
-    <table>
-      <thead><tr><th></th><th></th></tr></thead>
-      <tbody>
-        <tr><td><strong>How many</strong></td><td>7</td></tr>
-        <tr><td><strong>Time</strong></td><td>40 minutes</td></tr>
-        <tr><td><strong>Grading</strong></td><td><span class="mark">Your evaluations are graded too</span></td></tr>
-      </tbody>
-    </table>
+    <p><span class="mark">Keep the Drive link open for one month after submitting.</span> Peer evaluation and grading happen in that time.<br><br>Once you submit your video link in nmims2026, seven classmates' videos are assigned to you. <span class="mark">Watch as a viewer and answer Q1–Q8.</span> Process is not judged there; only whether you would want to go, and whether you would share it.</p>
 
-    <h4>What you are judging</h4>
-
-    <p>Different from Exercise 1. <strong>Not how the video looks.</strong></p>
-
-    <table>
-      <thead><tr><th>Criterion</th><th>What to look at</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Stage breakdown</strong></td><td>How many stages, and is there a reason for the split?</td></tr>
-        <tr><td><strong>Approval points</strong></td><td>Where does it hand over to a person? <span class="mark">Does it stop before anything irreversible?</span></td></tr>
-        <tr><td><strong>Send-back design</strong></td><td>Where does a failed check return to? Does it start over from nothing?</td></tr>
-        <tr><td><strong>Fact checking</strong></td><td>Are there sources? Is there a verification node?</td></tr>
-      </tbody>
-    </table>
-
-    <div class="warn">
-      <span class="tag">Open the notebook</span>
-      <span class="mark">Do not score from the video alone.</span> None of the four criteria can be judged without reading the notebook.<br><br>
-      The graph definition, the order of the nodes, where <code>interrupt</code> sits. <strong>That is where their design is.</strong>
-    </div>
-
-    <div class="note">
-      <span class="tag">Why the video quality is not scored</span>
-      Text and still images can score highly if the design is good. <span class="mark">An elaborate video scores low if the flow is a straight line.</span><br><br>
-      As stated in 8.0.1. <strong>What is being judged here is the mechanism, not the footage.</strong>
-    </div>
-
-    <div class="note">
-      <span class="tag">At the end of this course</span>
-      In Exercise 0 you looked for work worth delegating, across three countries. <span class="mark">Look again at the column you wrote headed "check a human must keep".</span><br><br>
-      What you did in this part was turn that column into code.<br><br>
-      Approving the concept, verifying the facts, deciding to publish. <strong>Where to stop was your decision, all the way through.</strong><br><br>
-      The technology will keep changing. Library names and model names will be different next year.<br><br>
-      What does not change is the work itself. <span class="mark">Break the job into pieces. Decide how much to delegate. Design where it stops.</span>
-    </div>
+    <div class="prompt"><span class="tag">FINAL</span>Back to the first question: what can agentic AI do?
+This part's answer: within the key points a human chose and the approvals a human gave, it can write, look at material and assemble it, and measure.
+You chose the theme, read the prompts, made the material, checked the facts, and decided to publish.
+That is the producer's job, and from here on everyone sits in that seat.</div>
   </section>
-
 
 
   <nav class="pager">

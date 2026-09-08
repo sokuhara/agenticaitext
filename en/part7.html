@@ -205,23 +205,66 @@ Not Cline. Your own Python.</div>
 
     <h3><span class="n">7.0.1</span>Before you start</h3>
 
-    <p>Use the <code>vibe-chat/</code> you built in Part 6. <span class="mark">First, put it into a state where a test fails.</span></p>
+    <p>As in Part 6, <span class="mark">everyone starts from the same folder.</span> It is the vibe-chat from the end of Part 6 (banned words included, four tests), with this part's agent code added as an <code>agent/</code> folder.</p>
 
-    <h4>How to break it</h4>
+    <p><a href="../starter/part7/vibe-chat-part7-starter.zip" download><strong>Download vibe-chat-part7-starter.zip</strong></a></p>
 
-    <p>Open <code>app.py</code> and <span class="mark">comment out the check that rejects an empty name.</span> The same thing you did in 5.5.</p>
+<pre><code>vibe-chat/
+├── app.py                 the Flask app at the end of Part 6
+├── templates/index.html
+├── tests/test_app.py      four tests
+├── requirements.txt
+└── agent/
+    ├── config.py          where to connect. Fill this in first
+    ├── tools.py           7.1  the tools the agent may use, with limits
+    ├── agent_plain.py     7.1  the agent in plain Python
+    ├── demo_structured.py 7.2  structured-output exercise
+    ├── agent_langchain.py 7.2  the same agent with LangChain
+    ├── agent_graph.py     7.3-7.4  flow, stop condition, approval
+    ├── break_app.py       7.0  break the app on purpose
+    └── requirements.txt</code></pre>
 
-    <p>Then run <code>pytest</code> and confirm that it fails.</p>
+    <h4>1　Unzip and install</h4>
 
-<pre><code>cd vibe-chat
+    <p>Open the unzipped <code>vibe-chat</code> in VS Code and, in the terminal:</p>
+
+<pre><code>pip install -r requirements.txt
+pip install -r agent/requirements.txt
 pytest</code></pre>
 
-    <p>Confirm the failure. <span class="mark">Investigating that failure, fixing it and getting the tests to pass is the goal you give your agent.</span></p>
+    <p><code>4 passed</code> means you are ready.</p>
+
+    <h4>2　Fill in the connection</h4>
+
+    <p>Open <code>agent/config.py</code> and enter the same four values you gave Cline in Part 3.</p>
+
+    <table>
+      <thead><tr><th>Variable</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td><code>BASE_URL</code></td><td>Your server (<code>https://pc11.okuharalab.com/v1</code> etc.; table in 3.1.3)</td></tr>
+        <tr><td><code>MODEL</code></td><td>The Model ID for that server (<code>qwen38_1:latest</code> etc.; numbers must match)</td></tr>
+        <tr><td><code>CF_ACCESS_CLIENT_ID</code></td><td>The Client ID you were given</td></tr>
+        <tr><td><code>CF_ACCESS_CLIENT_SECRET</code></td><td>The Client Secret you were given</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">Never hand in or share config.py</span>
+      It contains the Client Secret. <span class="mark">Leave <code>agent/config.py</code> out of the zip you submit.</span>
+    </div>
+
+    <h4>3　Break it on purpose</h4>
+
+    <p>As in 5.5, comment out the empty-name check in <code>app.py</code>. By hand, or with the script:</p>
+
+<pre><code>python agent/break_app.py
+pytest</code></pre>
+
+    <p><code>1 failed, 3 passed</code> means you are ready. <span class="mark">Investigating that failure, fixing it and getting the tests to pass is the goal you give your agent.</span></p>
 
     <div class="note">
       <span class="tag">Then forget what you broke</span>
-      All you tell the agent is "a test is failing, find out why and fix it". <span class="mark">You do not tell it where.</span><br><br>
-      You are watching whether it can find it on its own.
+      All you tell the agent is "a test is failing, find out why and fix it". <span class="mark">You do not tell it where.</span> You are watching whether it can find it on its own.
     </div>
 
     <h3><span class="n">7.0.2</span>What counts as finished</h3>
@@ -237,6 +280,15 @@ pytest</code></pre>
     </table>
 
     <p>Number 4 is the part that distinguishes this from a script. <strong>Section 7.4 builds it.</strong></p>
+
+    <div class="note">
+      <span class="tag">How this part works</span>
+      All the code is in <code>agent/</code>. <span class="mark">You do not type it in.</span> In each section you read it, run it, and change one thing.<br><br>
+      <strong>7.1</strong>　Required. Read and run the plain-Python agent, so you know what the libraries do for you<br>
+      <strong>7.2</strong>　Instructor demo. The same thing written with LangChain<br>
+      <strong>7.3–7.4</strong>　Required. Stop condition and approval. <strong>Send a change back with revise, then change MAX_ATTEMPTS and run again</strong><br>
+      <strong>7.5</strong>　Optional. MCP
+    </div>
   </section>
 
   <section class="sec" id="s7-1">
@@ -254,40 +306,54 @@ pytest</code></pre>
       <code>_safe_path</code> below refuses anything outside the project. <strong>Every tool goes through it.</strong>
     </div>
 
-<pre><code>import subprocess
+<pre><code>&quot;&quot;&quot;Tools the agent may use. Every tool is a plain Python function with limits built in.
+
+PROJECT_ROOT is the vibe-chat folder (the parent of this agent/ folder), whatever the
+current working directory is.
+&quot;&quot;&quot;
+
+import difflib
+import subprocess
+import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path.cwd().resolve()
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Files the agent may overwrite: .py files directly under the project root, or under tests/.
+WRITE_ROOTS = [PROJECT_ROOT, PROJECT_ROOT / &quot;tests&quot;]
+
+# Files whose &quot;before&quot; state we keep, so we can show a diff without git.
+WATCHED_FILES = [&quot;app.py&quot;, &quot;tests/test_app.py&quot;]
 
 
 def _safe_path(path: str) -&gt; Path:
+    &quot;&quot;&quot;Resolve a path and refuse anything outside the project.&quot;&quot;&quot;
     target = (PROJECT_ROOT / path).resolve()
     if PROJECT_ROOT not in target.parents and target != PROJECT_ROOT:
-        raise ValueError("files outside the project are not allowed")
+        raise ValueError(&quot;Files outside the project cannot be accessed.&quot;)
     return target
 
 
 def read_file(path: str) -&gt; str:
-    return _safe_path(path).read_text(encoding="utf-8")[:4000]
-
-
-WRITE_ROOTS = [PROJECT_ROOT, PROJECT_ROOT / "tests"]
+    &quot;&quot;&quot;Read a file inside the project (first 4000 characters).&quot;&quot;&quot;
+    return _safe_path(path).read_text(encoding=&quot;utf-8&quot;)[:4000]
 
 
 def write_file(path: str, content: str) -&gt; str:
+    &quot;&quot;&quot;Overwrite a .py file directly under the project root or under tests/.&quot;&quot;&quot;
     target = _safe_path(path)
-    if not any(root == target.parent or root in target.parents
-               for root in WRITE_ROOTS):
-        raise ValueError("only the project root and tests/ may be written")
-    if target.suffix != ".py":
-        raise ValueError("only .py files may be written")
-    target.write_text(content, encoding="utf-8")
-    return f"updated {path}"
+    if not any(root == target.parent for root in WRITE_ROOTS):
+        raise ValueError(&quot;Only files directly under the project root or under tests/ may be written.&quot;)
+    if target.suffix != &quot;.py&quot;:
+        raise ValueError(&quot;Only .py files may be written.&quot;)
+    target.write_text(content, encoding=&quot;utf-8&quot;)
+    return f&quot;Updated {path}&quot;
 
 
 def run_tests() -&gt; str:
+    &quot;&quot;&quot;Run pytest in the project and return the tail of its output.&quot;&quot;&quot;
     r = subprocess.run(
-        ["pytest"],
+        [sys.executable, &quot;-m&quot;, &quot;pytest&quot;, &quot;-q&quot;],
         cwd=PROJECT_ROOT,
         capture_output=True,
         text=True,
@@ -296,7 +362,37 @@ def run_tests() -&gt; str:
     return (r.stdout + r.stderr)[-4000:]
 
 
-TOOLS = {"read_file": read_file, "write_file": write_file, "run_tests": run_tests}</code></pre>
+def tests_pass() -&gt; bool:
+    r = subprocess.run([sys.executable, &quot;-m&quot;, &quot;pytest&quot;, &quot;-q&quot;], cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=120)
+    return r.returncode == 0
+
+
+# ---- diff without git ---------------------------------------------------------
+
+def snapshot() -&gt; dict:
+    &quot;&quot;&quot;Remember the current content of the watched files.&quot;&quot;&quot;
+    out = {}
+    for rel in WATCHED_FILES:
+        p = PROJECT_ROOT / rel
+        out[rel] = p.read_text(encoding=&quot;utf-8&quot;) if p.exists() else &quot;&quot;
+    return out
+
+
+def make_diff(before: dict) -&gt; str:
+    &quot;&quot;&quot;Unified diff between a snapshot and the files as they are now.&quot;&quot;&quot;
+    chunks = []
+    for rel, old in before.items():
+        p = PROJECT_ROOT / rel
+        new = p.read_text(encoding=&quot;utf-8&quot;) if p.exists() else &quot;&quot;
+        if old == new:
+            continue
+        chunks.append(&quot;&quot;.join(difflib.unified_diff(
+            old.splitlines(keepends=True), new.splitlines(keepends=True),
+            fromfile=f&quot;{rel} (before)&quot;, tofile=f&quot;{rel} (after)&quot;)))
+    return &quot;\n&quot;.join(chunks) if chunks else &quot;(no changes)&quot;
+
+
+TOOLS = {&quot;read_file&quot;: read_file, &quot;write_file&quot;: write_file, &quot;run_tests&quot;: run_tests}</code></pre>
 
     <table>
       <thead><tr><th>Limit</th><th>What it prevents</th></tr></thead>
@@ -311,59 +407,87 @@ TOOLS = {"read_file": read_file, "write_file": write_file, "run_tests": run_test
 
     <h3><span class="n">7.1.2</span>The tool definitions and the loop</h3>
 
-<pre><code>import ollama
+<pre><code>&quot;&quot;&quot;7.1 — The smallest possible agent, in plain Python.
 
-MODEL = "qwen3.8:27b"
+Run from the vibe-chat folder:   python agent/agent_plain.py
+
+The loop below is the whole idea of an agent:
+  1. we give the model a list of tools (SCHEMA)
+  2. the model answers with tool calls (or a final message)
+  3. WE run the tool and send the result back
+  4. repeat, with a hard limit on the number of steps
+&quot;&quot;&quot;
+
+import json
+
+import requests
+
+from config import BASE_URL, MODEL, HEADERS, API_KEY
+from tools import TOOLS
 
 SCHEMA = [
-    {"type": "function", "function": {
-        "name": "read_file",
-        "description": "read a file inside the project",
-        "parameters": {"type": "object",
-                       "properties": {"path": {"type": "string"}},
-                       "required": ["path"]}}},
-    {"type": "function", "function": {
-        "name": "write_file",
-        "description": "rewrite a .py file inside the project",
-        "parameters": {"type": "object",
-                       "properties": {"path": {"type": "string"},
-                                      "content": {"type": "string"}},
-                       "required": ["path", "content"]}}},
-    {"type": "function", "function": {
-        "name": "run_tests",
-        "description": "run pytest and return the result",
-        "parameters": {"type": "object", "properties": {}}}},
+    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
+        &quot;name&quot;: &quot;read_file&quot;,
+        &quot;description&quot;: &quot;Read a file inside the project. Use it to look at app.py and tests/test_app.py.&quot;,
+        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;,
+                       &quot;properties&quot;: {&quot;path&quot;: {&quot;type&quot;: &quot;string&quot;}},
+                       &quot;required&quot;: [&quot;path&quot;]}}},
+    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
+        &quot;name&quot;: &quot;write_file&quot;,
+        &quot;description&quot;: &quot;Overwrite a .py file inside the project with new content.&quot;,
+        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;,
+                       &quot;properties&quot;: {&quot;path&quot;: {&quot;type&quot;: &quot;string&quot;},
+                                      &quot;content&quot;: {&quot;type&quot;: &quot;string&quot;}},
+                       &quot;required&quot;: [&quot;path&quot;, &quot;content&quot;]}}},
+    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
+        &quot;name&quot;: &quot;run_tests&quot;,
+        &quot;description&quot;: &quot;Run pytest and return the result.&quot;,
+        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: {}}}},
 ]
+
+SYSTEM = (
+    &quot;You are a careful coding agent working inside a small Flask project. &quot;
+    &quot;Use the tools to read files, edit files and run the tests. &quot;
+    &quot;Fix the failing test by fixing the application code, not by changing the test. &quot;
+    &quot;When the tests pass, reply with a short summary of what you changed.&quot;
+)
+
+
+def chat(messages):
+    &quot;&quot;&quot;One call to the OpenAI-compatible endpoint of the shared server.&quot;&quot;&quot;
+    r = requests.post(
+        f&quot;{BASE_URL}/chat/completions&quot;,
+        headers={**HEADERS, &quot;Authorization&quot;: f&quot;Bearer {API_KEY}&quot;, &quot;Content-Type&quot;: &quot;application/json&quot;},
+        json={&quot;model&quot;: MODEL, &quot;messages&quot;: messages, &quot;tools&quot;: SCHEMA, &quot;temperature&quot;: 0},
+        timeout=300,
+    )
+    r.raise_for_status()
+    return r.json()[&quot;choices&quot;][0][&quot;message&quot;]
 
 
 def agent(goal: str, max_steps: int = 12) -&gt; str:
-    messages = [{"role": "user", "content": goal}]
-
+    messages = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM}, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: goal}]
     for step in range(max_steps):
-        reply = ollama.chat(model=MODEL, messages=messages, tools=SCHEMA)
-        # depending on the library version this is an object or a dict.
-        # normalise to a dict before using it.
-        msg = dict(reply["message"])
+        msg = chat(messages)
         messages.append(msg)
-
-        calls = msg.get("tool_calls") or []
+        calls = msg.get(&quot;tool_calls&quot;) or []
         if not calls:
-            return msg["content"]            # nothing proposed, so stop
-
+            return msg.get(&quot;content&quot;) or &quot;(no content)&quot;       # no tool call: the model is done
         for call in calls:
-            fn = dict(dict(call)["function"])
-            name = fn["name"]
-            args = fn.get("arguments") or {}
+            name = call[&quot;function&quot;][&quot;name&quot;]
+            args = json.loads(call[&quot;function&quot;].get(&quot;arguments&quot;) or &quot;{}&quot;)
+            shown = {k: (v[:60] + &quot;…&quot; if isinstance(v, str) and len(v) &gt; 60 else v) for k, v in args.items()}
+            print(f&quot;[{step}] {name}({shown})&quot;)
             try:
-                result = TOOLS[name](**args)   # this is where it actually happens
-            except Exception as e:
-                result = f"error: {e}"
-            messages.append({"role": "tool", "content": str(result)})
+                result = TOOLS[name](**args)
+            except Exception as e:                              # a failure is also a result
+                result = f&quot;ERROR: {e}&quot;
+            messages.append({&quot;role&quot;: &quot;tool&quot;, &quot;tool_call_id&quot;: call[&quot;id&quot;], &quot;content&quot;: str(result)})
+    return &quot;Stopped: reached the maximum number of steps.&quot;
 
-    return "stopped (reached the step limit)"
 
-
-print(agent("Run pytest, find out why a test is failing, and fix it"))</code></pre>
+if __name__ == &quot;__main__&quot;:
+    print(agent(&quot;Run the tests, find out why one of them fails, and fix it.&quot;))</code></pre>
 
     <h3><span class="n">7.1.3</span>The core of an agent is in this loop</h3>
 
@@ -380,7 +504,7 @@ print(agent("Run pytest, find out why a test is failing, and fix it"))</code></p
     <table>
       <thead><tr><th>In the loop</th><th>What it corresponds to</th></tr></thead>
       <tbody>
-        <tr><td><code>ollama.chat(...)</code></td><td>Decide</td></tr>
+        <tr><td><code>chat(messages)</code></td><td>Decide</td></tr>
         <tr><td><code>TOOLS[name](**args)</code></td><td>Execute</td></tr>
         <tr><td><code>messages.append(...)</code></td><td>Feed the result back</td></tr>
         <tr><td><code>for step in range(...)</code></td><td>Repeat, with a limit</td></tr>
@@ -388,6 +512,15 @@ print(agent("Run pytest, find out why a test is failing, and fix it"))</code></p
     </table>
 
     <p><span class="mark">Cline is doing the same four things, with a user interface around them.</span></p>
+
+    <div class="note">
+      <span class="tag">If it does not run</span>
+      The endpoint is the same shared server Cline uses. <span class="mark">If Cline works, matching the four values in <code>config.py</code> is all it takes.</span><br><br>
+      <code>401</code> / <code>403</code> / an HTML login page → Client ID / Secret<br>
+      <code>model ... not found</code> → the server number in <code>BASE_URL</code> and the number in <code>MODEL</code> do not match<br>
+      <code>502</code> → that server's Ollama is down; tell the instructor<br>
+      It stops early → <code>max_steps</code> was reached. The <code>[n] tool(args)</code> lines show what it did
+    </div>
   </section>
 
   <section class="sec" id="s7-2">
@@ -416,38 +549,46 @@ print(agent("Run pytest, find out why a test is failing, and fix it"))</code></p
 
     <h3><span class="n">7.2.2</span>A small exercise: a travel suggestion in a fixed shape</h3>
 
-    <p>Pulling specific fields out of free-form prose is difficult. <span class="mark">The program below forces the output into four fields:</span> name, region, how to get there, and what to see.</p>
+    <p>Pulling specific fields out of free-form prose is difficult. <span class="mark">The program below forces the output into four fields:</span> place, city, how to get there, and what makes it worth it.</p>
 
-<pre><code>uv add langchain langchain-ollama pydantic</code></pre>
+<pre><code>python agent/demo_structured.py</code></pre>
 
-<pre><code>from pydantic import BaseModel, Field
+<pre><code>&quot;&quot;&quot;7.2.2 — LangChain: force the model to answer in a fixed shape.
+
+Run from the vibe-chat folder:   python agent/demo_structured.py
+&quot;&quot;&quot;
+
+from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
+
+from config import BASE_URL, MODEL, HEADERS, API_KEY
 
 
 class Destination(BaseModel):
-    name: str = Field(description="name of the destination")
-    region: str = Field(description="state or region it is in")
-    access: str = Field(description="main way to get there from the city")
-    highlight: str = Field(description="what makes it worth visiting")
+    name: str = Field(description=&quot;Name of the place&quot;)
+    city: str = Field(description=&quot;City or region&quot;)
+    access: str = Field(description=&quot;How to get there from central Mumbai&quot;)
+    highlight: str = Field(description=&quot;What makes it worth the trip&quot;)
 
 
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a travel adviser."),
-    ("human", "Suggest one destination about an hour from Mumbai."),
+    (&quot;system&quot;, &quot;You are a travel adviser for Mumbai.&quot;),
+    (&quot;human&quot;, &quot;Suggest one place to visit within about one hour of central Mumbai.&quot;),
 ])
 
-model = ChatOllama(model="qwen3.8:27b", temperature=0)
-structured_model = model.with_structured_output(Destination)
+model = ChatOpenAI(base_url=BASE_URL, api_key=API_KEY, model=MODEL, temperature=0,
+                   default_headers=HEADERS)
+structured_model = model.with_structured_output(Destination, method=&quot;function_calling&quot;)
 
-# prompt -> model -> Destination, in that order
+# Prompt -&gt; Model -&gt; Destination
 chain = prompt | structured_model
 result = chain.invoke({})
 
-print("destination:", result.name)
-print("region:", result.region)
-print("access:", result.access)
-print("highlight:", result.highlight)</code></pre>
+print(&quot;Place:    &quot;, result.name)
+print(&quot;City:     &quot;, result.city)
+print(&quot;Access:   &quot;, result.access)
+print(&quot;Highlight:&quot;, result.highlight)</code></pre>
 
     <h4>What to do with it</h4>
 
@@ -469,39 +610,59 @@ print("highlight:", result.highlight)</code></pre>
       </tbody>
     </table>
 
-<pre><code>from langchain.agents import create_agent
+<pre><code>python agent/agent_langchain.py</code></pre>
+
+<pre><code>&quot;&quot;&quot;7.2.3 — The same agent as 7.1, but LangChain/LangGraph run the loop.
+
+Run from the vibe-chat folder:   python agent/agent_langchain.py
+&quot;&quot;&quot;
+
 from langchain_core.tools import tool
-from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
+
+from config import BASE_URL, MODEL, HEADERS, API_KEY
+import tools as t
+
+
+# The docstring of each tool is what the model sees. 7.2.4 asks you to change them.
+@tool
+def read_file(path: str) -&gt; str:
+    &quot;&quot;&quot;Read a file inside the project. Use it to look at app.py and tests/test_app.py.&quot;&quot;&quot;
+    return t.read_file(path)
 
 
 @tool
-def read_file_tool(path: str) -&gt; str:
-    &quot;&quot;&quot;Read a file inside the project. Path is relative to the repository root.&quot;&quot;&quot;
-    return read_file(path)                # the constrained function from 7.1
+def write_file(path: str, content: str) -&gt; str:
+    &quot;&quot;&quot;Overwrite a .py file inside the project with new content.&quot;&quot;&quot;
+    return t.write_file(path, content)
 
 
 @tool
-def run_tests_tool() -&gt; str:
-    &quot;&quot;&quot;Run pytest and return the result as it is.&quot;&quot;&quot;
-    return run_tests()                    # the function from 7.1
+def run_tests() -&gt; str:
+    &quot;&quot;&quot;Run pytest and return the result.&quot;&quot;&quot;
+    return t.run_tests()
 
 
-@tool
-def write_file_tool(path: str, content: str) -&gt; str:
-    &quot;&quot;&quot;Rewrite a .py file in the project root or in tests/.&quot;&quot;&quot;
-    return write_file(path, content)      # the constrained function from 7.1
+model = ChatOpenAI(base_url=BASE_URL, api_key=API_KEY, model=MODEL, temperature=0,
+                   default_headers=HEADERS)
+
+SYSTEM = (
+    &quot;You are a careful coding agent working inside a small Flask project. &quot;
+    &quot;Fix the failing test by fixing the application code, not by changing the test. &quot;
+    &quot;When the tests pass, reply with a short summary of what you changed.&quot;
+)
+
+agent_executor = create_react_agent(model, [read_file, write_file, run_tests], prompt=SYSTEM)
 
 
-llm = ChatOllama(model="qwen3.8:27b")
+def run(goal: str) -&gt; str:
+    result = agent_executor.invoke({&quot;messages&quot;: [(&quot;user&quot;, goal)]}, {&quot;recursion_limit&quot;: 30})
+    return result[&quot;messages&quot;][-1].content
 
-agent_executor = create_agent(
-    model=llm,
-    tools=[read_file_tool, write_file_tool, run_tests_tool],
-    system_prompt=(
-        "Investigate the pytest failure and make the smallest fix. "
-        "Always run pytest after editing."
-    ),
-)</code></pre>
+
+if __name__ == &quot;__main__&quot;:
+    print(run(&quot;Run the tests, find out why one of them fails, and fix it.&quot;))</code></pre>
 
     <table>
       <thead><tr><th>7.1</th><th>7.2</th></tr></thead>
@@ -520,15 +681,15 @@ agent_executor = create_agent(
     </div>
 
     <div class="note">
-      <span class="tag">The function name may differ</span>
-      <code>create_agent</code> has been called different things across versions, including <code>create_react_agent</code>. <span class="mark">If the import fails, check the version you have installed.</span>
+      <span class="tag">Same server as Cline</span>
+      <code>ChatOpenAI</code> is given <code>base_url</code> and <code>default_headers</code>; underneath it is the shared server's Qwen, exactly as in Part 3. <code>create_react_agent</code> runs the loop you wrote by hand in 7.1.
     </div>
 
     <h3><span class="n">7.2.4</span>Exercise: change a docstring and compare</h3>
 
     <p>The docstring is not a comment. <strong>It is the description the model reads when choosing a tool.</strong></p>
 
-    <p>Change <code>read_file_tool</code>'s docstring to something vague, such as "does something with files", and run the same task again.</p>
+    <p>In <code>agent/agent_langchain.py</code>, change <code>read_file</code>'s docstring to something vague, such as "does something with files", and run the same task again.</p>
 
     <table>
       <thead><tr><th>Watch for</th></tr></thead>
@@ -598,18 +759,24 @@ agent_executor = create_agent(
 
     <p><strong>The only place an LLM is called is <code>implement</code>.</strong> Everything else is ordinary Python.</p>
 
-<pre><code>uv add langgraph</code></pre>
 
-<pre><code>import subprocess
-from typing import TypedDict
+
+<pre><code>from typing import TypedDict
+
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, END
+from langgraph.types import interrupt, Command
 
-MAX_ATTEMPTS = 3
+import tools as t
+from agent_langchain import agent_executor
+
+MAX_ATTEMPTS = 3        # 7.3.2: the stop condition. Try changing it.
 
 
 class State(TypedDict, total=False):
     goal: str
     attempts: int
+    before: dict          # snapshot of the watched files, taken in plan
     check_output: str
     passed: bool
     diff: str
@@ -618,39 +785,37 @@ class State(TypedDict, total=False):
 
 
 def plan(state: State) -&gt; State:
-    return {**state, "attempts": 0}
+    return {**state, &quot;attempts&quot;: 0, &quot;before&quot;: t.snapshot()}
 
 
 def implement(state: State) -&gt; State:
-    # the only agent call. reuses agent_executor from 7.2.
-    prompt = state["goal"]
-    if state.get("check_output"):
-        prompt += f"\n\nPrevious run:\n{state['check_output']}"
-    if state.get("review_feedback"):
-        prompt += f"\n\nFeedback from the reviewer:\n{state['review_feedback']}"
-    agent_executor.invoke({"messages": [("user", prompt)]})
-    return {**state, "attempts": state["attempts"] + 1}
+    # The only place the model is called.
+    prompt = state[&quot;goal&quot;]
+    if state.get(&quot;check_output&quot;):
+        prompt += f&quot;\n\nResult of the last test run:\n{state[&#x27;check_output&#x27;]}&quot;
+    if state.get(&quot;review_feedback&quot;):
+        prompt += f&quot;\n\nFeedback from the human reviewer:\n{state[&#x27;review_feedback&#x27;]}&quot;
+    agent_executor.invoke({&quot;messages&quot;: [(&quot;user&quot;, prompt)]}, {&quot;recursion_limit&quot;: 30})
+    return {**state, &quot;attempts&quot;: state[&quot;attempts&quot;] + 1}
 
 
 def check(state: State) -&gt; State:
-    r = subprocess.run(["pytest"], cwd=PROJECT_ROOT,
-                       capture_output=True, text=True, timeout=120)
-    return {**state,
-            "check_output": (r.stdout + r.stderr)[-4000:],
-            "passed": r.returncode == 0}
+    # pytest is a node of its own. The model never gets to &quot;say&quot; the tests passed.
+    output = t.run_tests()
+    return {**state, &quot;check_output&quot;: output, &quot;passed&quot;: t.tests_pass()}
 
 
 def route_after_check(state: State) -&gt; str:
-    if state["passed"]:
-        return "review"
-    if state["attempts"] &gt;= MAX_ATTEMPTS:
-        return "give_up"
-    return "implement"
+    if state[&quot;passed&quot;]:
+        return &quot;review&quot;
+    if state[&quot;attempts&quot;] &gt;= MAX_ATTEMPTS:
+        return &quot;give_up&quot;
+    return &quot;implement&quot;
 
 
 def give_up(state: State) -&gt; State:
-    print("Three attempts, still failing. Handing back to a human.")
-    print(state["check_output"])
+    print(f&quot;\nGave up after {MAX_ATTEMPTS} attempts. Handing over to a human.\n&quot;)
+    print(state[&quot;check_output&quot;])
     return state</code></pre>
 
     <div class="note">
@@ -674,64 +839,86 @@ def give_up(state: State) -&gt; State:
   <section class="sec" id="s7-4">
     <h2><span class="n">7.4</span>Approval, interruption and resuming</h2>
 
-    <p>The <code>review</code> node stops the run and waits for a human decision.</p>
+    <p>The <code>review</code> node stops the run and waits for a human decision. The diff is made by comparing the files now with the copy taken in <code>plan</code> (<code>snapshot</code>); git is not needed.</p>
 
-<pre><code>from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import StateGraph, START, END
-from langgraph.types import interrupt, Command
-
-
-def review(state: State) -&gt; State:
-    diff = subprocess.run(["git", "diff"], cwd=PROJECT_ROOT,
-                          capture_output=True, text=True).stdout
+<pre><code>def review(state: State) -&gt; State:
+    diff = t.make_diff(state[&quot;before&quot;])
     answer = interrupt({
-        "diff": diff[:4000],
-        "check_output": state["check_output"],
-        "question": "Accept this change?",
-        "choices": ["approve", "revise", "stop"],
-        "when_revise": "Say what you want changed",
+        &quot;diff&quot;: diff[:4000],
+        &quot;check_output&quot;: state[&quot;check_output&quot;],
+        &quot;question&quot;: &quot;Approve these changes?&quot;,
+        &quot;choices&quot;: [&quot;approve&quot;, &quot;revise&quot;, &quot;stop&quot;],
     })
-    return {**state,
-            "diff": diff,
-            "decision": answer["decision"],
-            "review_feedback": answer.get("feedback", "")}
+    return {**state, &quot;diff&quot;: diff,
+            &quot;decision&quot;: answer[&quot;decision&quot;],
+            &quot;review_feedback&quot;: answer.get(&quot;feedback&quot;, &quot;&quot;)}
 
 
 def route_after_review(state: State) -&gt; str:
-    if state["decision"] == "revise":
-        return "implement"   # send the feedback back and try again
-    return END               # approve and stop both end the run</code></pre>
+    if state[&quot;decision&quot;] == &quot;revise&quot;:
+        return &quot;implement&quot;          # send the feedback back to the agent
+    return END                      # approve and stop both end here</code></pre>
 
     <h3><span class="n">7.4.1</span>Now assemble it</h3>
 
 <pre><code>graph = StateGraph(State)
-graph.add_node("plan", plan)
-graph.add_node("implement", implement)
-graph.add_node("check", check)
-graph.add_node("review", review)
-graph.add_node("give_up", give_up)
-
-graph.add_edge(START, "plan")
-graph.add_edge("plan", "implement")
-graph.add_edge("implement", "check")
-graph.add_conditional_edges("check", route_after_check)
-graph.add_conditional_edges("review", route_after_review)
-graph.add_edge("give_up", END)
-
+graph.add_node(&quot;plan&quot;, plan)
+graph.add_node(&quot;implement&quot;, implement)
+graph.add_node(&quot;check&quot;, check)
+graph.add_node(&quot;review&quot;, review)
+graph.add_node(&quot;give_up&quot;, give_up)
+graph.add_edge(START, &quot;plan&quot;)
+graph.add_edge(&quot;plan&quot;, &quot;implement&quot;)
+graph.add_edge(&quot;implement&quot;, &quot;check&quot;)
+graph.add_conditional_edges(&quot;check&quot;, route_after_check)
+graph.add_conditional_edges(&quot;review&quot;, route_after_review)
+graph.add_edge(&quot;give_up&quot;, END)
 app = graph.compile(checkpointer=MemorySaver())
 
-config = {"configurable": {"thread_id": "task-001"}}
-app.invoke({"goal": "Fix the failing pytest"}, config)
-# -&gt; stops at interrupt and returns the diff
-# a human reads the diff, then resumes
 
-app.invoke(Command(resume={"decision": "approve"}), config)
+def main():
+    config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;task-001&quot;}}
+    result = app.invoke({&quot;goal&quot;: &quot;Run the tests, find out why one of them fails, and fix it.&quot;}, config)
 
-# if you want something changed
-app.invoke(Command(resume={
-    "decision": "revise",
-    "feedback": "Fix the implementation, not the test",
-}), config)</code></pre>
+    # While the graph is paused at `review`, show the diff and ask the human.
+    while &quot;__interrupt__&quot; in result:
+        payload = result[&quot;__interrupt__&quot;][0].value
+        print(&quot;\n&quot; + &quot;=&quot; * 60)
+        print(&quot;TESTS:\n&quot; + payload[&quot;check_output&quot;].strip().splitlines()[-1])
+        print(&quot;-&quot; * 60)
+        print(&quot;DIFF:\n&quot; + payload[&quot;diff&quot;])
+        print(&quot;=&quot; * 60)
+        decision = &quot;&quot;
+        while decision not in (&quot;approve&quot;, &quot;revise&quot;, &quot;stop&quot;):
+            decision = input(&quot;approve / revise / stop &gt; &quot;).strip().lower()
+        feedback = input(&quot;What should be changed? &gt; &quot;) if decision == &quot;revise&quot; else &quot;&quot;
+        result = app.invoke(Command(resume={&quot;decision&quot;: decision, &quot;feedback&quot;: feedback}), config)
+
+    print(&quot;\nFinished. Decision:&quot;, result.get(&quot;decision&quot;, &quot;(gave up)&quot;))
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</code></pre>
+
+    <h4>Run it</h4>
+
+<pre><code>python agent/break_app.py      # if you have not broken it yet
+python agent/agent_graph.py</code></pre>
+
+    <p>When the agent's fix makes the tests pass, the diff is printed and the program stops at <code>approve / revise / stop &gt;</code>. <span class="mark">This is condition 4 in 7.0.2.</span> The agent does not end on its own.</p>
+
+    <h4>Revise at least once</h4>
+
+    <p>Read the diff. The first time, choose <code>revise</code> and write one line of feedback in English, for example:</p>
+
+<pre><code>Do not change tests/test_app.py. Fix app.py only.
+Keep the error message exactly "User name cannot be empty."</code></pre>
+
+    <p>The agent goes back to <code>implement</code> with the last test output and your feedback. <strong>How the second diff differs from the first is what you write in REPORT.txt (7.6).</strong> When you are satisfied, <code>approve</code>.</p>
+
+    <h4>Change the stop condition</h4>
+
+    <p>Set <code>MAX_ATTEMPTS = 3</code> in <code>agent/agent_graph.py</code> to <code>1</code>, break the app again and run. If one attempt is not enough, the run goes to <code>give_up</code> and hands over to you. <span class="mark">"The agent gives up" is behaviour you designed.</span> Put it back to 3 afterwards.</p>
 
     <p>Choosing <code>revise</code> sends the run back to <code>implement</code>. <span class="mark">The agent tries again using the previous test output and your feedback.</span></p>
 
@@ -791,7 +978,7 @@ app.invoke(Command(resume={
 
     <h3><span class="n">7.5.1</span>Start a kitchen board server</h3>
 
-<pre><code>uv add mcp</code></pre>
+<pre><code>pip install mcp</code></pre>
 
 <pre><code># tools/kitchen_board_mcp.py
 import json
@@ -824,8 +1011,8 @@ if __name__ == "__main__":
 <pre><code>{
   "mcpServers": {
     "kitchen-board": {
-      "command": "uv",
-      "args": ["run", "python", "tools/kitchen_board_mcp.py"]
+      "command": "python",
+      "args": ["tools/kitchen_board_mcp.py"]
     }
   }
 }</code></pre>
@@ -932,25 +1119,32 @@ Report it as needing human confirmation.</div>
   <section class="sec" id="s7-6">
     <h2><span class="n">7.6</span>What to hand in</h2>
 
-    <p>Show that you actually met the conditions you set in 7.0.2.</p>
+    <p>You hand in <strong>one zip file</strong>: the <code>vibe-chat</code> folder with <code>REPORT.txt</code> added and <code>agent/config.py</code> removed.</p>
+
+<pre><code>vibe-chat/
+├── app.py, templates/, tests/
+├── agent/                 ← without config.py
+└── REPORT.txt             ← add this</code></pre>
+
+    <p><code>REPORT.txt</code> has three entries.</p>
 
     <table>
-      <thead><tr><th></th><th>What</th></tr></thead>
+      <thead><tr><th></th><th>Write</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td>The code from 7.1 to 7.4, including <code>_safe_path</code> and <code>WRITE_ROOTS</code></td></tr>
-        <tr><td><strong>2</strong></td><td>The agent's run log. How many attempts it took, and what it did along the way</td></tr>
-        <tr><td><strong>3</strong></td><td>The screen where <code>interrupt</code> paused, and the <code>git diff</code> it showed</td></tr>
-        <tr><td><strong>4</strong></td><td><strong>Use <code>revise</code> at least once.</strong> What feedback you gave, and how the second attempt differed</td></tr>
-        <tr><td><strong>5</strong></td><td>If you did 7.5: how the agent's decision changed before and after editing <code>kitchen_board.json</code></td></tr>
+        <tr><td><strong>1</strong></td><td>The one line you gave with <code>revise</code>, and how the second diff differed from the first</td></tr>
+        <tr><td><strong>2</strong></td><td>What happened with <code>MAX_ATTEMPTS = 1</code> (fixed in one go, or went to give_up)</td></tr>
+        <tr><td><strong>3</strong></td><td>Only if you did 7.5: how the agent's judgement changed before and after editing <code>kitchen_board.json</code></td></tr>
       </tbody>
     </table>
 
     <div class="note">
-      <span class="tag">Number 4 is the centre of it</span>
-      <span class="mark">A record of sending something back scores higher than an approval on the first try.</span><br><br>
-      An approval step that only ever produces approvals is not doing anything. <strong>Its value is in being able to send work back.</strong><br><br>
-      If it passed first time, look at the diff again and find something you would genuinely want changed. Write that, and send it back.
+      <span class="tag">Entry 1 matters most</span>
+      <span class="mark">A record of sending the change back and having it redone counts for more than a change approved first time.</span> An approval step is not built so that you can approve. It is built so that you can send things back.<br><br>
+      Even if the first diff is fine, <strong>find one thing to say and send it back.</strong> The point is to confirm that the route back works.
     </div>
+
+    <p>Right-click the <code>vibe-chat</code> folder, compress it, name it <code>PART7_StudentID.zip</code>, and upload it here.</p>
+    <p><a href="FORM_URL_PART7" target="_blank" rel="noopener"><strong>FORM_URL_PART7</strong></a></p>
 
     <h3><span class="n">7.6.1</span>Something to think about</h3>
 

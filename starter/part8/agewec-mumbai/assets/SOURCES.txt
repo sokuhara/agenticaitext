@@ -1,0 +1,4 @@
+# One line per clip. Fields separated by " | ".
+# cutN | how it was made (service name, or "own photo/video", or "Pexels: URL") | the prompt you used | date
+# Example:
+# cut1 | Colab Wan2.1 (course notebook) | slow pan over a Mumbai suburban train at dawn, wide shot | 2026-09-10

@@ -212,11 +212,22 @@ Do not break a single existing test.</div>
       Checking everything by hand after every change is not sustainable. So you write the checkable parts down while you still remember them. <strong>That is what Part 5 was for.</strong>
     </div>
 
-    <h3><span class="n">6.1.2</span>Before you start</h3>
+    <h3><span class="n">6.1.2</span>The starting files</h3>
 
-    <p>Run <code>pytest</code> and <span class="mark">confirm that it passes right now.</span></p>
+    <p>As in Part 5, <span class="mark">everyone starts from the same folder.</span> It is the app as it stands at the end of Part 5: the Flask version, with Delete and the 200-character limit on the server side, and two tests. Use this one, not your own folder.</p>
 
-<pre><code>pytest</code></pre>
+    <p><a href="../starter/part6/vibe-chat-part6-starter.zip" download><strong>Download vibe-chat-part6-starter.zip</strong></a></p>
+
+    <p>Unzip it to get a <code>vibe-chat</code> folder. Open that folder in VS Code and, in the terminal:</p>
+
+<pre><code>pip install flask pytest
+pytest</code></pre>
+
+    <p><code>2 passed</code> means you are ready. <strong>Your own folder from Part 5 is untouched if you keep it somewhere else.</strong> If you use a virtual environment, create it inside <code>vibe-chat</code> as in Part 5.</p>
+
+    <h3><span class="n">6.1.3</span>Before you start</h3>
+
+    <p>Before adding anything, <span class="mark">make sure <code>pytest</code> passes right now.</span> If you saw <code>2 passed</code> above, that is done.</p>
 
     <p>Add features on top of a failing test suite and <strong>you will not be able to tell whether a later failure is old or new.</strong></p>
   </section>
@@ -364,7 +375,7 @@ Do not edit the file yet. Show the plan only.</div>
     </table>
 
     <p>Right-click the <code>vibe-chat</code> folder, compress it, name it <code>PART6_StudentID.zip</code>, and upload it here.</p>
-    <p><a href="FORM_URL_PART6" target="_blank" rel="noopener"><strong>FORM_URL_PART6</strong></a></p>
+    <p><a href="https://forms.gle/oHNPNnV438cLrz928" target="_blank" rel="noopener"><strong>https://forms.gle/oHNPNnV438cLrz928</strong></a></p>
 
     <div class="note">
       <span class="tag">Entry 2 matters most</span>

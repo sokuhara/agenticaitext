@@ -217,6 +217,14 @@ and an empty message are rejected.</div>
       On the server side, "an empty name is rejected" can be checked in code. <span class="mark">One command replaces a sequence of clicks.</span> <strong>It also runs the same way every time, which a person does not.</strong>
     </div>
 
+    <h3><span class="n">5.1.1b</span>The starting file</h3>
+
+    <p>In this part <span class="mark">everyone starts from the same <code>index.html</code>.</span> It is the app as it stands at the end of Part 4, with the Delete button and the 200-character limit. Use this one, not your own file.</p>
+
+    <p><a href="../starter/part5/index.html" download="index.html"><strong>Download index.html</strong></a> (<a href="../starter/part5/index.html" target="_blank" rel="noopener">open it in the browser to see it run</a>)</p>
+
+    <p>Put the downloaded file in a new folder called <code>vibe-chat</code> and open that folder in VS Code. <strong>Your own file from Parts 3 and 4 is untouched if you keep it somewhere else.</strong></p>
+
     <h3><span class="n">5.1.2</span>The files at the end</h3>
 
 <pre><code>vibe-chat/
@@ -259,9 +267,18 @@ Name / Student ID:
 
     <h3><span class="n">5.1.4</span>Setup</h3>
 
-    <p>Two packages, from the Cline terminal.</p>
+    <p>In the VS Code terminal, move into the <code>vibe-chat</code> folder and install two packages.</p>
 
 <pre><code>pip install flask pytest</code></pre>
+
+    <div class="note">
+      <span class="tag">A virtual environment is fine</span>
+      If you normally use <code>venv</code>, go ahead. Create it inside <code>vibe-chat</code>:<br><br>
+      <code>python -m venv .venv</code><br>
+      Windows: <code>.venv\Scripts\activate</code>　　macOS: <code>source .venv/bin/activate</code><br>
+      then run the <code>pip install</code> above.<br><br>
+      If you have never used one, skip it. <span class="mark">This part installs only flask and pytest, so the result is the same either way.</span> If you do use one, make sure it is active in the terminal where Cline runs <code>python</code> and <code>pytest</code>. Leave <code>.venv</code> out of the zip you hand in.
+    </div>
 
     <div class="note">
       <span class="tag">If that errors</span>
@@ -288,13 +305,18 @@ Name / Student ID:
       <tbody>
         <tr><td><strong>1</strong></td><td>The page opens in a browser</td><td>A person looks</td></tr>
         <tr><td><strong>2</strong></td><td>Sending a message adds it to the list</td><td>A person tries it</td></tr>
-        <tr><td><strong>3</strong></td><td>An empty name is not accepted</td><td><span class="mark">A test decides</span></td></tr>
-        <tr><td><strong>4</strong></td><td>An empty message is not accepted</td><td><span class="mark">A test decides</span></td></tr>
+        <tr><td><strong>3</strong></td><td>Sending with an empty name adds nothing, and the page shows "User name cannot be empty."</td><td><span class="mark">A test decides</span></td></tr>
+        <tr><td><strong>4</strong></td><td>Sending with an empty message adds nothing, and the page shows "Message cannot be empty."</td><td><span class="mark">A test decides</span></td></tr>
         <tr><td><strong>5</strong></td><td>Delete removes only that message, and it stays gone after a reload</td><td>You operate it</td></tr>
       </tbody>
     </table>
 
     <p>You check 1, 2 and 5. <strong>A machine checks 3 and 4.</strong> That split is what this part is about.</p>
+
+    <div class="note">
+      <span class="tag">3 and 4 are deliberately specific</span>
+      "An empty name is not accepted" leaves it to the agent to decide what "not accepted" means. <span class="mark">Spell out "adds nothing" and "shows this text", and what the test must check is decided by you.</span> You compare against these two lines when you read the tests in 5.3.2 and when you break things in 5.5.
+    </div>
   </section>
 
   <section class="sec" id="s5-3">
@@ -318,7 +340,9 @@ Requirements:
 - POST the form to a route, then show the messages below the form
 - Reject an empty user name and an empty message
 - Keep the Delete button and the 200-character limit from the current index.html, but implement both on the server side in app.py (no JavaScript logic)
-- tests/test_app.py must test that an empty name and an empty message are rejected
+- tests/test_app.py must contain exactly these two tests:
+  1. POST with an empty user name: the response contains "User name cannot be empty." and the message list is still empty
+  2. POST with an empty message: the response contains "Message cannot be empty." and the message list is still empty
 - Use Flask and pytest only
 
 Do not use:
@@ -338,7 +362,7 @@ Do not create or edit files yet. Show the plan only.</div>
         <tr><td>Only the four files?</td><td>Ask it to drop anything else</td></tr>
         <tr><td>No database?</td><td><span class="mark">SQLite or SQLAlchemy: ask for the Python list instead</span></td></tr>
         <tr><td>Does it keep the current design?</td><td>If it plans a rewrite, ask it to reuse the page</td></tr>
-        <tr><td>Are there at least two tests?</td><td>If there are none, say so</td></tr>
+        <tr><td>Are there two tests, matching 3 and 4 in 5.2.1?</td><td>If "adds nothing" or "shows this text" is missing, ask for it</td></tr>
       </tbody>
     </table>
 
@@ -367,7 +391,7 @@ Do not create or edit files yet. Show the plan only.</div>
     <div class="note">
       <span class="tag">Read the tests themselves</span>
       <span class="mark">Having tests and having tests that do something are different.</span><br><br>
-      A test containing only <code>assert True</code> passes every time, and looks exactly as green as a real one. <strong>Read them and decide for yourself what they check.</strong>
+      A test whose body just says "always succeed" also prints <code>passed</code>, and looks exactly like a real one. <strong>Do the two things in 3 and 4 of 5.2.1 (adds nothing, shows this text) each appear as an <code>assert</code>?</strong> That is what you read for.
     </div>
 
     <h3><span class="n">5.3.4</span>Check it in a browser</h3>
@@ -424,26 +448,70 @@ Do not create or edit files yet. Show the plan only.</div>
   <section class="sec" id="s5-5">
     <h2><span class="n">5.5</span>Break it on purpose and watch the test fail</h2>
 
-    <p>A passing test is not evidence that the test works. <span class="mark">A test that checks nothing also passes.</span></p>
+    <p><code>pytest</code> says <code>2 passed</code>. <span class="mark">Now for an awkward question.</span></p>
 
-    <p><strong>There is one way to find out: break the code and see.</strong></p>
+    <p><strong>What does that <code>passed</code> prove?</strong></p>
+
+    <p>That an empty name is rejected? No. It proves only that the test did not fail. <span class="mark">A test that checks nothing also says passed.</span></p>
+
+    <p>Think of the smoke alarm on the ceiling. Silence does not mean the building is safe. <strong>An alarm with no battery is silent as well.</strong> There is exactly one way to know the alarm is real: <span class="mark">hold smoke under it.</span></p>
+
+    <p>That is what you do here. Take the "reject an empty name" line out of <code>app.py</code> on purpose, so the app now accepts an empty name. <strong>You are the smoke.</strong> Then run <code>pytest</code>.</p>
+
+    <table>
+      <thead><tr><th>pytest says</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><strong><code>1 failed</code></strong></td><td>The alarm went off. The test is watching that line. <span class="mark">This is the result you want.</span></td></tr>
+        <tr><td><strong><code>2 passed</code></strong></td><td>Smoke, and no sound. The test is watching nothing. <strong>What is broken is not the app. It is the test.</strong></td></tr>
+      </tbody>
+    </table>
+
+    <p>Normally <code>failed</code> is bad news. For these five minutes it is the other way round. <span class="mark">failed means relief.</span> Once you have seen it, put the line back and confirm it says <code>2 passed</code> again. Done. (In the terminal, passed is printed in green and failed in red; that is what developers mean by "green" and "red".)</p>
+
+    <div class="note">
+      <span class="tag">Why now</span>
+      From the next part on, every time <code>app.py</code> changes you run <code>pytest</code> once and conclude "nothing existing broke". <span class="mark">You can only trust that conclusion to tests that really fail when something breaks.</span> So you hold smoke under them once, here.
+    </div>
 
     <h3><span class="n">5.5.1</span>Steps</h3>
 
     <div class="flow-steps">
       <p><strong>1</strong>　Open <code>app.py</code></p>
-      <p><strong>2</strong>　<span class="mark">Comment out the check that rejects an empty name</span></p>
-      <p><strong>3</strong>　Save and run <code>pytest</code></p>
-      <p><strong>4</strong>　<strong>Confirm that it fails</strong></p>
-      <p><strong>5</strong>　Put the check back and run <code>pytest</code> again</p>
-      <p><strong>6</strong>　Confirm that it passes</p>
+      <p><strong>2</strong>　<span class="mark">Comment out the part that rejects an empty name</span> (example below)</p>
+      <p><strong>3</strong>　Save, then run <code>pytest</code> in the terminal</p>
+      <p><strong>4</strong>　<strong>Confirm that one test fails and one passes</strong> (example below)</p>
+      <p><strong>5</strong>　Uncomment it, save, and run <code>pytest</code> again</p>
+      <p><strong>6</strong>　Confirm that both pass</p>
     </div>
 
-    <p>If step 4 does not fail, <span class="mark">that test is not checking anything.</span></p>
+    <h4>2　What to comment out</h4>
+
+    <p>Somewhere in the <code>app.py</code> Cline wrote, a few lines refuse an empty name. Search for <code>name</code> and <code>empty</code>. It looks roughly like this:</p>
+
+<pre><code>if not name:
+    return render_template("index.html", error="User name cannot be empty.", messages=messages), 400</code></pre>
+
+    <p>Put <code>#</code> at the start of each line from the <code>if</code> to the <code>return</code>. <span class="mark">The whole block, not one line.</span></p>
+
+<pre><code># if not name:
+#     return render_template("index.html", error="User name cannot be empty.", messages=messages), 400</code></pre>
+
+    <p>The app now accepts an empty name. <strong>Your file may look a little different from this example.</strong> What matters is that the "reject an empty name" part is gone.</p>
+
+    <h4>4　What success looks like</h4>
+
+    <p>The last lines of the <code>pytest</code> output should be like this:</p>
+
+<pre><code>FAILED tests/test_app.py::test_empty_name_is_rejected - assert ...
+1 failed, 1 passed</code></pre>
+
+    <p><strong>Only the name test</strong> fails; the message test still passes. <span class="mark">That is the evidence that the test is watching that line.</span> Cline chose the test name, so anything with <code>name</code> in it is the same thing.</p>
+
+    <p>If it still says <code>2 passed</code>, go to 5.5.2.</p>
 
     <h3><span class="n">5.5.2</span>If it did not fail</h3>
 
-    <p>Have Cline fix it. <strong>Give the symptom and what should happen.</strong></p>
+    <p>If it still says <code>2 passed</code>, the thing to fix is the test. Have Cline fix it, written the same way as the three lines in Part 4.</p>
 
     <div class="prompt"><span class="tag">PROMPT</span>I commented out the empty-name check in app.py, but the tests still pass.
 
@@ -454,7 +522,16 @@ Inspect tests/test_app.py and show a short plan.
 Edit tests/test_app.py only.
 Do not edit the file yet.</div>
 
-    <p>The same shape as Part 4. <span class="mark">Symptom, expected result, constraints.</span></p>
+        <table>
+      <thead><tr><th>The three lines from Part 4</th><th>In this prompt</th></tr></thead>
+      <tbody>
+        <tr><td>What you did</td><td>Commented out the empty-name check in app.py</td></tr>
+        <tr><td>What happened</td><td>The tests still passed</td></tr>
+        <tr><td><span class="mark">What should happen instead</span></td><td>With that line gone, the test should fail</td></tr>
+      </tbody>
+    </table>
+
+    <p>On top of that, the last lines say <strong>only tests/test_app.py may be edited</strong>. If Cline "fixed" app.py instead, it would just put the line back, and the test would stay decorative.</p>
 
     <div class="note">
       <span class="tag">This is how you test a test</span>

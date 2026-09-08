@@ -168,13 +168,13 @@ th{background:var(--accent-soft);font-weight:700}
   <header class="masthead">
     <div class="eyebrow">PART 8</div>
     <h1>Agentic AIで動画制作を回す</h1>
-    <p class="lede">最終課題です。あなたは小さな制作チームのプロデューサーです。テーマを与えると1分の解説動画を完成させる制作Agentを、Google Colabの上に作ります。作るのは動画ではなく、複数の道具を使い、確認を挟みながら成果物を仕上げるAgentの仕事の流れです。</p>
+    <p class="lede">最終課題です。あなたは小さな制作チームのプロデューサーです。世界の人にムンバイへ来てもらうための短い動画を、複数の道具と2回の承認を挟みながら仕上げる制作Agentを、手元のVS Codeで動かします。作るのは動画そのものではなく、動画を仕上げる仕事の流れです。</p>
   </header>
 
   <div class="bridge">
     <dl>
       <dt>前章まで</dt><dd>PART 7で、Agentの中身を自分で組み立てました。ツール呼び出し、分岐、停止条件、人間の承認、中断と再開です。</dd>
-      <dt>この章</dt><dd>同じ設計を、コーディング以外の仕事に当てはめます。企画、根拠確認、台本、素材、組み立て、評価、修正。人間が承認するのは、企画と事実確認と公開判断です。</dd>
+      <dt>この章</dt><dd>同じ設計を、コーディング以外の仕事に当てはめます。企画、承認、素材、組み立て、検査、修正。人間が承認するのは、企画と公開判断です。</dd>
       <dt>次章へ</dt><dd>Agentのリリースと運用については、付録Cにまとめてあります。</dd>
     </dl>
   </div>
@@ -183,11 +183,11 @@ th{background:var(--accent-soft);font-weight:700}
     <h2>この章の内容</h2>
     <ol>
       <li><span class="n">8.1</span><a href="#s8-1">動画制作を「仕事の流れ」に分ける</a></li>
-      <li><span class="n">8.2</span><a href="#s8-2">Colabで状態とツールを用意する</a></li>
-      <li><span class="n">8.3</span><a href="#s8-3">企画から絵コンテまでをAgentに任せる</a></li>
-      <li><span class="n">8.4</span><a href="#s8-4">承認後、動画に組み立てる</a></li>
-      <li><span class="n">8.5</span><a href="#s8-5">評価し、修正ループを回す</a></li>
-      <li><span class="n">8.6</span><a href="#s8-6">公開できない理由を確認する</a></li>
+      <li><span class="n">8.2</span><a href="#s8-2">参考：Wan2.1を自分で動かしてみる（任意）</a></li>
+      <li><span class="n">8.3</span><a href="#s8-3">素材の規約</a></li>
+      <li><span class="n">8.4</span><a href="#s8-4">本番：制作Agentを動かす</a></li>
+      <li><span class="n">8.5</span><a href="#s8-5">公開できない理由を確認する</a></li>
+      <li><span class="n">8.6</span><a href="#s8-6">提出と相互評価</a></li>
     </ol>
   </nav>
 
@@ -195,396 +195,499 @@ th{background:var(--accent-soft);font-weight:700}
   <section class="sec" id="s8-0" style="margin-bottom:44px">
     <h2><span class="n">8.0</span>この章で何をするか</h2>
 
-    <h3>この章で学ぶこと</h3>
+    <p>PART 7で作ったAgentには、<strong>状態、ツール、分岐、承認</strong>がありました。<span class="mark">その設計を、コーディング以外の仕事へ移します。</span>題材は動画制作です。</p>
 
-    <p>PART 7で作ったAgentには、<strong>状態、ツール、分岐、承認</strong>がありました。<span class="mark">その設計を、コーディング以外の仕事へ移します。</span></p>
+    <div class="prompt"><span class="tag">FINAL MISSION</span>AGEWEC Mumbai。
+世界の人にムンバイへ来てもらうための、60秒以下の動画を1本仕上げなさい。
+仕上げるのはあなたではなく、あなたが動かす制作Agentです。
+Agentは、企画を書き、あなたの承認を待ち、素材が揃ったら組み立て、検査し、あなたの公開判断で止まります。</div>
 
-    <p><span class="mark">動画制作は題材です。</span>目的は2つあります。複数段階の仕事を分解すること。<strong>機械が判定する部分と、人間が判断する部分を分けること。</strong></p>
+    <h3>やること</h3>
 
-    <h3>この章を終えると</h3>
+    <p>制作Agentで60秒以下の動画を1本仕上げます。素材は8.3の規約の範囲で自分で作ります。企画、承認、素材、編集、検査、公開判断の順に、約90分。</p>
 
-    <p>企画から公開判断までを持つ制作ワークフローを設計できるようになります。<strong>修正ループを含むNotebookを作れるようになります。</strong></p>
-
-    <h3>この章で繰り返す進め方</h3>
-
-    <div class="flow-steps">
-      <p><strong>1</strong>　仕事を分解する</p>
-      <p><strong>2</strong>　状態とツールを決める</p>
-      <p><strong>3</strong>　人間の承認位置を決める</p>
-      <p><strong>4</strong>　実行する</p>
-      <p><strong>5</strong>　失敗したら戻す</p>
-    </div>
-
-    <p>PART 7の <code>plan → implement → check → 分岐</code> と同じ形です。<span class="mark">工程の数が増えるだけで、考え方は変わりません。</span></p>
-
-    <h3><span class="n">8.0.1</span>最終課題</h3>
-
-<div class="prompt"><span class="tag">FINAL MISSION</span>「学生が知るべき地域の魅力」「大学生活で本当に役立つこと」「身近な社会課題」からテーマを1つ選び、1分の解説動画を完成させる制作Agentを作りなさい。
-
-Agentは、構成を考え、根拠を確認し、台本を作り、素材の指示を出し、
-動画を組み立て、チェック結果を見て修正する。
-
-人間は、企画の承認、事実確認、公開判断を行う。</div>
-
-<div class="warn">
-      <span class="tag">これは動画コンテストではありません</span>
-      評価するのは映像の見栄えではありません。<span class="mark">仕事をどう分解したか、どこに人間の確認を置いたか、失敗したときにどう戻したか</span>です。凝った映像でも、評価は低くなることがあります。<span class="mark">Agentの流れが1本道で、承認も再試行もない場合です。</span><br><br>
-      逆に、素材が文字と静止画だけでも構いません。<strong>根拠確認のノードがあり、しきい値で人間に渡す設計なら、良い提出物です。</strong>
-    </div>
-
-<h3><span class="n">8.0.2</span>なぜColabなのか</h3>
-
-    <table>
-      <thead><tr><th></th><th>理由</th></tr></thead>
-      <tbody>
-        <tr><td><strong>GPUが借りられる</strong></td><td>手元のPCの性能に左右されない。全員が同じ条件で実行できる</td></tr>
-        <tr><td><strong>道具が揃っている</strong></td><td>Python、ffmpeg、画像・音声処理をNotebookにまとめられる</td></tr>
-        <tr><td><strong>工程が見える</strong></td><td>セルごとに「計画 → 実行 → 確認」を分けて示せる</td></tr>
-        <tr><td><strong>提出しやすい</strong></td><td>最後に <code>.mp4</code> とNotebookをそのまま出せる</td></tr>
-      </tbody>
-    </table>
-
-<h3><span class="n">8.0.3</span>VS CodeからColabにつなぐ</h3>
-
-    <p>Colabはブラウザでも使えますが、<span class="mark">VS Codeから接続できます。</span>PART 3以降と同じ環境のまま、GPUだけを借りる形です。</p>
-
-    <table>
-      <thead><tr><th></th><th>ブラウザのColab</th><th>VS Codeから接続</th></tr></thead>
-      <tbody>
-        <tr><td>編集</td><td>Colabのエディタ</td><td><span class="mark">VS Code。Clineも使える</span></td></tr>
-        <tr><td>Git</td><td>やりにくい</td><td>そのまま使える</td></tr>
-        <tr><td>Driveのマウント</td><td>必要</td><td>不要</td></tr>
-        <tr><td>ファイルの受け渡し</td><td>ブラウザ経由</td><td>右クリックで送受信</td></tr>
-      </tbody>
-    </table>
-
-    <h4>接続の手順</h4>
-
-    <ol>
-      <li>拡張機能のパネル（<code>Ctrl</code> + <code>Shift</code> + <code>X</code>）で <strong>Colab</strong> を検索し、<span class="mark">発行元が Google のもの</span>を入れる</li>
-      <li>作業フォルダに <code>.ipynb</code> ファイルを作る</li>
-      <li>右上の <strong>Select Kernel</strong> を押す</li>
-      <li><strong>Colab</strong> を選ぶ</li>
-      <li><strong>New Colab Server (CPU, GPU or TPU)</strong> を選ぶ</li>
-      <li>Googleアカウントへのアクセスを聞かれたら <strong>Allow</strong></li>
-      <li>ブラウザが開いたら、画面の指示に従う</li>
-      <li>VS Codeに戻り、<strong>GPU</strong> を選ぶ</li>
-      <li>アクセラレータの一覧から <strong>T4 GPU</strong> を選ぶ</li>
-    </ol>
-
-    <h4>つながったか確認する</h4>
-
-    <p>セルに次を貼って実行します。</p>
-
-<pre><code>import torch
-
-print("GPU available:", torch.cuda.is_available())
-print("GPU name:", torch.cuda.get_device_name(0)
-      if torch.cuda.is_available() else "No GPU")</code></pre>
-
-    <p>こう出れば成功です。</p>
-
-<pre><code>GPU available: True
-GPU name: Tesla T4</code></pre>
-
-    <h4>ファイルの受け渡し</h4>
-
-    <table>
-      <thead><tr><th>やりたいこと</th><th>操作</th></tr></thead>
-      <tbody>
-        <tr><td>手元のファイルをColabへ送る</td><td>エクスプローラーで右クリック → <strong>Upload to Colab</strong></td></tr>
-        <tr><td>Colabのファイルを手元へ持ってくる</td><td><strong>Colab</strong> タブを開き、ファイルを右クリック → <strong>download</strong></td></tr>
-      </tbody>
-    </table>
+    <p>8.2は参考です。動画生成モデルを自分の手で1回動かしてみたい人向けで、やらなくても本番には影響しません。</p>
 
     <div class="warn">
-      <span class="tag">ランタイムを切ると、中のファイルは消えます</span>
-      Colab側に作った <code>.mp4</code> は、<span class="mark">接続を切ると消えます。</span>Driveには保存されません。<br><br>
-      <strong>作業が終わったら、その場でダウンロードしてください。</strong>提出物を作ってから切る、という順序を守ります。
+      <span class="tag">映像の見栄えは評価しません</span>
+      評価するのは、工程の分解、承認の位置、戻り先の設計、素材の出典です。<span class="mark">きれいな動画を1本作った人より、承認で止まり、検査で落ち、戻って直した記録がある人を評価します。</span><br><br>
+      観客としての反応（面白いか、行きたくなるか）は、8.6の相互評価で別に集めます。
     </div>
 
-    <div class="note">
-      <span class="tag">VS Codeから接続できない場合</span>
-      ブラウザでColabを開いても進められます。<span class="mark">その場合はGPUを自分で有効にする必要があります。</span>手順は<a href="appendix-a.html">付録A</a>のA.12にあります。<br><br>
-      <strong>本編はVS Codeからの接続で進めます。</strong>
-    </div>
+    <h3>準備</h3>
 
-<div class="note">
-      <span class="tag">ColabではローカルOllamaを前提にしません</span>
-      PART 3以降で使ってきた27Bのモデルは、Colabでは安定して動きません。<span class="mark">実行環境が一時的で、GPUの割り当ても保証されないためです。</span>この章は次の2ルートに分けます。<br><br>
-      <table style="margin:10px 0">
-        <thead><tr><th>ルート</th><th>作るもの</th></tr></thead>
-        <tbody>
-          <tr><td><strong>標準課題</strong></td><td>状態・ツール・分岐・承認を持つ<strong>「制作ワークフロー」</strong>。LLMは使わず、テンプレートとルールで工程を通す</td></tr>
-          <tr><td><strong>発展課題</strong></td><td>企画・台本・絵コンテのノードにLLMを接続した<strong>「制作Agent」</strong></td></tr>
-        </tbody>
-      </table>
-      <span class="mark">標準課題だけでも、この章の目的は達成できます。</span>映像生成APIを使えないことは減点理由になりません。<br><br>
-      なお、LLMを使わない標準課題は、厳密には「AI Agent」ではありません。<strong>Agenticな仕事の流れの骨組みです。</strong><br><br>設計の対象は同じです。判断する部分が、人間とルールに置き換わっているだけです。
-    </div>
+    <p>本番のAgentは手元のVS Codeで動かします。PART 7と同じ形のフォルダを用意しました。</p>
+
+    <p><a href="starter/part8/agewec-mumbai-starter.zip" download><strong>agewec-mumbai-starter.zip をダウンロード</strong></a></p>
+
+<pre><code>agewec-mumbai/
+├── agent/
+│   ├── config.py          接続先。PART 7と同じ4つを書く
+│   ├── video_tools.py     ffmpegの処理（正規化、連結、字幕、ナレーション）
+│   ├── edit_tools.py      編集Agentに渡す道具。呼ぶたびにログを残す
+│   ├── agent_video.py     制作Agent本体（LangGraph）
+│   └── requirements.txt
+├── assets/
+│   └── SOURCES.txt        素材の出典ログ。1カット1行
+└── README.md</code></pre>
+
+<pre><code>pip install -r agent/requirements.txt</code></pre>
+
+    <p>ffmpegは <code>imageio-ffmpeg</code> に同梱されているので、別途インストールは不要です。<code>agent/config.py</code> にPART 7と同じ4つ（Base URL、Model ID、Client ID、Client Secret）を書いてください。<span class="mark">config.py は提出しません。</span></p>
   </section>
+
 
   <section class="sec" id="s8-1">
     <h2><span class="n">8.1</span>動画制作を「仕事の流れ」に分ける</h2>
 
-    <p>まず、動画を作る仕事を工程に割ります。<span class="mark">演習0でやったことと同じです。</span></p>
-
-    <p>繰り返しで、多段階で、いまは人がやっている仕事。それを分解します。</p>
-
-    <div class="flow-steps">
-      <p><strong>企画</strong>　テーマから、伝えたい要点を3つに絞る</p>
-      <p><strong>根拠確認</strong>　その要点が事実か確かめる。出典を残す</p>
-      <p><strong>台本</strong>　1分（およそ300字）に収まる原稿を書く</p>
-      <p><strong>絵コンテ</strong>　各カットに何を映すかを指示する</p>
-      <p><strong>素材</strong>　画像、音声、字幕を用意する</p>
-      <p><strong>組み立て</strong>　ffmpegで1本の動画にする</p>
-      <p><strong>評価</strong>　尺、字幕のズレ、音量、誤りを点検する</p>
-    </div>
-
-    <p>PART 7の <code>plan → implement → check</code> と同じ形です。違うのは工程の数と、<strong>checkが機械的に判定しきれない</strong>ことです。テストは通るか通らないかですが、「この動画はよいか」には自動判定がありません。</p>
-
-    <h3><span class="n">8.1.1</span>だから確認を2種類に分けます</h3>
+    <p>「動画を作って」は、ひとつの仕事ではありません。分けると、こうなります。</p>
 
     <table>
-      <thead><tr><th>機械が判定できること</th><th>人間が判定すること</th></tr></thead>
+      <thead><tr><th>工程</th><th>誰が</th><th>何を決めるか</th></tr></thead>
       <tbody>
-        <tr><td>尺が55〜65秒に収まっているか</td><td>企画が趣旨に合っているか</td></tr>
-        <tr><td>字幕の総文字数が台本と一致するか</td><td>事実として正しいか</td></tr>
-        <tr><td>音声と字幕のタイムコードがずれていないか</td><td>誤解を招く表現がないか</td></tr>
-        <tr><td>出力ファイルが再生できるか</td><td>公開してよいか</td></tr>
+        <tr><td>1　要点を決める</td><td><span class="mark">人間</span></td><td>この動画で伝える3つのこと。Agentは決めない</td></tr>
+        <tr><td>2　絵コンテと原稿</td><td>Agent（27B）</td><td>6〜8カット。各カットの生成プロンプト、秒数、字幕。ナレーション原稿</td></tr>
+        <tr><td>3　<strong>承認</strong></td><td><span class="mark">人間</span></td><td>プロンプトを1行ずつ読む。<strong>素材を作る前</strong>に止まる</td></tr>
+        <tr><td>4　素材を作る</td><td><span class="mark">人間</span>＋外の道具</td><td>各カットを8.3の規約の範囲で生成し、<code>assets/</code> に置く。出典を記録</td></tr>
+        <tr><td>5　編集</td><td><span class="mark">Agent（27B＋ツール）</span></td><td>戻ってきた素材を見て、順番、トリム、つなぎ、字幕の時刻を決め、ツールを呼ぶ</td></tr>
+        <tr><td>6　検査</td><td>機械</td><td>尺、要点の字幕、出典ログ、ナレーションの長さ</td></tr>
+        <tr><td>7　<strong>公開判断</strong></td><td><span class="mark">人間</span></td><td>見て、承認するか止めるか</td></tr>
       </tbody>
     </table>
 
-    <p><span class="mark">左の列はcheckノードにします。右の列はinterruptにします。</span>この振り分けが、この課題の設計そのものです。</p>
+    <p>モデルを呼ぶのは2と5ですが、<span class="mark">2と5は別の種類の仕事です。</span>2は「書く」。文章を入れて JSON を返す、ツールなし。5は「指揮する」。素材を見て、道具をどの順にどう使うかを自分で決める。PART 7で作った、ツールを持つ Agent です。</p>
+
+    <p>4が人間の手にあるのは、素材を作る手段が Agent の外にあるからです。Colab の Wan2.1 は1本に数分かかり、生成サービスはクレジットを消費し、自分で撮るなら現場に行く。<span class="mark">どの手段でも、1回の生成で出るのは数秒で、それを何本も作る工程は人間の段取りです。</span>Agent に回させると、時間とクレジットが判断なしに溶けます。人間が8.3の手段で作り、Agent は待ちます。</p>
+
+    <h3>固定の手順と、オーケストレーション</h3>
+
+    <p>道具を組み合わせるやり方は2つあります。</p>
+
+    <table>
+      <thead><tr><th></th><th>固定の手順（スクリプト）</th><th>オーケストレーション（Agent）</th></tr></thead>
+      <tbody>
+        <tr><td>誰が順番を決めるか</td><td>書いた人。毎回同じ</td><td>モデル。その場の状況で変わる</td></tr>
+        <tr><td>向いている場面</td><td>入力の形が決まっていて、同じ結果が要る</td><td>入力がばらつく。欠けたり余ったりする</td></tr>
+        <tr><td>この章では</td><td>検査（6）。正規化・連結などの<strong>道具そのもの</strong></td><td>編集（5）。<strong>道具をどう使うか</strong></td></tr>
+        <tr><td>危うさ</td><td>想定外の入力で壊れる</td><td>何をしたかが見えにくい。だから<strong>ログ</strong>を取る</td></tr>
+      </tbody>
+    </table>
+
+    <p>素材は3つのサービスから来て、長さも向きもばらばらで、生成に失敗したカットもある。<span class="mark">「cut3が無いなら cut1 の別の場所を使う」「縦の素材は短く」と、その場で決める必要があります。</span>これは固定の手順では書き切れません。だから編集はオーケストレーションにし、その前後を固定の検査と人間の承認で挟みます。<strong>自由に判断させる範囲を、判断させない層で囲む。</strong>これが PART 7 から一貫した形です。</p>
+
+    <h3>1本の生成では作れないもの</h3>
+
+    <p>動画生成モデルは、1回の生成で2〜5秒の映像を返します。次の生成は前の生成を知りません。<span class="mark">「電車が減速して止まり、ドアが開いて景色が変わる」のような時間の連続は、1回では作れません。</span>カットに分け、順番と秒数を決め、つなぐ。それが工程です。素材を作り始めれば、すぐに分かります。</p>
   </section>
+
 
   <section class="sec" id="s8-2">
-    <h2><span class="n">8.2</span>Colabで状態とツールを用意する</h2>
+    <h2><span class="n">8.2</span>参考：Wan2.1を自分で動かしてみる（任意）</h2>
 
-<pre><code>!apt-get -qq install ffmpeg
-!pip -q install langgraph pydantic</code></pre>
+    <p><strong>任意です。</strong>生成サービスの裏で何が起きているかを見たい人は、Google ColabのGPU（T4）で動画生成モデル Wan2.1（1.3B）を1回動かしてみてください。プロンプトは1文、出力は約2秒・480p。GPUが取れない日もあり、生成に5〜10分かかるので、<span class="mark">授業中ではなく、空いた時間に</span>。</p>
 
-<pre><code>from typing import TypedDict
+    <p><a href="starter/part8/part8_practice_wan.ipynb" download><strong>part8_practice_wan.ipynb をダウンロード</strong></a>　→ Colab で開く（ブラウザの Colab か、VS Code の Google Colab 拡張のどちらでも）。ランタイムは <strong>T4 GPU</strong> を選びます。</p>
 
-
-class VideoState(TypedDict, total=False):
-    theme: str
-    points: list[str]        # 要点3つ
-    sources: list[str]       # 根拠の出典
-    script: str              # 台本
-    shots: list[dict]        # 絵コンテ
-    caption_only: bool       # 音声なし・字幕のみで作るか
-    audio_path: str
-    subtitle_path: str
-    video_path: str
-    check_report: dict
-    attempts: int
-    approved: bool</code></pre>
-
-    <p>PART 7の <code>State</code> と構造は同じです。<span class="mark">工程が増えただけで、考え方は変わりません。</span></p>
-
-    <div class="note">
-      <span class="tag">スターターNotebookを使ってください</span>
-      ffprobeの呼び出し、字幕の生成、ffmpegの組み立て、グラフの雛形。<span class="mark">これらはスターターNotebook（<a href="part8_starter.ipynb">part8_starter.ipynb</a>）に入っています。</span>ゼロから書くと、動画処理のデバッグに時間を取られて、この章の主題に届きません。<br><br>
-      <strong>あなたが設計して書き換えるのは、次の4つだけです。</strong><br>
-      1. 状態（<code>VideoState</code> に何を持たせるか）<br>
-      2. 承認の位置（どこで <code>interrupt</code> するか）<br>
-      3. 戻り先（落ちたとき、どの工程へ戻すか）<br>
-      4. 検査条件（機械が判定するのは何か）
+    <div class="flow-steps">
+      <p><strong>1</strong>　セル1でライブラリを入れる（2〜3分）</p>
+      <p><strong>2</strong>　セル2の <code>PROMPT</code> を、駅に近づく車窓の1文にする。<span class="mark">決めるのはこの1行だけ</span></p>
+      <p><strong>3</strong>　セル3〜4を実行。重みのダウンロードと生成で <strong>5〜10分</strong></p>
+      <p><strong>4</strong>　できた <code>practice_cut.mp4</code> を見る</p>
+      <p><strong>5</strong>　<code>SEED</code> を変えてもう1回。<strong>同じ電車にならない</strong>ことを見る</p>
     </div>
 
-    <h3><span class="n">8.2.1</span>ツールを用意する</h3>
+    <p>見てほしいのは3つです。</p>
 
     <table>
-      <thead><tr><th>ツール</th><th>やること</th></tr></thead>
+      <thead><tr><th></th><th>気づくこと</th><th>工程での答え</th></tr></thead>
       <tbody>
-        <tr><td><code>make_subtitles</code></td><td>台本からSRT字幕を生成する</td></tr>
-        <tr><td><code>make_audio</code></td><td>台本から音声を作る（TTS、または無音＋字幕のみ）</td></tr>
-        <tr><td><code>make_slide</code></td><td>カットごとに静止画を生成する（PILで作図でも可）</td></tr>
-        <tr><td><code>assemble_video</code></td><td>ffmpegで画像・音声・字幕を1本にする</td></tr>
-        <tr><td><code>inspect_video</code></td><td>ffprobeで尺と解像度を取得し、機械的な検査を行う</td></tr>
+        <tr><td>長さ</td><td>1回で2秒。60秒は20〜30回分</td><td>カットに分けて、秒数を決める</td></tr>
+        <tr><td>一貫性</td><td>SEEDを変えると別の電車、別の光</td><td>絵コンテで様式を揃え、承認で見る</td></tr>
+        <tr><td>制御</td><td>決めたのは1文。カメラも間も、モデルが決めた</td><td>プロンプトを人間が読んでから生成する</td></tr>
       </tbody>
     </table>
 
-    <p>PART 7の <code>@tool</code> と同じ書き方です。docstringを丁寧に書いてください。</p>
+    <p>できたクリップは、本番の1カットに使って構いません。出典は <code>Colab Wan2.1 (course notebook)</code> と書きます。</p>
   </section>
+
 
   <section class="sec" id="s8-3">
-    <h2><span class="n">8.3</span>企画から絵コンテまでをAgentに任せる</h2>
+    <h2><span class="n">8.3</span>素材の規約</h2>
 
-    <p>ここは文章を作る工程です。企画、根拠確認、台本、絵コンテを順に通します。まずは「見た人が、誰に、何をしてほしい動画か」を1文で決めてください。これが曖昧だと、Agentはもっともらしい映像を足すだけになります。</p>
+    <p>本番の素材は、次の4つの手段で作ったものだけを使います。</p>
 
-    <div class="warn">
-      <span class="tag">根拠確認のノードを飛ばさないこと</span>
-      LLMに台本を書かせると、<strong>それらしい数字と固有名詞が混ざります。</strong><span class="mark">自然に混ざるので、読んでも気づきません。</span>PART 1の1.2.3で見たとおりです。演習0で <code>※推測</code> を付けてもらったのは、まさにこの練習でした。<br><br>
-      <span class="mark">要点ごとに出典を <code>sources</code> に残し、出典のない要点は台本に進ませない。</span>これをノードとして実装してください。「気をつける」では実装になりません。<br><br>
-      <strong>標準課題では、出典は学生が3本入力します。</strong>ワークフローがWeb検索で事実を作ることはしません。<strong>発展課題では</strong>、検索やMCP、外部APIで候補を集めても構いません。<span class="mark">ただし、最後の事実確認は人間が行います。</span>
-    </div>
+    <table>
+      <thead><tr><th></th><th>手段</th><th>出典ログの書き方</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>授業のColabノート（Wan2.1）</td><td><code>Colab Wan2.1 (course notebook)</code></td></tr>
+        <tr><td><strong>2</strong></td><td>動画生成・画像生成サービスを、<strong>自分のアカウント</strong>で使う。<span class="mark">そのサービスの利用規約に従うこと</span></td><td>サービス名</td></tr>
+        <tr><td><strong>3</strong></td><td>自分で撮った写真・動画</td><td><code>own photo</code> / <code>own video</code></td></tr>
+        <tr><td><strong>4</strong></td><td>利用条件が明示されたフリー素材サイト（Pexels、Pixabayなど）の、商用可・帰属不要の素材</td><td>サイト名と素材のURL</td></tr>
+      </tbody>
+    </table>
 
-    <p>絵コンテまで出来たところで、<strong>1回目の人間の承認</strong>を入れます。</p>
+    <p>講師は特定のサービスを指定しません。契約もしません。<span class="mark">何を使うかは、あなたが利用規約を読んで決めます。</span></p>
 
-<pre><code>def review_plan(state: VideoState) -&gt; VideoState:
-    decision = interrupt({
-        "points": state["points"],
-        "sources": state["sources"],
-        "script": state["script"],
-        "question": "企画と事実確認は妥当ですか？ (approve / revise)",
-    })
-    return {**state, "approved": decision == "approve"}</code></pre>
+    <h3>出典ログ SOURCES.txt</h3>
 
-    <p><span class="mark">ここで止める理由は、この先が取り消しにくいからです。</span>音声合成と動画のエンコードは時間もコストもかかります。台本が間違ったまま先へ進むと、作り直しの範囲が一気に広がります。7.4の「取り消せない操作の前」に該当します。</p>
+    <p><code>assets/SOURCES.txt</code> に、<strong>カットごとに1行</strong>書きます。</p>
+
+<pre><code>cut1 | Colab Wan2.1 (course notebook) | slow pan over a Mumbai suburban train at dawn, wide shot | 2026-09-10
+cut2 | Kling | Marine Drive at night from above, streetlights curving along the bay | 2026-09-10
+cut3 | own video | - | 2026-09-08
+cut4 | Pexels: https://www.pexels.com/video/... | - | 2026-09-10</code></pre>
+
+    <p>検査（8.4.4）は、この行が無いカットを落とします。<span class="mark">出典を書けない素材は、使えない素材です。</span></p>
   </section>
+
 
   <section class="sec" id="s8-4">
-    <h2><span class="n">8.4</span>承認後、動画に組み立てる</h2>
+    <h2><span class="n">8.4</span>本番：制作Agentを動かす</h2>
 
-    <p>承認が出てから、素材を作り、1本にまとめます。</p>
+    <h3><span class="n">8.4.1</span>要点3つを決める（人間）</h3>
 
-<pre><code>ffmpeg -y \
-  -f concat -safe 0 -i shots.txt \
-  -i narration.wav \
-  -vf "subtitles=subtitles.srt" \
-  -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest \
-  output.mp4</code></pre>
+    <p><code>agent/agent_video.py</code> の冒頭を開きます。</p>
 
-    <p>この工程はAgentに書かせて構いませんが、<strong>コマンドは必ず自分で読んでください。</strong>ffmpegのオプションは、間違っていても静かに違う結果を出します。エラーで止まってくれるとは限りません。</p>
+<pre><code>THEME = &quot;AGEWEC Mumbai: why the world should come and see Mumbai&quot;
+# Each key point: (the statement, the words that must appear in a subtitle for it to count)
+KEY_POINTS = [
+    (&quot;The suburban railway carries about 7 million passengers a day&quot;, &quot;7 million&quot;),
+    (&quot;Marine Drive at night, the &#x27;Queen&#x27;s Necklace&#x27;&quot;, &quot;marine drive&quot;),
+    (&quot;Street food: vada pav and pav bhaji&quot;, &quot;vada pav&quot;),
+]
+MAX_SECONDS = 60          # the check: the video must be at most this long
+MIN_SECONDS = 20          # and at least this long
+NUM_CUTS = 6              # 5 to 8 works well
+MAX_ROUNDS = 3            # how many times the loop may go back to draft</code></pre>
+
+    <p><code>KEY_POINTS</code> を自分の3つに書き換えます。各行は「伝える文」と「字幕に必ず入る言葉」の組です。<span class="mark">2つ目の言葉を検査が探します。</span>短い固有名詞や数字が向いています。</p>
+
+    <div class="warn">
+      <span class="tag">事実には根拠を</span>
+      「1日700万人」のような数字を要点にするなら、出典を1つ控えておいてください。ナレーションに載せた事実は、8.5で確認します。<strong>作り話の観光情報は、PR動画では一番の害です。</strong>
+    </div>
+
+    <h3><span class="n">8.4.2</span>流れを読む</h3>
+
+<pre><code>&quot;&quot;&quot;PART 8 — A production workflow for a short PR video.
+
+    draft ──► approve_storyboard ──► wait_for_clips ──► edit ──► check ──pass──► review ──► END
+                     │ (interrupt)         │ (interrupt)   ▲         │ fail
+                     └─ revise ─────────►draft             └─────────┘ (back to edit, MAX_ROUNDS)
+
+Two nodes talk to the model, and they are different kinds of node:
+
+  draft  — the model WRITES a plan (storyboard, narration). Plain text in, JSON out. No tools.
+  edit   — the model ORCHESTRATES: it looks at the clips that actually came back, decides the
+           order, the trims, the transitions and the subtitle timing, and calls the editing
+           tools itself. This is the agent from PART 7, pointed at a different job.
+
+Everything else is fixed code or a human decision.
+
+Run from the agewec-mumbai folder:   python agent/agent_video.py
+&quot;&quot;&quot;</code></pre>
+
+    <p>PART 7と同じ形に、中断が3か所。<strong>絵コンテの承認</strong>、<strong>素材待ち</strong>、<strong>公開判断</strong>。2つ目は「Agentが人間の作業を待つ」中断です。そして <code>edit</code> は、PART 7の <code>implement</code> と同じく<span class="mark">ツールを持つ Agent が中で動く</span>ノードです。</p>
+
+    <h3><span class="n">8.4.3</span>企画と承認</h3>
+
+<pre><code>def draft(state: State) -&gt; State:
+    &quot;&quot;&quot;The model writes the storyboard and the narration. It does not touch any file.&quot;&quot;&quot;
+    feedback = state.get(&quot;feedback&quot;, &quot;&quot;)
+    prompt = f&quot;&quot;&quot;You are planning a PR video of at most {MAX_SECONDS} seconds.
+Theme: {THEME}
+Key points that MUST appear, each in at least one subtitle:
+{chr(10).join(&#x27;- &#x27; + k for k, _ in KEY_POINTS)}
+
+Return ONLY a JSON object with:
+- &quot;storyboard&quot;: a list of exactly {NUM_CUTS} cuts. Each cut: {{&quot;cut&quot;: n, &quot;seconds&quot;: 5-10, &quot;prompt&quot;: &quot;a text-to-video prompt for this shot, one sentence, no real people&#x27;s faces, no logos&quot;, &quot;subtitle&quot;: &quot;one short line shown on screen&quot;}}
+- &quot;narration&quot;: the voice-over for the whole video, at most {int(MAX_SECONDS * 2.3)} words, plain English.
+{(&#x27;Feedback from the human reviewer, apply it: &#x27; + feedback) if feedback else &#x27;&#x27;}&quot;&quot;&quot;
+    text = model.invoke(prompt).content
+    m = re.search(r&quot;\{.*\}&quot;, text, re.S)
+    data = json.loads(m.group(0))
+    return {**state, &quot;storyboard&quot;: data[&quot;storyboard&quot;], &quot;narration&quot;: data[&quot;narration&quot;],
+            &quot;round&quot;: state.get(&quot;round&quot;, 0) + 1}
+
+
+def approve_storyboard(state: State) -&gt; State:
+    &quot;&quot;&quot;Interrupt 1: the human reads every prompt before any clip is generated.&quot;&quot;&quot;
+    lines = [f&quot;cut{c[&#x27;cut&#x27;]}  {c[&#x27;seconds&#x27;]}s  subtitle: {c[&#x27;subtitle&#x27;]}\n        prompt: {c[&#x27;prompt&#x27;]}&quot;
+             for c in state[&quot;storyboard&quot;]]
+    answer = interrupt({
+        &quot;storyboard&quot;: &quot;\n&quot;.join(lines),
+        &quot;narration&quot;: state[&quot;narration&quot;],
+        &quot;question&quot;: &quot;Approve this storyboard? (approve / revise / stop)&quot;,
+    })
+    return {**state, &quot;decision&quot;: answer[&quot;decision&quot;], &quot;feedback&quot;: answer.get(&quot;feedback&quot;, &quot;&quot;)}</code></pre>
+
+    <p><code>draft</code> はモデルを呼ぶ唯一のノードです。JSONで絵コンテと原稿を返させ、ファイルには触らせません。<code>approve_storyboard</code> で止まり、<span class="mark">あなたはプロンプトを1行ずつ読みます。</span>ここで見るのは：</p>
+
+    <ul>
+      <li>要点3つが、どこかのカットの字幕に入っているか</li>
+      <li>プロンプトに、人の顔・著名人・ロゴが混ざっていないか（8.3）</li>
+      <li>秒数の合計が60を超えていないか。<strong>超えていたら revise で戻す</strong></li>
+    </ul>
+
+    <p>気になる点があれば <code>revise</code> と、直してほしいことを1行。モデルは指摘を受けて書き直します。</p>
+
+    <h3><span class="n">8.4.4</span>素材待ち</h3>
+
+<pre><code>def wait_for_clips(state: State) -&gt; State:
+    &quot;&quot;&quot;Interrupt 2: the human generates the clips with the allowed tools and puts them in assets/.&quot;&quot;&quot;
+    expected = [f&quot;assets/cut{c[&#x27;cut&#x27;]}.mp4&quot; for c in state[&quot;storyboard&quot;]]
+    answer = interrupt({
+        &quot;instruction&quot;: &quot;Generate each cut with the allowed tools, save them as the files below, &quot;
+                       &quot;and write one line per cut in assets/SOURCES.txt. Missing cuts are fine; &quot;
+                       &quot;the editor will work with what is there. Then type: done&quot;,
+        &quot;files&quot;: expected,
+    })
+    return {**state, &quot;decision&quot;: answer[&quot;decision&quot;]}</code></pre>
+
+    <p>止まっている間に、あなたは8.3の手段で各カットを作り、<code>assets/cut1.mp4 …</code> に置き、<code>SOURCES.txt</code> に1行ずつ書きます。<span class="mark">全部揃わなくても構いません。</span>無いカットは、編集Agentが「無い」と知ったうえで組み立てます。<code>done</code> と打つと次へ進みます。</p>
+
+    <h3><span class="n">8.4.5</span>編集：オーケストレーション</h3>
+
+    <p>編集Agentに渡す道具です。それぞれ小さく、判断を持たず、呼ばれるたびにログを残します。</p>
+
+<pre><code>@tool
+def list_assets() -&gt; str:
+    &quot;&quot;&quot;List the clips in assets/ with their length in seconds, width and height, and whether SOURCES.txt has a line for them.&quot;&quot;&quot;
+    sources = vt.read_sources()
+    rows = []
+    for p in sorted(vt.ASSETS.glob(&quot;cut*.mp4&quot;)):
+        n = int(p.stem[3:])
+        w, h = vt.probe_size(p)
+        rows.append({&quot;cut&quot;: n, &quot;file&quot;: p.name, &quot;seconds&quot;: round(vt.probe_duration(p), 1),
+                     &quot;width&quot;: w, &quot;height&quot;: h, &quot;has_source&quot;: n in sources})
+    _log(f&quot;list_assets -&gt; {len(rows)} clips&quot;)
+    return json.dumps(rows)
+
+
+@tool
+def contact_sheet() -&gt; str:
+    &quot;&quot;&quot;Make one image with a frame from each clip (first, middle, last) so you can see what each cut shows. Returns the image path.&quot;&quot;&quot;
+    paths = sorted(vt.ASSETS.glob(&quot;cut*.mp4&quot;))
+    vt.BUILD.mkdir(exist_ok=True)
+    tiles = []
+    for p in paths:
+        d = vt.probe_duration(p)
+        for k, t in enumerate((0.2, d / 2, max(0.2, d - 0.3))):
+            out = vt.BUILD / f&quot;sheet_{p.stem}_{k}.png&quot;
+            vt.frame_at(p, t, out)
+            tiles.append(Image.open(out).resize((320, 180)))
+    cols = 3
+    rows = (len(tiles) + cols - 1) // cols
+    sheet = Image.new(&quot;RGB&quot;, (320 * cols, 180 * rows), &quot;black&quot;)
+    for i, im in enumerate(tiles):
+        sheet.paste(im, ((i % cols) * 320, (i // cols) * 180))
+    out = vt.BUILD / &quot;contact_sheet.png&quot;
+    sheet.save(out)
+    _log(&quot;contact_sheet -&gt; build/contact_sheet.png&quot;)
+    return str(out)
+
+
+@tool
+def add_to_timeline(cut: int, seconds: float, start: float = 0.0) -&gt; str:
+    &quot;&quot;&quot;Append a clip to the timeline: cut number, how many seconds to use, and where in the clip to start (seconds). Clips are normalized to 1280x720 here.&quot;&quot;&quot;
+    src = vt.ASSETS / f&quot;cut{cut}.mp4&quot;
+    if not src.exists():
+        return f&quot;ERROR: {src.name} does not exist&quot;
+    dst = vt.BUILD / f&quot;t{len(_timeline) + 1}_cut{cut}.mp4&quot;
+    vt.normalize_clip(src, dst, seconds, start=start)
+    _timeline.append({&quot;cut&quot;: cut, &quot;seconds&quot;: seconds, &quot;start&quot;: start, &quot;file&quot;: str(dst)})
+    _log(f&quot;add_to_timeline(cut={cut}, seconds={seconds}, start={start})&quot;)
+    return f&quot;timeline now has {len(_timeline)} clips, total {sum(c[&#x27;seconds&#x27;] for c in _timeline):.1f}s&quot;
+
+
+@tool
+def clear_timeline() -&gt; str:
+    &quot;&quot;&quot;Empty the timeline to start the order again.&quot;&quot;&quot;
+    _timeline.clear()
+    _log(&quot;clear_timeline&quot;)
+    return &quot;timeline cleared&quot;
+
+
+@tool
+def join_timeline(fade: float = 0.6) -&gt; str:
+    &quot;&quot;&quot;Join the timeline clips in order with a crossfade of `fade` seconds between each pair. Writes build/joined.mp4 and returns its length.&quot;&quot;&quot;
+    if not _timeline:
+        return &quot;ERROR: timeline is empty&quot;
+    vt.concat_with_crossfade([c[&quot;file&quot;] for c in _timeline], vt.BUILD / &quot;joined.mp4&quot;, fade=fade)
+    d = vt.probe_duration(vt.BUILD / &quot;joined.mp4&quot;)
+    _log(f&quot;join_timeline(fade={fade}) -&gt; {d:.1f}s&quot;)
+    return f&quot;joined.mp4 is {d:.1f}s&quot;
+
+
+@tool
+def add_subtitles(subtitles_json: str) -&gt; str:
+    &quot;&quot;&quot;Burn subtitles onto build/joined.mp4. subtitles_json is a JSON list of {&quot;start&quot;: seconds, &quot;end&quot;: seconds, &quot;text&quot;: &quot;...&quot;}. Writes build/subtitled.mp4.&quot;&quot;&quot;
+    subs = json.loads(subtitles_json)
+    LAST_SUBTITLES[:] = [s[&quot;text&quot;] for s in subs]
+    vt.burn_subtitles(vt.BUILD / &quot;joined.mp4&quot;, vt.BUILD / &quot;subtitled.mp4&quot;, subs)
+    _log(f&quot;add_subtitles({len(subs)} lines)&quot;)
+    return f&quot;{len(subs)} subtitles burned&quot;
+
+
+@tool
+def add_narration(text: str) -&gt; str:
+    &quot;&quot;&quot;Turn the narration text into speech and put it under build/subtitled.mp4. Writes output.mp4 and returns the audio and video lengths.&quot;&quot;&quot;
+    audio_len = vt.narrate(text, vt.BUILD / &quot;narration.mp3&quot;)
+    vt.mux_audio(vt.BUILD / &quot;subtitled.mp4&quot;, vt.BUILD / &quot;narration.mp3&quot;, vt.PROJECT_ROOT / &quot;output.mp4&quot;)
+    video_len = vt.probe_duration(vt.PROJECT_ROOT / &quot;output.mp4&quot;)
+    _log(f&quot;add_narration({len(text.split())} words) -&gt; audio {audio_len:.1f}s, video {video_len:.1f}s&quot;)
+    return f&quot;output.mp4 written. audio {audio_len:.1f}s, video {video_len:.1f}s&quot;
+
+
+EDIT_TOOLS = [list_assets, contact_sheet, add_to_timeline, clear_timeline, join_timeline, add_subtitles, add_narration]</code></pre>
+
+    <p>Agent本体は、PART 7の <code>create_react_agent</code> と同じです。違うのは、渡す道具と、指示と、<strong>最初のメッセージに画像が入る</strong>ことです。共有サーバの27Bは画像が読めるので、各カットの最初・中間・最後のフレームを並べた一覧（<code>contact_sheet</code>）を見せてから判断させます。</p>
+
+<pre><code>EDITOR_SYSTEM = f&quot;&quot;&quot;You are the editor of a short PR video. You have tools to inspect the clips and to build the video.
+Work like this:
+1. Call list_assets, then contact_sheet, and look at the sheet before deciding anything.
+2. Decide the order and the length of each clip. Follow the storyboard where the clips allow it;
+   if a clip is missing, too short, or does not show what its prompt asked for, say so and adapt
+   (reorder, reuse a good clip for two beats, drop a cut).
+3. Build the timeline with add_to_timeline, then join_timeline, then add_subtitles, then add_narration.
+4. The finished video must be between {MIN_SECONDS} and {MAX_SECONDS} seconds.
+   Each of these phrases must appear in some subtitle: {&#x27;, &#x27;.join(repr(w) for _, w in KEY_POINTS)}.
+   The narration must not be longer than the video: cut words before you cut clips.
+5. Finish with a short summary of the decisions you made and why, especially where you departed from the storyboard.
+Never invent clip numbers that list_assets did not return.&quot;&quot;&quot;
+
+editor = create_react_agent(model, et.EDIT_TOOLS, prompt=EDITOR_SYSTEM)
+
+
+def edit(state: State) -&gt; State:
+    et.LOG.clear()
+    et._timeline.clear()
+    brief = {&quot;storyboard&quot;: state[&quot;storyboard&quot;], &quot;narration&quot;: state[&quot;narration&quot;]}
+    text = &quot;Storyboard and narration as approved:\n&quot; + json.dumps(brief, indent=1)
+    if state.get(&quot;feedback&quot;):
+        text += &quot;\n\nThe last attempt failed the check. Fix these:\n&quot; + state[&quot;feedback&quot;]
+    # The contact sheet is made first so the model can SEE the clips in its first message.
+    sheet = et.contact_sheet.invoke({})
+    msg = HumanMessage(content=[{&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: text}, et.image_message(sheet)])
+    result = editor.invoke({&quot;messages&quot;: [msg]}, {&quot;recursion_limit&quot;: 40})
+    summary = result[&quot;messages&quot;][-1].content
+    return {**state, &quot;edit_summary&quot;: summary, &quot;edit_rounds&quot;: state.get(&quot;edit_rounds&quot;, 0) + 1}</code></pre>
+
+    <p>指示（<code>EDITOR_SYSTEM</code>）に書いてあるのは、順番の決め方ではありません。<span class="mark">見てから決めること、絵コンテからずれたら理由を言うこと、守る制約、最後に決定をまとめること</span>です。順番そのものは、素材を見た Agent が決めます。</p>
 
     <div class="note">
-      <span class="tag">失敗が多い箇所</span>
-      画像の解像度がカットごとに違う。音声のサンプリングレートが揃っていない。字幕のエンコーディングがUTF-8でない。フレームレートの指定漏れで尺が変わる。<span class="mark">どれもffmpegは動いてしまいます。</span>だから8.5の <code>inspect_video</code> が要ります。
+      <span class="tag">何をしたかは、ログで追う</span>
+      オーケストレーションの弱点は、何が起きたかが見えにくいことです。だから道具の側でログを取ります。<code>add_to_timeline(cut=1, seconds=8, start=0.5)</code> のような行が順に残り、<span class="mark">公開判断（8.4.7）で、Agentの決定の要約と一緒に人間に見せます。</span>終了後は <code>EDIT_LOG.txt</code> に書き出されます。
+    </div>
+
+    <h3><span class="n">8.4.6</span>検査</h3>
+
+<pre><code>def check(state: State) -&gt; State:
+    problems = []
+    out = vt.PROJECT_ROOT / &quot;output.mp4&quot;
+    if not out.exists():
+        problems.append(&quot;output.mp4 was not written: the editor did not finish the tool sequence&quot;)
+    else:
+        dur = vt.probe_duration(out)
+        if not (MIN_SECONDS &lt;= dur &lt;= MAX_SECONDS):
+            problems.append(f&quot;length is {dur:.1f}s, must be between {MIN_SECONDS} and {MAX_SECONDS}s&quot;)
+        narr = vt.BUILD / &quot;narration.mp3&quot;
+        if narr.exists() and vt.probe_duration(narr) &gt; dur + 0.5:
+            problems.append(&quot;narration is longer than the video: shorten the narration&quot;)
+        subs_text = &quot; &quot;.join(et.LAST_SUBTITLES).lower()      # the subtitles the editor actually burned
+        for statement, words in KEY_POINTS:
+            if words.lower() not in subs_text:
+                problems.append(f&quot;no subtitle mentions &#x27;{words}&#x27; (key point: {statement})&quot;)
+        sources = vt.read_sources()
+        for c in et._timeline:
+            if c[&quot;cut&quot;] not in sources:
+                problems.append(f&quot;cut{c[&#x27;cut&#x27;]} is on the timeline but has no line in assets/SOURCES.txt&quot;)
+    text = &quot;OK&quot; if not problems else &quot;\n&quot;.join(&quot;- &quot; + p for p in problems)
+    print(&quot;\nCHECK:&quot;, text)
+    return {**state, &quot;check_output&quot;: text, &quot;passed&quot;: not problems, &quot;feedback&quot;: &quot;&quot; if not problems else text}</code></pre>
+
+    <p>検査は固定の手順です。編集Agentが何を決めていても、ここは同じ物差しで測ります。落ちた理由は文で出て、<code>feedback</code> として <code>edit</code> に戻ります（<code>MAX_ROUNDS</code> 回まで）。</p>
+
+    <table>
+      <thead><tr><th>検査</th><th>落ちたとき編集Agentがやること</th></tr></thead>
+      <tbody>
+        <tr><td>output.mp4 ができているか</td><td>道具の順序をやり直す</td></tr>
+        <tr><td>尺が20〜60秒か</td><td>クリップを削る／伸ばす</td></tr>
+        <tr><td>ナレーションが動画より短いか</td><td>原稿を削ってから音声を作り直す</td></tr>
+        <tr><td>要点の言葉が字幕にあるか</td><td>字幕を直す</td></tr>
+        <tr><td>使ったカット全部に出典ログがあるか</td><td>これだけは人間。<code>SOURCES.txt</code> に書く</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">8.4.7</span>動かす</h3>
+
+<pre><code>python agent/agent_video.py</code></pre>
+
+    <p>最初に <code>draft</code> が数十秒かかります（27Bの応答待ち）。素材を置いて <code>done</code> と打つと、編集Agentが道具を呼ぶ様子が <code>[tool] …</code> の行で流れます。最後に <code>output.mp4</code> と、Agentの決定の要約、ツールのログが出て、公開判断で止まります。</p>
+
+    <div class="note">
+      <span class="tag">必ず1回は revise を通す</span>
+      1回目の絵コンテに文句がなくても、何か1つ指摘して戻してください。<span class="mark">戻せることを確かめるのが目的です。</span>PART 7と同じで、承認の仕組みは差し戻せるように作ります。
     </div>
   </section>
+
 
   <section class="sec" id="s8-5">
-    <h2><span class="n">8.5</span>評価し、修正ループを回す</h2>
+    <h2><span class="n">8.5</span>公開できない理由を確認する</h2>
 
-    <p>出来た動画を検査します。8.1.1の左の列を、そのままコードにします。</p>
+    <p><code>output.mp4</code> ができました。検査も通りました。<span class="mark">それでも、そのまま公開はできません。</span>検査は「形が整っているか」しか見ていないからです。</p>
 
-<pre><code>def check_video(state: VideoState) -&gt; VideoState:
-    info = ffprobe(state["video_path"])
-    report = {
-        "duration_ok": 55 &lt;= info["duration"] &lt;= 65,
-        "has_audio": info["has_audio"],
-        "subtitle_chars": count_chars(state["subtitle_path"]),
-        "script_chars": len(state["script"]),
-    }
-    report["passed"] = (
-        report["duration_ok"]
-        and (info["has_audio"] or state["caption_only"])
-    )
-    return {**state, "check_report": report}</code></pre>
+    <table>
+      <thead><tr><th>公開前に人間が確かめること</th><th>なぜ機械では無理か</th></tr></thead>
+      <tbody>
+        <tr><td>ナレーションの事実は正しいか（数字、地名、歴史）</td><td>27Bは事実を「それらしく」書く。根拠は持っていない</td></tr>
+        <tr><td>素材の出典は本当か。規約に反していないか</td><td>ログの行があることは確かめられるが、中身の真偽は確かめられない</td></tr>
+        <tr><td>ムンバイに住む人が見て、嫌な気持ちにならないか</td><td>「魅力」の裏返しの偏見は、機械には見えない</td></tr>
+        <tr><td>要点は「来てもらう」動画として意味を持っているか</td><td>字幕に言葉があることと、伝わることは別</td></tr>
+      </tbody>
+    </table>
 
-    <p><code>caption_only</code> は、音声なしで仕上げるルートを通すための項目です。<span class="mark">字幕だけで完成させられます。</span><span class="mark">標準課題でTTSが使えなくても、検査で落ちません。</span></p>
-
-    <p>落ちたら、どの工程へ戻すかを決めます。<span class="mark">全部やり直すのではありません。</span>尺が長ければ台本へ、音がなければ素材へ、字幕がずれていれば組み立てへ戻します。</p>
-
-<pre><code>def route(state: VideoState) -&gt; str:
-    r = state["check_report"]
-    if r["passed"]:
-        return "review_final"
-    if state["attempts"] &gt;= 3:
-        return "give_up"
-    if not r["duration_ok"]:
-        return "script"          # 台本まで戻る
-    return "assemble"            # 組み立てだけやり直す</code></pre>
-
-    <p><strong>提出要件：修正ループを最低1回は回してください。</strong></p>
-
-    <div class="note">
-      <span class="tag">最初の1回は必ず落ちます</span>
-      スターターNotebookは、<span class="mark">初期設定で動画が約70秒になるようにしてあります。</span>55〜65秒の条件を満たさないので、1回目の検査は必ず失敗します。仕込みです。<br><br>
-      落ちてから、どこへ戻すかを設計してください。台本へ戻して要点を短くするのか、絵コンテへ戻して1カットの秒数を詰めるのか。<span class="mark">この課題で見たいのは、失敗したときに何が起きるかです。</span>
-    </div>
+    <p>この4つの確認をして、<code>approve</code> を押す。それがプロデューサーの仕事です。<strong>Agentがやったのは、書くことと、素材を見てつなぐことと、測ることです。</strong>つなぎ方の判断はAgentに委ねましたが、その判断はログで追え、検査で測られ、あなたが最後に見ました。</p>
   </section>
+
 
   <section class="sec" id="s8-6">
-    <h2><span class="n">8.6</span>公開できない理由を確認する</h2>
+    <h2><span class="n">8.6</span>提出と相互評価</h2>
 
-    <p>動画が完成しても、それは「公開してよい」を意味しません。最後の承認の前に、次を確認します。</p>
+    <p>提出は2つに分かれます。<strong>動画は観客に、工程は講師に</strong>見せます。</p>
 
     <table>
-      <thead><tr><th>観点</th><th>確認すること</th></tr></thead>
+      <thead><tr><th>何を</th><th>どこへ</th><th>誰が見る</th><th>観点</th></tr></thead>
       <tbody>
-        <tr><td><strong>誤情報</strong></td><td>要点3つに出典があるか。出典が本当にその内容を述べているか</td></tr>
-        <tr><td><strong>著作権</strong></td><td>画像、音楽、フォントの利用条件。生成物の学習元が問題にならないか</td></tr>
-        <tr><td><strong>肖像</strong></td><td>実在の人物が映っていないか。似せていないか</td></tr>
-        <tr><td><strong>生成物の表示</strong></td><td>AIが作ったことを示す必要がある場面か</td></tr>
-        <tr><td><strong>コスト</strong></td><td>1本あたりいくらかかったか。何回作り直したか</td></tr>
-        <tr><td><strong>ログ</strong></td><td>どの工程で何を実行したか、後から追えるか</td></tr>
+        <tr><td><code>output.mp4</code> を Google Drive に置き、共有を「リンクを知っている全員」にして、その URL</td><td>nmims2026 の <strong>Assignment 2</strong> カード</td><td>クラスメイト7人</td><td>Q1〜Q8。世界の観客として「ムンバイに行きたくなるか」</td></tr>
+        <tr><td><code>agewec-mumbai</code> フォルダの zip（<code>config.py</code> を除く。<code>assets/</code>、<code>SOURCES.txt</code>、<code>EDIT_LOG.txt</code>、<code>REPORT.txt</code> を含む）</td><td>Google フォーム</td><td>講師</td><td>工程の分解、承認の位置、戻り先、出典</td></tr>
       </tbody>
     </table>
 
-    <h3><span class="n">8.6.1</span>提出物</h3>
-
-    <div class="prompt"><span class="tag">SUBMISSION</span>最終課題は、nmims2026 のシステムへアップロードします。
-
-https://github.com/shunokuhara/nmims/tree/main/nmims2026</div>
-
-    <div class="warn">
-      <span class="tag">アップロードする前に確認すること</span>
-      <span class="mark">APIキー、トークン、個人情報がNotebookに残っていないか。</span>実行結果のセルにも出ていないことを確認してください。<br><br>
-      <strong>公開する場所へ出す前が、最後の確認機会です。</strong>
-    </div>
-
-    <p>出すものは次のとおりです。</p>
-
-    <ol>
-      <li>完成した <code>.mp4</code></li>
-      <li>Colab Notebook（グラフの定義、ノード、ツール、承認の位置が読める状態で）</li>
-      <li>工程のログ。どこで落ち、どこへ戻り、何回で通ったか</li>
-      <li>人間が承認・却下した箇所と、その理由</li>
-      <li>8.6の表について、各行の確認結果</li>
-    </ol>
-
-    <h3><span class="n">8.6.2</span>他の人の作品を評価する</h3>
-
-    <p>提出したら終わりではありません。<span class="mark">割り当てられたクラスメイトの作品を評価します。</span>演習1と同じ形です。</p>
+    <h3>REPORT.txt に書くこと</h3>
 
     <table>
-      <thead><tr><th></th><th></th></tr></thead>
+      <thead><tr><th></th><th>書くこと</th></tr></thead>
       <tbody>
-        <tr><td><strong>人数</strong></td><td>7人</td></tr>
-        <tr><td><strong>時間</strong></td><td>40分</td></tr>
-        <tr><td><strong>成績</strong></td><td><span class="mark">評価した内容も成績に入ります</span></td></tr>
+        <tr><td><strong>1</strong></td><td>絵コンテの承認で <code>revise</code> した指摘（1行）と、それで絵コンテがどう変わったか</td></tr>
+        <tr><td><strong>2</strong></td><td>編集Agentが絵コンテからずらした点（<code>EDIT_LOG.txt</code> の決定要約から1つ）と、その判断に納得したか</td></tr>
+        <tr><td><strong>3</strong></td><td>ナレーションの事実で、根拠を確かめた1つと、その出典</td></tr>
+        <tr><td><strong>4</strong></td><td>検査で落ちたことがあれば、その文と、Agentがどう直したか。落ちなかったなら「落ちなかった」</td></tr>
       </tbody>
     </table>
 
-    <h4>評価する観点</h4>
+    <p><code>agewec-mumbai</code> フォルダを右クリックして圧縮し、<code>PART8_学籍番号.zip</code> という名前で次のフォームからアップロードします。</p>
+    <p><a href="FORM_URL_PART8" target="_blank" rel="noopener"><strong>FORM_URL_PART8</strong></a></p>
 
-    <p>演習1とは違います。<strong>映像の出来ではありません。</strong></p>
+    <h3>相互評価</h3>
 
-    <table>
-      <thead><tr><th>観点</th><th>見るところ</th></tr></thead>
-      <tbody>
-        <tr><td><strong>工程の分解</strong></td><td>仕事がいくつの段階に分かれているか。分け方に理由があるか</td></tr>
-        <tr><td><strong>承認の位置</strong></td><td>どこで人間に渡しているか。<span class="mark">取り消せない操作の前で止まっているか</span></td></tr>
-        <tr><td><strong>戻り先の設計</strong></td><td>検査に落ちたとき、どこへ戻すか。全部やり直しになっていないか</td></tr>
-        <tr><td><strong>根拠の確認</strong></td><td>出典があるか。事実確認のノードがあるか</td></tr>
-      </tbody>
-    </table>
+    <p>Drive の共有は、<span class="mark">提出から1か月間は解除しないでください。</span>相互評価と採点がその間に行われます。<br><br>nmims2026 に動画のリンクを提出すると、クラスメイトの動画が7本割り当てられます。<span class="mark">観客として見て、Q1〜Q8に答えてください。</span>工程の良し悪しはここでは見ません。「来たくなるか」「人に見せたくなるか」だけです。</p>
 
-    <div class="warn">
-      <span class="tag">Notebookを開いてください</span>
-      <span class="mark">動画だけ見て点を付けないでください。</span>4つの観点は、どれもNotebookを読まないと判断できません。<br><br>
-      グラフの定義、ノードの並び、<code>interrupt</code> の位置。<strong>そこにその人の設計が出ています。</strong>
-    </div>
-
-    <div class="note">
-      <span class="tag">映像の出来を評価しない理由</span>
-      素材が文字と静止画だけでも、設計が良ければ高く評価されます。<span class="mark">凝った映像でも、流れが1本道なら低くなります。</span><br><br>
-      8.0.1に書いたとおりです。<strong>この課題で見るのは、映像ではなく仕組みです。</strong>
-    </div>
-
-    <div class="note">
-      <span class="tag">この教材の終わりに</span>
-      演習0で、AIに任せる価値がある仕事を3か国分探しました。あのとき書いた「人間が残すべき確認」の列を、もう一度見てください。<br><br>
-      <span class="mark">この章でやったことは、その列をコードにしたことです。</span>企画の承認、事実確認、公開判断。どこで止めるかを決めたのは、最後まであなたでした。<br><br>
-      Agentic AIの技術は変わり続けます。ライブラリ名もモデル名も、来年には別のものになっています。<strong>変わらないのは、作業のほうです。<strong>仕事を分解する。任せる範囲を決める。止める場所を設計する。</strong></strong>
-    </div>
+    <div class="prompt"><span class="tag">FINAL</span>最初の質問に戻ります。「Agentic AIは何ができるか」。
+この章の答えは、「人間が決めた要点と承認の中で、書き、素材を見て組み立て、測ることができる」です。
+テーマを決めたのも、プロンプトを読んだのも、素材を作ったのも、事実を確かめたのも、公開すると決めたのも、あなたです。
+それがプロデューサーの仕事で、これからは誰もがその席に座ります。</div>
   </section>
-
-
-  
 
 
   <nav class="pager">

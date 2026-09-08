@@ -199,25 +199,67 @@ th{background:var(--accent-soft);font-weight:700}
 
     <h3><span class="n">7.0.1</span>始める前の準備</h3>
 
-    <p>PART 6で作った<code>vibe-chat/</code>を使います。最初に、テストが失敗する状態を作ります。</p>
+    <p>PART 6と同じく、<span class="mark">全員が同じフォルダから始めます。</span>PART 6を終えた vibe-chat（禁止語まで入り、テスト4つ）に、この章のAgentのコードを <code>agent/</code> フォルダとして同梱してあります。</p>
 
-    <h4>壊し方</h4>
+    <p><a href="starter/part7/vibe-chat-part7-starter.zip" download><strong>vibe-chat-part7-starter.zip をダウンロード</strong></a></p>
 
-    <p><code>app.py</code> を開き、<span class="mark">空の名前を弾いている部分をコメントアウトしてください。</span>PART 5の5.5でやったのと同じです。</p>
+<pre><code>vibe-chat/
+├── app.py                 PART 6完了時のFlaskアプリ
+├── templates/index.html
+├── tests/test_app.py      テスト4つ
+├── requirements.txt
+└── agent/
+    ├── config.py          接続先。最初にここを書く
+    ├── tools.py           7.1  Agentが使う道具（制限つき）
+    ├── agent_plain.py     7.1  素のPythonのAgent
+    ├── demo_structured.py 7.2  構造化出力の小演習
+    ├── agent_langchain.py 7.2  LangChain版のAgent
+    ├── agent_graph.py     7.3〜7.4  流れ・停止条件・承認
+    ├── break_app.py       7.0  わざと壊す
+    └── requirements.txt</code></pre>
 
-    <p>そのうえで <code>pytest</code> を実行し、テストが落ちることを確認します。</p>
+    <h4>1　展開して、入れる</h4>
 
-<pre><code>pytest</code></pre>
+    <p>展開した <code>vibe-chat</code> をVS Codeで開き、ターミナルで：</p>
+
+<pre><code>pip install -r requirements.txt
+pip install -r agent/requirements.txt
+pytest</code></pre>
+
+    <p><code>4 passed</code> と出れば準備完了です。</p>
+
+    <h4>2　接続先を書く</h4>
+
+    <p><code>agent/config.py</code> を開き、PART 3でClineに入れたのと同じ4つを書きます。</p>
+
+    <table>
+      <thead><tr><th>変数</th><th>入れるもの</th></tr></thead>
+      <tbody>
+        <tr><td><code>BASE_URL</code></td><td>自分のサーバ（<code>https://pc11.okuharalab.com/v1</code> など。3.1.3の表）</td></tr>
+        <tr><td><code>MODEL</code></td><td>そのサーバのModel ID（<code>qwen38_1:latest</code> など。番号を揃える）</td></tr>
+        <tr><td><code>CF_ACCESS_CLIENT_ID</code></td><td>配布されたClient ID</td></tr>
+        <tr><td><code>CF_ACCESS_CLIENT_SECRET</code></td><td>配布されたClient Secret</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">config.py は提出しない・共有しない</span>
+      Client Secret が入っています。<span class="mark">提出のzipからは <code>agent/config.py</code> を除いてください。</span>
+    </div>
+
+    <h4>3　わざと壊す</h4>
+
+    <p>PART 5の5.5と同じく、<code>app.py</code> の「空の名前を弾く行」をコメントアウトします。手でやっても、次のスクリプトでも構いません。</p>
+
+<pre><code>python agent/break_app.py
+pytest</code></pre>
+
+    <p><code>1 failed, 3 passed</code> になれば準備完了です。<span class="mark">この失敗を調査し、修正し、テストを通すことが、この章のAgentの目標です。</span></p>
 
     <div class="note">
       <span class="tag">Agentには修正場所を教えません</span>
-      Agentには「テストが失敗しています。原因を調べて修正してください」と伝えます。Agentが原因を発見できるか確認します。
+      Agentには「テストが失敗しています。原因を調べて修正してください」とだけ伝えます。<strong>どの行を壊したかは教えません。</strong>Agentが自力で見つけられるかを見ます。
     </div>
-
-<pre><code>cd vibe-chat
-pytest</code></pre>
-
-    <p>テストが失敗することを確認してください。<span class="mark">この失敗を調査し、修正し、テストを通すことが、この章のAgentの目標です。</span></p>
 
     <h3><span class="n">7.0.2</span>この章の完成条件</h3>
 
@@ -225,28 +267,18 @@ pytest</code></pre>
       <p><strong>1</strong>　Agentが、失敗したテストを読む</p>
       <p><strong>2</strong>　修正対象のファイルを提案する</p>
       <p><strong>3</strong>　修正して <code>pytest</code> を実行する</p>
-      <p><strong>4</strong>　成功しても、<code>git diff</code> を示して<strong>人間の承認で止まる</strong></p>
+      <p><strong>4</strong>　成功しても、<strong>差分を示して人間の承認で止まる</strong></p>
     </div>
 
     <p>4番が重要です。Agentは自分で完了を決めません。最終判断を人間へ返します。Clineでは、この機能が最初から用意されていました。この章では自分で実装します。</p>
 
     <div class="note">
-      <span class="tag">必修と発展</span>
-      すべてをゼロから書く必要はありません。授業では次のように扱います。<br><br>
-      <strong>7.1</strong>　必修。素のPythonでツール呼び出しを書く<br>
-      <strong>7.2</strong>　講師デモ＋一部穴埋め。全部を書き写す必要はない<br>
-      <strong>7.3〜7.4</strong>　必修。停止条件、承認、再試行<br>
-      <strong>7.5</strong>　発展。MCP
-    </div>
-
-    <div class="note">
-      <span class="tag">この章の作り方</span>
-      <span class="mark">同じ処理を3段階で作ります。</span><br><br>
-      <strong>7.1</strong>　ツール呼び出しの中身を自分で書く<br>
-      <strong>7.2</strong>　LangChainに定型処理を任せる<br>
-      <strong>7.3〜7.4</strong>　LangGraphで仕事の流れと人間の承認を設計する<br>
-      <strong>7.5</strong>　そのAgentを、現在の外部データにつなぐ<br><br>
-      7.1を省略しないでください。ライブラリが代行する処理を理解するためです。<br>
+      <span class="tag">この章の進め方</span>
+      コードはすべて <code>agent/</code> に入っています。<span class="mark">写経はしません。</span>各節で「読む → 動かす → 1か所変える」を繰り返します。<br><br>
+      <strong>7.1</strong>　必修。素のPythonのAgentを読み、動かす。ライブラリが何を代行しているかを知るため<br>
+      <strong>7.2</strong>　講師デモ。同じことをLangChainで書くとどう見えるか<br>
+      <strong>7.3〜7.4</strong>　必修。停止条件と承認。<strong>revise で差し戻し、MAX_ATTEMPTS を変えて動かす</strong><br>
+      <strong>7.5</strong>　発展。MCP<br><br>
       LangGraphの目的は、コードを短くすることではありません。処理の流れを明確にすることです。
     </div>
   </section>
@@ -260,40 +292,54 @@ pytest</code></pre>
 
     <p>自分で作るツールにも制約が必要です。プロジェクト外のファイルを読めないようにします。テストの実行時間も制限します。</p>
 
-<pre><code>import subprocess
+<pre><code>&quot;&quot;&quot;Tools the agent may use. Every tool is a plain Python function with limits built in.
+
+PROJECT_ROOT is the vibe-chat folder (the parent of this agent/ folder), whatever the
+current working directory is.
+&quot;&quot;&quot;
+
+import difflib
+import subprocess
+import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path.cwd().resolve()
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Files the agent may overwrite: .py files directly under the project root, or under tests/.
+WRITE_ROOTS = [PROJECT_ROOT, PROJECT_ROOT / &quot;tests&quot;]
+
+# Files whose &quot;before&quot; state we keep, so we can show a diff without git.
+WATCHED_FILES = [&quot;app.py&quot;, &quot;tests/test_app.py&quot;]
 
 
 def _safe_path(path: str) -&gt; Path:
+    &quot;&quot;&quot;Resolve a path and refuse anything outside the project.&quot;&quot;&quot;
     target = (PROJECT_ROOT / path).resolve()
     if PROJECT_ROOT not in target.parents and target != PROJECT_ROOT:
-        raise ValueError("プロジェクト外のファイルは扱えません")
+        raise ValueError(&quot;Files outside the project cannot be accessed.&quot;)
     return target
 
 
 def read_file(path: str) -&gt; str:
-    return _safe_path(path).read_text(encoding="utf-8")[:4000]
-
-
-WRITE_ROOTS = [PROJECT_ROOT, PROJECT_ROOT / "tests"]
+    &quot;&quot;&quot;Read a file inside the project (first 4000 characters).&quot;&quot;&quot;
+    return _safe_path(path).read_text(encoding=&quot;utf-8&quot;)[:4000]
 
 
 def write_file(path: str, content: str) -&gt; str:
+    &quot;&quot;&quot;Overwrite a .py file directly under the project root or under tests/.&quot;&quot;&quot;
     target = _safe_path(path)
-    if not any(root == target.parent or root in target.parents
-               for root in WRITE_ROOTS):
-        raise ValueError("プロジェクト直下と tests/ 以外は書き換えません")
-    if target.suffix != ".py":
-        raise ValueError(".py 以外は書き換えません")
-    target.write_text(content, encoding="utf-8")
-    return f"{path} を更新しました"
+    if not any(root == target.parent for root in WRITE_ROOTS):
+        raise ValueError(&quot;Only files directly under the project root or under tests/ may be written.&quot;)
+    if target.suffix != &quot;.py&quot;:
+        raise ValueError(&quot;Only .py files may be written.&quot;)
+    target.write_text(content, encoding=&quot;utf-8&quot;)
+    return f&quot;Updated {path}&quot;
 
 
 def run_tests() -&gt; str:
+    &quot;&quot;&quot;Run pytest in the project and return the tail of its output.&quot;&quot;&quot;
     r = subprocess.run(
-        ["pytest"],
+        [sys.executable, &quot;-m&quot;, &quot;pytest&quot;, &quot;-q&quot;],
         cwd=PROJECT_ROOT,
         capture_output=True,
         text=True,
@@ -302,9 +348,39 @@ def run_tests() -&gt; str:
     return (r.stdout + r.stderr)[-4000:]
 
 
-TOOLS = {"read_file": read_file, "write_file": write_file, "run_tests": run_tests}</code></pre>
+def tests_pass() -&gt; bool:
+    r = subprocess.run([sys.executable, &quot;-m&quot;, &quot;pytest&quot;, &quot;-q&quot;], cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=120)
+    return r.returncode == 0
 
-    <p><code>_safe_path</code>は、プロジェクト外へのアクセスを防ぎます。<code>WRITE_ROOTS</code>は、書き込み先を制限します。この2つがない場合、Agentは不要なファイルを読む、または変更する可能性があります。</p>
+
+# ---- diff without git ---------------------------------------------------------
+
+def snapshot() -&gt; dict:
+    &quot;&quot;&quot;Remember the current content of the watched files.&quot;&quot;&quot;
+    out = {}
+    for rel in WATCHED_FILES:
+        p = PROJECT_ROOT / rel
+        out[rel] = p.read_text(encoding=&quot;utf-8&quot;) if p.exists() else &quot;&quot;
+    return out
+
+
+def make_diff(before: dict) -&gt; str:
+    &quot;&quot;&quot;Unified diff between a snapshot and the files as they are now.&quot;&quot;&quot;
+    chunks = []
+    for rel, old in before.items():
+        p = PROJECT_ROOT / rel
+        new = p.read_text(encoding=&quot;utf-8&quot;) if p.exists() else &quot;&quot;
+        if old == new:
+            continue
+        chunks.append(&quot;&quot;.join(difflib.unified_diff(
+            old.splitlines(keepends=True), new.splitlines(keepends=True),
+            fromfile=f&quot;{rel} (before)&quot;, tofile=f&quot;{rel} (after)&quot;)))
+    return &quot;\n&quot;.join(chunks) if chunks else &quot;(no changes)&quot;
+
+
+TOOLS = {&quot;read_file&quot;: read_file, &quot;write_file&quot;: write_file, &quot;run_tests&quot;: run_tests}</code></pre>
+
+    <p><code>agent/tools.py</code> です。<code>_safe_path</code>は、プロジェクト外へのアクセスを防ぎます。<code>WRITE_ROOTS</code>は、書き込み先を制限します。この2つがない場合、Agentは不要なファイルを読む、または変更する可能性があります。</p>
 
     <div class="warn">
       <span class="tag">これは演習用に危険を縮めた書き換えツールです</span>
@@ -313,65 +389,95 @@ TOOLS = {"read_file": read_file, "write_file": write_file, "run_tests": run_test
 
     <h3><span class="n">7.1.2</span>ツールの定義とループ</h3>
 
-<pre><code>import ollama
+<pre><code>&quot;&quot;&quot;7.1 — The smallest possible agent, in plain Python.
 
-MODEL = "qwen3.8:27b"
+Run from the vibe-chat folder:   python agent/agent_plain.py
+
+The loop below is the whole idea of an agent:
+  1. we give the model a list of tools (SCHEMA)
+  2. the model answers with tool calls (or a final message)
+  3. WE run the tool and send the result back
+  4. repeat, with a hard limit on the number of steps
+&quot;&quot;&quot;
+
+import json
+
+import requests
+
+from config import BASE_URL, MODEL, HEADERS, API_KEY
+from tools import TOOLS
 
 SCHEMA = [
-    {"type": "function", "function": {
-        "name": "read_file",
-        "description": "プロジェクト内のファイルを読む",
-        "parameters": {"type": "object",
-                       "properties": {"path": {"type": "string"}},
-                       "required": ["path"]}}},
-    {"type": "function", "function": {
-        "name": "write_file",
-        "description": "プロジェクト内の .py ファイルを書き換える",
-        "parameters": {"type": "object",
-                       "properties": {"path": {"type": "string"},
-                                      "content": {"type": "string"}},
-                       "required": ["path", "content"]}}},
-    {"type": "function", "function": {
-        "name": "run_tests",
-        "description": "pytest を実行して結果を返す",
-        "parameters": {"type": "object", "properties": {}}}},
+    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
+        &quot;name&quot;: &quot;read_file&quot;,
+        &quot;description&quot;: &quot;Read a file inside the project. Use it to look at app.py and tests/test_app.py.&quot;,
+        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;,
+                       &quot;properties&quot;: {&quot;path&quot;: {&quot;type&quot;: &quot;string&quot;}},
+                       &quot;required&quot;: [&quot;path&quot;]}}},
+    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
+        &quot;name&quot;: &quot;write_file&quot;,
+        &quot;description&quot;: &quot;Overwrite a .py file inside the project with new content.&quot;,
+        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;,
+                       &quot;properties&quot;: {&quot;path&quot;: {&quot;type&quot;: &quot;string&quot;},
+                                      &quot;content&quot;: {&quot;type&quot;: &quot;string&quot;}},
+                       &quot;required&quot;: [&quot;path&quot;, &quot;content&quot;]}}},
+    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
+        &quot;name&quot;: &quot;run_tests&quot;,
+        &quot;description&quot;: &quot;Run pytest and return the result.&quot;,
+        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: {}}}},
 ]
+
+SYSTEM = (
+    &quot;You are a careful coding agent working inside a small Flask project. &quot;
+    &quot;Use the tools to read files, edit files and run the tests. &quot;
+    &quot;Fix the failing test by fixing the application code, not by changing the test. &quot;
+    &quot;When the tests pass, reply with a short summary of what you changed.&quot;
+)
+
+
+def chat(messages):
+    &quot;&quot;&quot;One call to the OpenAI-compatible endpoint of the shared server.&quot;&quot;&quot;
+    r = requests.post(
+        f&quot;{BASE_URL}/chat/completions&quot;,
+        headers={**HEADERS, &quot;Authorization&quot;: f&quot;Bearer {API_KEY}&quot;, &quot;Content-Type&quot;: &quot;application/json&quot;},
+        json={&quot;model&quot;: MODEL, &quot;messages&quot;: messages, &quot;tools&quot;: SCHEMA, &quot;temperature&quot;: 0},
+        timeout=300,
+    )
+    r.raise_for_status()
+    return r.json()[&quot;choices&quot;][0][&quot;message&quot;]
 
 
 def agent(goal: str, max_steps: int = 12) -&gt; str:
-    messages = [{"role": "user", "content": goal}]
-
+    messages = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM}, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: goal}]
     for step in range(max_steps):
-        reply = ollama.chat(model=MODEL, messages=messages, tools=SCHEMA)
-        # ライブラリのバージョンでオブジェクト型か辞書型かが変わる。
-        # 辞書に揃えてから扱う。
-        msg = dict(reply["message"])
+        msg = chat(messages)
         messages.append(msg)
-
-        calls = msg.get("tool_calls") or []
+        calls = msg.get(&quot;tool_calls&quot;) or []
         if not calls:
-            return msg["content"]            # 提案がなければ終了
-
+            return msg.get(&quot;content&quot;) or &quot;(no content)&quot;       # no tool call: the model is done
         for call in calls:
-            fn = dict(dict(call)["function"])
-            name = fn["name"]
-            args = dict(fn["arguments"])
-            print(f"[{step}] {name}({args})")
+            name = call[&quot;function&quot;][&quot;name&quot;]
+            args = json.loads(call[&quot;function&quot;].get(&quot;arguments&quot;) or &quot;{}&quot;)
+            shown = {k: (v[:60] + &quot;…&quot; if isinstance(v, str) and len(v) &gt; 60 else v) for k, v in args.items()}
+            print(f&quot;[{step}] {name}({shown})&quot;)
             try:
                 result = TOOLS[name](**args)
-            except Exception as e:            # 失敗も結果として返す
-                result = f"ERROR: {e}"
-            messages.append({"role": "tool", "content": str(result)})
+            except Exception as e:                              # a failure is also a result
+                result = f&quot;ERROR: {e}&quot;
+            messages.append({&quot;role&quot;: &quot;tool&quot;, &quot;tool_call_id&quot;: call[&quot;id&quot;], &quot;content&quot;: str(result)})
+    return &quot;Stopped: reached the maximum number of steps.&quot;
 
-    return "打ち切りました（最大ステップ数に到達）"
 
-
-print(agent("pytest を実行し、失敗しているテストの原因を調べて直してください"))</code></pre>
+if __name__ == &quot;__main__&quot;:
+    print(agent(&quot;Run the tests, find out why one of them fails, and fix it.&quot;))</code></pre>
 
     <div class="warn">
       <span class="tag">動かないときに最初に見るところ</span>
-      <code>ollama</code> パッケージは、バージョンによって応答が辞書だったりオブジェクトだったりします。<span class="mark">上のコードは <code>dict()</code> で包んで揃えていますが、それでも <code>KeyError</code> や <code>AttributeError</code> が出ることがあります。</span><br><br>
-      エラーが出た場合は、<code>print(reply)</code>で応答を確認します。ツール呼び出しが入っているキーを探してください。これはライブラリの形式に関する問題です。
+      接続先は、Clineと同じ共有サーバです。<span class="mark">Clineで動いていれば、<code>config.py</code> の4つを揃えるだけで動きます。</span><br><br>
+      <code>401</code> / <code>403</code> / HTMLのログイン画面が返る → Client ID / Secret<br>
+      <code>model ... not found</code> → <code>BASE_URL</code> のサーバ番号と <code>MODEL</code> の番号が合っているか<br>
+      <code>502</code> → そのサーバのOllamaが落ちている。講師に言う<br>
+      途中で止まる → <code>max_steps</code> に達した。何をしていたかは <code>[n] ツール名(引数)</code> の行に出ています
     </div>
 
     <h3><span class="n">7.1.3</span>このループに、Agentの核が入っています</h3>
@@ -424,48 +530,56 @@ print(agent("pytest を実行し、失敗しているテストの原因を調べ
 
     <h3><span class="n">7.2.2</span>小演習：旅行案内を決まった形で出す</h3>
 
-    <p>自由な文章から特定の項目を取り出すことは困難です。次のプログラムは、出力を<strong>観光地名、都道府県、交通手段、見どころ</strong>の4項目に固定します。</p>
+    <p>自由な文章から特定の項目を取り出すことは困難です。次のプログラムは、出力を<strong>場所、地域、行き方、見どころ</strong>の4項目に固定します。</p>
 
-<pre><code>uv add langchain langchain-ollama pydantic</code></pre>
+<pre><code>python agent/demo_structured.py</code></pre>
 
-<pre><code>from pydantic import BaseModel, Field
+<pre><code>&quot;&quot;&quot;7.2.2 — LangChain: force the model to answer in a fixed shape.
+
+Run from the vibe-chat folder:   python agent/demo_structured.py
+&quot;&quot;&quot;
+
+from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
+
+from config import BASE_URL, MODEL, HEADERS, API_KEY
 
 
 class Destination(BaseModel):
-    name: str = Field(description="観光地の名前")
-    prefecture: str = Field(description="都道府県名")
-    access: str = Field(description="東京からの主な移動手段")
-    highlight: str = Field(description="その観光地の見どころ")
+    name: str = Field(description=&quot;Name of the place&quot;)
+    city: str = Field(description=&quot;City or region&quot;)
+    access: str = Field(description=&quot;How to get there from central Mumbai&quot;)
+    highlight: str = Field(description=&quot;What makes it worth the trip&quot;)
 
 
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "あなたは日本の旅行アドバイザーです。"),
-    ("human", "東京から約1時間で行ける観光地を1つ提案してください。"),
+    (&quot;system&quot;, &quot;You are a travel adviser for Mumbai.&quot;),
+    (&quot;human&quot;, &quot;Suggest one place to visit within about one hour of central Mumbai.&quot;),
 ])
 
-model = ChatOllama(model="qwen3.8:27b", temperature=0)
-structured_model = model.with_structured_output(Destination)
+model = ChatOpenAI(base_url=BASE_URL, api_key=API_KEY, model=MODEL, temperature=0,
+                   default_headers=HEADERS)
+structured_model = model.with_structured_output(Destination, method=&quot;function_calling&quot;)
 
-# Prompt → Model → Destination の順につなぐ
+# Prompt -&gt; Model -&gt; Destination
 chain = prompt | structured_model
 result = chain.invoke({})
 
-print("観光地:", result.name)
-print("都道府県:", result.prefecture)
-print("移動手段:", result.access)
-print("見どころ:", result.highlight)</code></pre>
+print(&quot;Place:    &quot;, result.name)
+print(&quot;City:     &quot;, result.city)
+print(&quot;Access:   &quot;, result.access)
+print(&quot;Highlight:&quot;, result.highlight)</code></pre>
 
     <div class="note">
-      <span class="tag">画像のコードから変更した点</span>
-      画像の例はOpenAIのモデルと<code>PydanticOutputParser</code>を使っています。この教材ではOllamaのQwenを使います。<code>with_structured_output()</code>で、出力をPydanticの形式へ変換します。
+      <span class="tag">接続先はClineと同じ</span>
+      <code>ChatOpenAI</code> に <code>base_url</code> と <code>default_headers</code> を渡しているだけで、中身は共有サーバのQwenです。<code>with_structured_output()</code> で、出力をPydanticの形式へ変換します。
     </div>
 
     <h4>学生が行うこと</h4>
     <ol>
       <li>プログラムを実行し、4項目が別々に表示されることを確認します。</li>
-      <li><code>Destination</code>へ<code>recommended_food</code>を追加します。</li>
+      <li><code>Destination</code>へ<code>recommended_food</code>を追加します（<code>agent/demo_structured.py</code> を直接編集）。</li>
       <li>もう一度実行し、食べ物も出力されることを確認します。</li>
       <li>自由文ではなく構造化する利点を1文で書きます。</li>
     </ol>
@@ -486,41 +600,59 @@ print("見どころ:", result.highlight)</code></pre>
       </tbody>
     </table>
 
-<pre><code>uv add langchain langchain-ollama</code></pre>
+<pre><code>python agent/agent_langchain.py</code></pre>
 
-<pre><code>from langchain.agents import create_agent
+<pre><code>&quot;&quot;&quot;7.2.3 — The same agent as 7.1, but LangChain/LangGraph run the loop.
+
+Run from the vibe-chat folder:   python agent/agent_langchain.py
+&quot;&quot;&quot;
+
 from langchain_core.tools import tool
-from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
+
+from config import BASE_URL, MODEL, HEADERS, API_KEY
+import tools as t
+
+
+# The docstring of each tool is what the model sees. 7.2.4 asks you to change them.
+@tool
+def read_file(path: str) -&gt; str:
+    &quot;&quot;&quot;Read a file inside the project. Use it to look at app.py and tests/test_app.py.&quot;&quot;&quot;
+    return t.read_file(path)
 
 
 @tool
-def read_file_tool(path: str) -&gt; str:
-    &quot;&quot;&quot;プロジェクト内のファイルを読む。パスはリポジトリ直下からの相対で指定する。&quot;&quot;&quot;
-    return read_file(path)                # 7.1で書いた制約付きの関数をそのまま使う
+def write_file(path: str, content: str) -&gt; str:
+    &quot;&quot;&quot;Overwrite a .py file inside the project with new content.&quot;&quot;&quot;
+    return t.write_file(path, content)
 
 
 @tool
-def run_tests_tool() -&gt; str:
-    &quot;&quot;&quot;pytest を実行し、テストの結果をそのまま返す。&quot;&quot;&quot;
-    return run_tests()                    # 7.1で書いたものをそのまま使う
+def run_tests() -&gt; str:
+    &quot;&quot;&quot;Run pytest and return the result.&quot;&quot;&quot;
+    return t.run_tests()
 
 
-@tool
-def write_file_tool(path: str, content: str) -&gt; str:
-    &quot;&quot;&quot;プロジェクト直下または tests/ 内の .py ファイルを書き換える。&quot;&quot;&quot;
-    return write_file(path, content)      # 7.1で書いた制約付きの関数をそのまま使う
+model = ChatOpenAI(base_url=BASE_URL, api_key=API_KEY, model=MODEL, temperature=0,
+                   default_headers=HEADERS)
+
+SYSTEM = (
+    &quot;You are a careful coding agent working inside a small Flask project. &quot;
+    &quot;Fix the failing test by fixing the application code, not by changing the test. &quot;
+    &quot;When the tests pass, reply with a short summary of what you changed.&quot;
+)
+
+agent_executor = create_react_agent(model, [read_file, write_file, run_tests], prompt=SYSTEM)
 
 
-llm = ChatOllama(model="qwen3.8:27b")
+def run(goal: str) -&gt; str:
+    result = agent_executor.invoke({&quot;messages&quot;: [(&quot;user&quot;, goal)]}, {&quot;recursion_limit&quot;: 30})
+    return result[&quot;messages&quot;][-1].content
 
-agent_executor = create_agent(
-    model=llm,
-    tools=[read_file_tool, write_file_tool, run_tests_tool],
-    system_prompt=(
-        "pytest の失敗を調べ、必要最小限の修正を行う。"
-        "修正後は必ず pytest を実行する。"
-    ),
-)</code></pre>
+
+if __name__ == &quot;__main__&quot;:
+    print(run(&quot;Run the tests, find out why one of them fails, and fix it.&quot;))</code></pre>
 
     <p><code>llm.bind_tools()</code>は、モデルとツールを接続するだけです。<code>agent_executor</code>は、ツール呼び出しのループも実行します。7.3では<code>agent_executor</code>を使います。</p>
 
@@ -535,7 +667,7 @@ agent_executor = create_agent(
 
     <div class="note">
       <span class="tag">やること</span>
-      最初に、現在のdocstringで実行結果を記録します。次に、<code>read_file_tool</code>のdocstringを「データを取得する」へ変更します。同じ依頼を実行し、<span class="mark">どのツールが選ばれたかを比較してください。</span><br><br>
+      最初に、現在のdocstringで実行結果を記録します。次に、<code>agent/agent_langchain.py</code> の <code>read_file</code> のdocstringを「データを取得する」へ変更します。同じ依頼を実行し、<span class="mark">どのツールが選ばれたかを比較してください。</span><br><br>
       最後に元の具体的なdocstringへ戻します。曖昧な説明がツール選択へ与えた影響を1文で書きます。
     </div>
 
@@ -604,19 +736,24 @@ agent_executor = create_agent(
 
     <p>LLMを呼ぶ場所は<code>implement</code>だけです。ほかの処理は通常のPythonです。</p>
 
-<pre><code>uv add langgraph</code></pre>
 
-<pre><code>import subprocess
-from typing import TypedDict
 
+<pre><code>from typing import TypedDict
+
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, END
+from langgraph.types import interrupt, Command
 
-MAX_ATTEMPTS = 3
+import tools as t
+from agent_langchain import agent_executor
+
+MAX_ATTEMPTS = 3        # 7.3.2: the stop condition. Try changing it.
 
 
 class State(TypedDict, total=False):
     goal: str
     attempts: int
+    before: dict          # snapshot of the watched files, taken in plan
     check_output: str
     passed: bool
     diff: str
@@ -625,39 +762,37 @@ class State(TypedDict, total=False):
 
 
 def plan(state: State) -&gt; State:
-    return {**state, "attempts": 0}
+    return {**state, &quot;attempts&quot;: 0, &quot;before&quot;: t.snapshot()}
 
 
 def implement(state: State) -&gt; State:
-    # ここだけがAgentの呼び出し。7.2で作った agent_executor をそのまま使う。
-    prompt = state["goal"]
-    if state.get("check_output"):
-        prompt += f"\n\n前回の実行結果:\n{state['check_output']}"
-    if state.get("review_feedback"):
-        prompt += f"\n\n人間からの指摘:\n{state['review_feedback']}"
-    agent_executor.invoke({"messages": [("user", prompt)]})
-    return {**state, "attempts": state["attempts"] + 1}
+    # The only place the model is called.
+    prompt = state[&quot;goal&quot;]
+    if state.get(&quot;check_output&quot;):
+        prompt += f&quot;\n\nResult of the last test run:\n{state[&#x27;check_output&#x27;]}&quot;
+    if state.get(&quot;review_feedback&quot;):
+        prompt += f&quot;\n\nFeedback from the human reviewer:\n{state[&#x27;review_feedback&#x27;]}&quot;
+    agent_executor.invoke({&quot;messages&quot;: [(&quot;user&quot;, prompt)]}, {&quot;recursion_limit&quot;: 30})
+    return {**state, &quot;attempts&quot;: state[&quot;attempts&quot;] + 1}
 
 
 def check(state: State) -&gt; State:
-    r = subprocess.run(["pytest"], cwd=PROJECT_ROOT,
-                       capture_output=True, text=True, timeout=120)
-    return {**state,
-            "check_output": (r.stdout + r.stderr)[-4000:],
-            "passed": r.returncode == 0}
+    # pytest is a node of its own. The model never gets to &quot;say&quot; the tests passed.
+    output = t.run_tests()
+    return {**state, &quot;check_output&quot;: output, &quot;passed&quot;: t.tests_pass()}
 
 
 def route_after_check(state: State) -&gt; str:
-    if state["passed"]:
-        return "review"
-    if state["attempts"] &gt;= MAX_ATTEMPTS:
-        return "give_up"
-    return "implement"
+    if state[&quot;passed&quot;]:
+        return &quot;review&quot;
+    if state[&quot;attempts&quot;] &gt;= MAX_ATTEMPTS:
+        return &quot;give_up&quot;
+    return &quot;implement&quot;
 
 
 def give_up(state: State) -&gt; State:
-    print("3回試しても通りませんでした。人間に引き継ぎます。")
-    print(state["check_output"])
+    print(f&quot;\nGave up after {MAX_ATTEMPTS} attempts. Handing over to a human.\n&quot;)
+    print(state[&quot;check_output&quot;])
     return state</code></pre>
 
     <div class="note">
@@ -682,64 +817,86 @@ def give_up(state: State) -&gt; State:
   <section class="sec" id="s7-4">
     <h2><span class="n">7.4</span>人間の承認・中断・再開</h2>
 
-    <p><code>review</code>ノードで処理を止め、人間の判断を待ちます。</p>
+    <p><code>review</code>ノードで処理を止め、人間の判断を待ちます。差分は、<code>plan</code> で取った控え（<code>snapshot</code>）と今のファイルを比べて作ります。gitは使いません。</p>
 
-<pre><code>from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import StateGraph, START, END
-from langgraph.types import interrupt, Command
-
-
-def review(state: State) -&gt; State:
-    diff = subprocess.run(["git", "diff"], cwd=PROJECT_ROOT,
-                          capture_output=True, text=True).stdout
+<pre><code>def review(state: State) -&gt; State:
+    diff = t.make_diff(state[&quot;before&quot;])
     answer = interrupt({
-        "diff": diff[:4000],
-        "check_output": state["check_output"],
-        "question": "採用しますか？",
-        "choices": ["approve", "revise", "stop"],
-        "when_revise": "直してほしい点を書いてください",
+        &quot;diff&quot;: diff[:4000],
+        &quot;check_output&quot;: state[&quot;check_output&quot;],
+        &quot;question&quot;: &quot;Approve these changes?&quot;,
+        &quot;choices&quot;: [&quot;approve&quot;, &quot;revise&quot;, &quot;stop&quot;],
     })
-    return {**state,
-            "diff": diff,
-            "decision": answer["decision"],
-            "review_feedback": answer.get("feedback", "")}
+    return {**state, &quot;diff&quot;: diff,
+            &quot;decision&quot;: answer[&quot;decision&quot;],
+            &quot;review_feedback&quot;: answer.get(&quot;feedback&quot;, &quot;&quot;)}
 
 
 def route_after_review(state: State) -&gt; str:
-    if state["decision"] == "revise":
-        return "implement"        # 指摘を渡して直させ直す
-    return END                    # approve も stop も終了</code></pre>
+    if state[&quot;decision&quot;] == &quot;revise&quot;:
+        return &quot;implement&quot;          # send the feedback back to the agent
+    return END                      # approve and stop both end here</code></pre>
 
     <h3><span class="n">7.4.1</span>ここで初めて組み立てる</h3>
 
 <pre><code>graph = StateGraph(State)
-graph.add_node("plan", plan)
-graph.add_node("implement", implement)
-graph.add_node("check", check)
-graph.add_node("review", review)
-graph.add_node("give_up", give_up)
-
-graph.add_edge(START, "plan")
-graph.add_edge("plan", "implement")
-graph.add_edge("implement", "check")
-graph.add_conditional_edges("check", route_after_check)
-graph.add_conditional_edges("review", route_after_review)
-graph.add_edge("give_up", END)
-
+graph.add_node(&quot;plan&quot;, plan)
+graph.add_node(&quot;implement&quot;, implement)
+graph.add_node(&quot;check&quot;, check)
+graph.add_node(&quot;review&quot;, review)
+graph.add_node(&quot;give_up&quot;, give_up)
+graph.add_edge(START, &quot;plan&quot;)
+graph.add_edge(&quot;plan&quot;, &quot;implement&quot;)
+graph.add_edge(&quot;implement&quot;, &quot;check&quot;)
+graph.add_conditional_edges(&quot;check&quot;, route_after_check)
+graph.add_conditional_edges(&quot;review&quot;, route_after_review)
+graph.add_edge(&quot;give_up&quot;, END)
 app = graph.compile(checkpointer=MemorySaver())
 
-config = {"configurable": {"thread_id": "task-001"}}
-app.invoke({"goal": "pytest の失敗を直してください"}, config)
-# → interrupt で停止し、差分が返ってくる
 
-# 人間が差分を読んでから再開する
-app.invoke(Command(resume={"decision": "approve"}), config)
+def main():
+    config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;task-001&quot;}}
+    result = app.invoke({&quot;goal&quot;: &quot;Run the tests, find out why one of them fails, and fix it.&quot;}, config)
 
-# 直してほしい点がある場合
-app.invoke(Command(resume={
-    "decision": "revise",
-    "feedback": "テスト側ではなく実装側を直してください",
-}), config)</code></pre>
+    # While the graph is paused at `review`, show the diff and ask the human.
+    while &quot;__interrupt__&quot; in result:
+        payload = result[&quot;__interrupt__&quot;][0].value
+        print(&quot;\n&quot; + &quot;=&quot; * 60)
+        print(&quot;TESTS:\n&quot; + payload[&quot;check_output&quot;].strip().splitlines()[-1])
+        print(&quot;-&quot; * 60)
+        print(&quot;DIFF:\n&quot; + payload[&quot;diff&quot;])
+        print(&quot;=&quot; * 60)
+        decision = &quot;&quot;
+        while decision not in (&quot;approve&quot;, &quot;revise&quot;, &quot;stop&quot;):
+            decision = input(&quot;approve / revise / stop &gt; &quot;).strip().lower()
+        feedback = input(&quot;What should be changed? &gt; &quot;) if decision == &quot;revise&quot; else &quot;&quot;
+        result = app.invoke(Command(resume={&quot;decision&quot;: decision, &quot;feedback&quot;: feedback}), config)
+
+    print(&quot;\nFinished. Decision:&quot;, result.get(&quot;decision&quot;, &quot;(gave up)&quot;))
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</code></pre>
+
+    <h4>動かす</h4>
+
+<pre><code>python agent/break_app.py      # まだ壊していなければ
+python agent/agent_graph.py</code></pre>
+
+    <p>Agentが直してテストが通ると、画面に差分が出て <code>approve / revise / stop &gt;</code> で止まります。<span class="mark">ここが7.0.2の4番です。</span>Agentは自分で終わりません。</p>
+
+    <h4>必ず1回は revise する</h4>
+
+    <p>差分を読んで、1回目は <code>revise</code> を選び、直してほしい点を英語で1行書きます。例：</p>
+
+<pre><code>Do not change tests/test_app.py. Fix app.py only.
+Keep the error message exactly "User name cannot be empty."</code></pre>
+
+    <p>Agentは、前回のテスト結果とあなたの指摘を受け取って <code>implement</code> からやり直します。<strong>2回目の差分が1回目とどう違うかを、REPORT.txt に書きます（7.6）。</strong>納得したら <code>approve</code>。</p>
+
+    <h4>停止条件を変えてみる</h4>
+
+    <p><code>agent/agent_graph.py</code> の <code>MAX_ATTEMPTS = 3</code> を <code>1</code> にして、もう一度壊して動かします。1回で直せなければ <code>give_up</code> に行き、人間に引き継がれます。<span class="mark">「Agentが諦める」もあなたが設計した動作です。</span>戻すのを忘れずに。</p>
 
     <p><code>revise</code>を選ぶと、処理は<code>implement</code>へ戻ります。Agentは、前回のテスト結果と人間の指摘を使って再修正します。</p>
 
@@ -800,7 +957,7 @@ app.invoke(Command(resume={
 
     <h3><span class="n">7.5.1</span>厨房ボードサーバを立てる</h3>
 
-<pre><code>uv add mcp</code></pre>
+<pre><code>pip install mcp</code></pre>
 
 <pre><code># tools/kitchen_board_mcp.py
 import json
@@ -835,8 +992,8 @@ if __name__ == "__main__":
 <pre><code>{
   "mcpServers": {
     "kitchen-board": {
-      "command": "uv",
-      "args": ["run", "python", "tools/kitchen_board_mcp.py"]
+      "command": "python",
+      "args": ["tools/kitchen_board_mcp.py"]
     }
   }
 }</code></pre>
@@ -941,24 +1098,32 @@ Agent:
   <section class="sec" id="s7-6">
     <h2><span class="n">7.6</span>提出物</h2>
 
-    <p>7.0.2で決めた完成条件を、実際に満たしたことを示してください。</p>
+    <p>出すのは <strong>zip ファイル1つ</strong>です。<code>vibe-chat</code> フォルダに <code>REPORT.txt</code> を足し、<code>agent/config.py</code> を除いて圧縮します。</p>
+
+<pre><code>vibe-chat/
+├── app.py, templates/, tests/
+├── agent/                 ← config.py は入れない
+└── REPORT.txt             ← 追加する</code></pre>
+
+    <p><code>REPORT.txt</code> に書くのは3つです。</p>
 
     <table>
-      <thead><tr><th></th><th>出すもの</th></tr></thead>
+      <thead><tr><th></th><th>書くこと</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td>7.1〜7.4のコード。<code>_safe_path</code> と <code>WRITE_ROOTS</code> を含むこと</td></tr>
-        <tr><td><strong>2</strong></td><td>Agentの実行ログ。何回で通ったか、途中で何をしたか</td></tr>
-        <tr><td><strong>3</strong></td><td><code>interrupt</code> で止まった画面と、そこで示された <code>git diff</code></td></tr>
-        <tr><td><strong>4</strong></td><td><strong><code>revise</code> を1回は使うこと。</strong>どんな指摘を渡し、Agentの2回目がどう変わったか</td></tr>
-        <tr><td><strong>5</strong></td><td>7.5を行った場合、<code>kitchen_board.json</code> の変更前後で、Agentの判断がどう変わったか</td></tr>
+        <tr><td><strong>1</strong></td><td><code>revise</code> で渡した指摘（1行）と、それで2回目の差分がどう変わったか</td></tr>
+        <tr><td><strong>2</strong></td><td><code>MAX_ATTEMPTS = 1</code> にしたとき何が起きたか（1回で直った／give_up に行った）</td></tr>
+        <tr><td><strong>3</strong></td><td>7.5をやった場合だけ：<code>kitchen_board.json</code> を変える前後で、Agentの判断がどう変わったか</td></tr>
       </tbody>
     </table>
 
     <div class="note">
-      <span class="tag">4番が中心です</span>
+      <span class="tag">1番が中心です</span>
       <span class="mark">一発で承認したものより、差し戻して直させた記録のほうを評価します。</span>承認の仕組みは、承認するために作るのではありません。差し戻せるようにするために作ります。<br><br>
-      1回で通ってしまった場合は、意図的に不十分な修正を承認せず、指摘を書いて戻してください。
+      1回目の差分に文句がなくても、<strong>何か1つ指摘して戻してください。</strong>戻せることを確かめるのが目的です。
     </div>
+
+    <p><code>vibe-chat</code> フォルダを右クリックして圧縮し、<code>PART7_学籍番号.zip</code> という名前で次のフォームからアップロードします。</p>
+    <p><a href="FORM_URL_PART7" target="_blank" rel="noopener"><strong>FORM_URL_PART7</strong></a></p>
 
     <h3><span class="n">7.6.1</span>考えておくこと</h3>
 

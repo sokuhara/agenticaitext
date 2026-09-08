@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vibe Chat — Message Board</title>
+  <!-- Starter template for PART 7: Vibe Chat (Flask version) as it stands at the end of PART 6. -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: linear-gradient(160deg, #eef2ff 0%, #e0f2fe 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 16px;
+    }
+
+    .board {
+      width: 100%;
+      max-width: 560px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(30, 41, 59, 0.12);
+      padding: 28px;
+    }
+
+    h1 { font-size: 1.5rem; color: #1e293b; margin-bottom: 4px; }
+
+    .subtitle { font-size: 0.9rem; color: #64748b; margin-bottom: 20px; }
+
+    form { display: grid; gap: 12px; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 130px;
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #1e293b;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+      background: #ffffff;
+    }
+
+    button {
+      padding: 11px 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #ffffff;
+      background: #6366f1;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.05s ease;
+    }
+
+    button:hover { background: #4f46e5; }
+    button:active { transform: scale(0.99); }
+
+    #error {
+      display: none;
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      color: #b91c1c;
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+    }
+
+    #error.visible { display: block; }
+
+    .messages-header {
+      margin-top: 28px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .count-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #4f46e5;
+      background: #e0e7ff;
+      border-radius: 999px;
+      padding: 2px 10px;
+    }
+
+    #messages { list-style: none; margin-top: 14px; display: grid; gap: 10px; }
+
+    .message {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    .status-Present { background: #22c55e; }
+    .status-Away    { background: #f59e0b; }
+    .status-Focus   { background: #6366f1; }
+
+    .message-content { flex: 1; min-width: 0; }
+
+    .message-meta {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .message-name {
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: #1e293b;
+      overflow-wrap: anywhere;
+    }
+
+    .message-status { font-size: 0.75rem; font-weight: 600; color: #64748b; }
+
+    .message-text {
+      margin-top: 3px;
+      font-size: 0.92rem;
+      color: #334155;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .delete-form { margin-left: auto; flex-shrink: 0; }
+
+    .delete-btn {
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #64748b;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .delete-btn:hover {
+      color: #b91c1c;
+      border-color: #fca5a5;
+      background: #fee2e2;
+    }
+
+    .empty-note {
+      margin-top: 14px;
+      font-size: 0.88rem;
+      color: #94a3b8;
+      text-align: center;
+      padding: 18px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <h1>Vibe Chat</h1>
+    <p class="subtitle">Share your status and a quick note with the room.</p>
+
+    <form id="message-form" method="post" action="{{ url_for('post_message') }}" novalidate>
+      <div class="field-row">
+        <div>
+          <label for="name">User name</label>
+          <input type="text" id="name" name="name" placeholder="e.g. Ada" autocomplete="off" value="{{ request.form.get('name', '') }}" />
+        </div>
+        <div>
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            {% for s in ["Present", "Away", "Focus"] %}
+            <option value="{{ s }}" {% if request.form.get('status') == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div>
+        <label for="message">Message</label>
+        <input type="text" id="message" name="message" placeholder="What's on your mind?" value="{{ request.form.get('message', '') }}" />
+      </div>
+      <div id="error" role="alert" class="{% if error %}visible{% endif %}">{{ error or "" }}</div>
+      <button type="submit">Send</button>
+    </form>
+
+    <div class="messages-header">
+      <span>Messages</span>
+      <span class="count-badge" id="count">{{ messages|length }}</span>
+    </div>
+    {% if not messages %}
+    <div id="empty-note" class="empty-note">No messages yet — be the first!</div>
+    {% endif %}
+    <ul id="messages">
+      {% for entry in messages %}
+      <li class="message">
+        <span class="status-dot status-{{ entry.status }}"></span>
+        <div class="message-content">
+          <div class="message-meta">
+            <span class="message-name">{{ entry.name }}</span>
+            <span class="message-status">{{ entry.status }}</span>
+          </div>
+          <p class="message-text">{{ entry.message }}</p>
+        </div>
+        <form class="delete-form" method="post" action="{{ url_for('delete_message', message_id=entry.id) }}">
+          <button type="submit" class="delete-btn">Delete</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+  </main>
+</body>
+</html>

@@ -213,6 +213,14 @@ th{background:var(--accent-soft);font-weight:700}
       サーバ側にすれば、「空の名前で送ると弾かれる」をコードで確かめられます。<strong>手で操作しなくても、コマンド1つで判定できます。</strong>
     </div>
 
+    <h3><span class="n">5.1.1b</span>出発点のファイル</h3>
+
+    <p>この章は、<span class="mark">全員が同じ <code>index.html</code> から始めます。</span>PART 4を終えた状態（Deleteボタンと200文字制限つき）のものを用意しました。自分のファイルではなく、これを使ってください。</p>
+
+    <p><a href="starter/part5/index.html" download="index.html"><strong>index.html をダウンロード</strong></a>（<a href="starter/part5/index.html" target="_blank" rel="noopener">ブラウザで開いて動作を見る</a>）</p>
+
+    <p>ダウンロードしたファイルを <code>vibe-chat</code> という新しいフォルダに入れ、VS Code でそのフォルダを開きます。<strong>PART 3・4で作った自分のファイルは、別の場所に残しておけば消えません。</strong></p>
+
     <h3><span class="n">5.1.2</span>完成したときのファイル</h3>
 
 <pre><code>vibe-chat/
@@ -255,9 +263,18 @@ Name / Student ID:
 
     <h3><span class="n">5.1.4</span>準備</h3>
 
-    <p>Clineのターミナルで、2つを入れます。</p>
+    <p>VS Codeのターミナルで、<code>vibe-chat</code> フォルダに移動してから2つを入れます。</p>
 
 <pre><code>pip install flask pytest</code></pre>
+
+    <div class="note">
+      <span class="tag">仮想環境を使っても構いません</span>
+      普段 <code>venv</code> を使っているなら、そのままで大丈夫です。<code>vibe-chat</code> の中で作ります。<br><br>
+      <code>python -m venv .venv</code><br>
+      Windows: <code>.venv\Scripts\activate</code>　　macOS: <code>source .venv/bin/activate</code><br>
+      その後に上の <code>pip install</code>。<br><br>
+      使ったことがなければ、作らなくて構いません。<span class="mark">この章で入れるのは flask と pytest の2つだけなので、どちらでも結果は同じです。</span>使う場合は、Clineに <code>python</code> や <code>pytest</code> を実行させるときも、そのターミナルで仮想環境が有効になっていることを確認してください。提出の zip に <code>.venv</code> は入れません。
+    </div>
 
     <div class="note">
       <span class="tag">エラーが出たら</span>
@@ -284,13 +301,18 @@ Name / Student ID:
       <tbody>
         <tr><td><strong>1</strong></td><td>ブラウザで画面が開く</td><td>人間が見る</td></tr>
         <tr><td><strong>2</strong></td><td>メッセージを送ると一覧に増える</td><td>人間が操作する</td></tr>
-        <tr><td><strong>3</strong></td><td>空の名前は登録されない</td><td><span class="mark">テストが判定する</span></td></tr>
-        <tr><td><strong>4</strong></td><td>空のメッセージは登録されない</td><td><span class="mark">テストが判定する</span></td></tr>
+        <tr><td><strong>3</strong></td><td>名前を空のまま送ると、メッセージは増えず、画面に「User name cannot be empty.」が出る</td><td><span class="mark">テストが判定する</span></td></tr>
+        <tr><td><strong>4</strong></td><td>メッセージを空のまま送ると、メッセージは増えず、画面に「Message cannot be empty.」が出る</td><td><span class="mark">テストが判定する</span></td></tr>
         <tr><td><strong>5</strong></td><td>Deleteを押すと、そのメッセージだけが消える（再読み込みしても消えたまま）</td><td>人間が操作する</td></tr>
       </tbody>
     </table>
 
     <p>1・2・5は人間が見ます。<strong>3と4は機械が判定します。</strong>この違いが、この章の中心です。</p>
+
+    <div class="note">
+      <span class="tag">3と4は、あえて細かく書いてあります</span>
+      「空の名前は登録されない」では、何をもって「登録されない」とするかをAgentが決めてしまいます。<span class="mark">「増えない」と「この文言が出る」まで書けば、テストが何を確かめるべきかが人間の手で決まります。</span>5.3.2でテストを読むときも、5.5で壊すときも、この2行と照らし合わせます。
+    </div>
   </section>
 
   <section class="sec" id="s5-3">
@@ -314,7 +336,9 @@ Requirements:
 - POST the form to a route, then show the messages below the form
 - Reject an empty user name and an empty message
 - Keep the Delete button and the 200-character limit from the current index.html, but implement both on the server side in app.py (no JavaScript logic)
-- tests/test_app.py must test that an empty name and an empty message are rejected
+- tests/test_app.py must contain exactly these two tests:
+  1. POST with an empty user name: the response contains "User name cannot be empty." and the message list is still empty
+  2. POST with an empty message: the response contains "Message cannot be empty." and the message list is still empty
 - Use Flask and pytest only
 
 Do not use:
@@ -334,7 +358,7 @@ Do not create or edit files yet. Show the plan only.</div>
         <tr><td>作るのは4ファイルだけか</td><td>それ以外があれば、削るよう指摘する</td></tr>
         <tr><td>データベースを使っていないか</td><td><span class="mark">SQLite、SQLAlchemyが出たらReject</span></td></tr>
         <tr><td>いまの画面デザインを残すか</td><td>作り直す計画なら、流用するよう頼む</td></tr>
-        <tr><td>テストが2つ以上あるか</td><td>1つもなければ、書くよう指摘する</td></tr>
+        <tr><td>テストが2つあり、5.2.1の3・4の文言どおりか</td><td>「増えない」か「文言が出る」のどちらかが抜けていれば、足すよう指摘する</td></tr>
       </tbody>
     </table>
 
@@ -363,7 +387,7 @@ Do not create or edit files yet. Show the plan only.</div>
     <div class="note">
       <span class="tag">テストの中身は必ず読んでください</span>
       <span class="mark">テストがあることと、テストが効いていることは別です。</span><br><br>
-      <code>assert True</code> だけのテストでも、実行すれば緑になります。<strong>何を確かめているかを、あなたが読んで判断します。</strong>
+      中身が「常に成功」と書いてあるだけのテストでも、実行すれば <code>passed</code> になります。<strong>5.2.1の3・4に書いた2つ（増えない、この文言が出る）が、それぞれ <code>assert</code> になっているか。</strong>それをあなたが読んで確かめます。
     </div>
 
     <h3><span class="n">5.3.4</span>ブラウザで確認する</h3>
@@ -420,26 +444,70 @@ Do not create or edit files yet. Show the plan only.</div>
   <section class="sec" id="s5-5">
     <h2><span class="n">5.5</span>わざと壊して、落ちることを確認する</h2>
 
-    <p>テストが通ることは、テストが効いている証拠になりません。<span class="mark">通るだけなら、何も確かめていないテストでも通ります。</span></p>
+    <p>いま <code>pytest</code> は <code>2 passed</code> と言っています。<span class="mark">ここで1つ、意地の悪い質問をします。</span></p>
 
-    <p><strong>効いていることを確かめる方法は1つです。壊してみることです。</strong></p>
+    <p><strong>その <code>passed</code> は、何を証明していますか。</strong></p>
+
+    <p>「空の名前は登録されない」ことでしょうか。違います。証明しているのは「テストが落ちなかった」ことだけです。<span class="mark">何も確かめていないテストも、passed になります。</span></p>
+
+    <p>天井の火災報知器を思い出してください。鳴っていないから安全、とは言えません。<strong>電池が抜けていても鳴りません。</strong>報知器が本物かどうかを知る方法は1つ。<span class="mark">煙を当ててみることです。</span></p>
+
+    <p>ここでやるのは、それです。<code>app.py</code> から「空の名前を弾く行」をわざと外して、アプリが空の名前を受け付ける状態にします。つまり<strong>あなたが煙を出します。</strong>そして <code>pytest</code> を打ちます。</p>
+
+    <table>
+      <thead><tr><th>pytest の結果</th><th>意味</th></tr></thead>
+      <tbody>
+        <tr><td><strong><code>1 failed</code></strong></td><td>報知器は鳴った。テストはその行を見張っている。<span class="mark">これが正解です。</span></td></tr>
+        <tr><td><strong><code>2 passed</code></strong></td><td>煙を当てても鳴らなかった。テストは何も見ていない。<strong>壊れているのはアプリではなく、テストのほうです。</strong></td></tr>
+      </tbody>
+    </table>
+
+    <p>ふだんは <code>failed</code> は悪い知らせですが、この5分間だけは逆です。<span class="mark">failed を見て安心してください。</span>見終わったら行を戻し、<code>2 passed</code> に戻ることを確かめて終わりです。（ターミナルでは passed が緑、failed が赤で出ます。開発者が「緑」「赤」と言うのはこれのことです。）</p>
+
+    <div class="note">
+      <span class="tag">なぜ今これをやるのか</span>
+      次の章から、<code>app.py</code> を変えるたびに <code>pytest</code> を1回打って「既存の動作は壊れていない」と判断します。<span class="mark">その判断は、壊れたら本当に failed になるテストにしか任せられません。</span>ここで1回、煙を当てて確かめておきます。
+    </div>
 
     <h3><span class="n">5.5.1</span>手順</h3>
 
     <div class="flow-steps">
       <p><strong>1</strong>　<code>app.py</code> を開く</p>
-      <p><strong>2</strong>　<span class="mark">空の名前を弾いている部分を、コメントアウトする</span></p>
-      <p><strong>3</strong>　保存して <code>pytest</code> を実行する</p>
-      <p><strong>4</strong>　<strong>落ちることを確認する</strong></p>
-      <p><strong>5</strong>　コメントアウトを戻して、もう一度 <code>pytest</code></p>
-      <p><strong>6</strong>　通ることを確認する</p>
+      <p><strong>2</strong>　<span class="mark">空の名前を弾いている部分を、コメントアウトする</span>（下の例）</p>
+      <p><strong>3</strong>　保存して、ターミナルで <code>pytest</code> を実行する</p>
+      <p><strong>4</strong>　<strong>1つ落ちて、1つ通ることを確認する</strong>（下の例）</p>
+      <p><strong>5</strong>　コメントアウトを戻して保存し、もう一度 <code>pytest</code></p>
+      <p><strong>6</strong>　2つとも通ることを確認する</p>
     </div>
 
-    <p>4で落ちなければ、<span class="mark">そのテストは何も確かめていません。</span></p>
+    <h4>2　どこをコメントアウトするか</h4>
+
+    <p>Clineが書いた <code>app.py</code> の中に、名前が空なら受け付けない、という数行があります。<code>name</code> と <code>empty</code> で検索すると見つかります。形はおおよそこうです。</p>
+
+<pre><code>if not name:
+    return render_template("index.html", error="User name cannot be empty.", messages=messages), 400</code></pre>
+
+    <p>この <code>if</code> から <code>return</code> までを、行頭に <code>#</code> を付けてコメントにします。<span class="mark">1行ではなく、そのブロック全部です。</span></p>
+
+<pre><code># if not name:
+#     return render_template("index.html", error="User name cannot be empty.", messages=messages), 400</code></pre>
+
+    <p>これでアプリは、名前が空でも登録してしまう状態になりました。<strong>あなたのファイルの書き方は、この例と少し違って構いません。</strong>「名前が空なら弾く」の部分を丸ごと消せていればよいです。</p>
+
+    <h4>4　何が見えれば成功か</h4>
+
+    <p><code>pytest</code> の出力の最後が、こうなっていれば成功です。</p>
+
+<pre><code>FAILED tests/test_app.py::test_empty_name_is_rejected - assert ...
+1 failed, 1 passed</code></pre>
+
+    <p>落ちたのが<strong>名前のテストだけ</strong>で、メッセージのテストは通っている。<span class="mark">これが「テストがその行を見張っている」証拠です。</span>テストの名前はClineが付けたものなので、<code>name</code> が入っていれば同じものです。</p>
+
+    <p>最後が <code>2 passed</code> のままなら、5.5.2へ。</p>
 
     <h3><span class="n">5.5.2</span>落ちなかった場合</h3>
 
-    <p>Clineに直させます。<strong>症状と期待する結果を伝えます。</strong></p>
+    <p><code>2 passed</code> のままなら、直す相手はテストです。Clineに直させます。書き方はPART 4の3行と同じです。</p>
 
     <div class="prompt"><span class="tag">PROMPT</span>I commented out the empty-name check in app.py, but the tests still pass.
 
@@ -450,7 +518,16 @@ Inspect tests/test_app.py and show a short plan.
 Edit tests/test_app.py only.
 Do not edit the file yet.</div>
 
-    <p>PART 4と同じ形です。<span class="mark">症状、期待する結果、制約。</span>この3つを書きます。</p>
+        <table>
+      <thead><tr><th>PART 4で書いた3行</th><th>このプロンプトでは</th></tr></thead>
+      <tbody>
+        <tr><td>行った操作</td><td>app.py の空の名前を弾く行をコメントアウトした</td></tr>
+        <tr><td>実際に起きたこと</td><td>それでもテストが通った</td></tr>
+        <tr><td><span class="mark">本来どうなるべきか</span></td><td>その行を外したら、テストは落ちるべき</td></tr>
+      </tbody>
+    </table>
+
+    <p>それに加えて、<strong>触ってよいのは tests/test_app.py だけ</strong>と最後に書いてあります。app.py を直されたら、壊した行が戻るだけで、テストは飾りのままだからです。</p>
 
     <div class="note">
       <span class="tag">これがテストの検査です</span>

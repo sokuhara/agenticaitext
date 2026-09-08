@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vibe Chat — Message Board</title>
+  <!-- Starter file for PART 5: Vibe Chat as it stands at the end of PART 4 (Delete button + 200-character limit). -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: linear-gradient(160deg, #eef2ff 0%, #e0f2fe 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 16px;
+    }
+
+    .board {
+      width: 100%;
+      max-width: 560px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(30, 41, 59, 0.12);
+      padding: 28px;
+    }
+
+    h1 { font-size: 1.5rem; color: #1e293b; margin-bottom: 4px; }
+
+    .subtitle { font-size: 0.9rem; color: #64748b; margin-bottom: 20px; }
+
+    form { display: grid; gap: 12px; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 130px;
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #1e293b;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+      background: #ffffff;
+    }
+
+    button {
+      padding: 11px 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #ffffff;
+      background: #6366f1;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.05s ease;
+    }
+
+    button:hover { background: #4f46e5; }
+    button:active { transform: scale(0.99); }
+
+    #error {
+      display: none;
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      color: #b91c1c;
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+    }
+
+    #error.visible { display: block; }
+
+    .messages-header {
+      margin-top: 28px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .count-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #4f46e5;
+      background: #e0e7ff;
+      border-radius: 999px;
+      padding: 2px 10px;
+    }
+
+    #messages { list-style: none; margin-top: 14px; display: grid; gap: 10px; }
+
+    .message {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    .status-Present { background: #22c55e; }
+    .status-Away    { background: #f59e0b; }
+    .status-Focus   { background: #6366f1; }
+
+    .message-content { flex: 1; min-width: 0; }
+
+    .message-meta {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .message-name {
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: #1e293b;
+      overflow-wrap: anywhere;
+    }
+
+    .message-status { font-size: 0.75rem; font-weight: 600; color: #64748b; }
+
+    .message-text {
+      margin-top: 3px;
+      font-size: 0.92rem;
+      color: #334155;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .delete-btn {
+      margin-left: auto;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #64748b;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .delete-btn:hover {
+      color: #b91c1c;
+      border-color: #fca5a5;
+      background: #fee2e2;
+    }
+
+    .empty-note {
+      margin-top: 14px;
+      font-size: 0.88rem;
+      color: #94a3b8;
+      text-align: center;
+      padding: 18px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <h1>Vibe Chat</h1>
+    <p class="subtitle">Share your status and a quick note with the room.</p>
+
+    <form id="message-form" novalidate>
+      <div class="field-row">
+        <div>
+          <label for="name">User name</label>
+          <input type="text" id="name" name="name" placeholder="e.g. Ada" autocomplete="off" />
+        </div>
+        <div>
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            <option value="Present">Present</option>
+            <option value="Away">Away</option>
+            <option value="Focus">Focus</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label for="message">Message</label>
+        <input type="text" id="message" name="message" placeholder="What's on your mind?" />
+      </div>
+      <div id="error" role="alert"></div>
+      <button type="submit">Send</button>
+    </form>
+
+    <div class="messages-header">
+      <span>Messages</span>
+      <span class="count-badge" id="count">0</span>
+    </div>
+    <div id="empty-note" class="empty-note">No messages yet — be the first!</div>
+    <ul id="messages"></ul>
+  </main>
+
+  <script>
+    "use strict";
+
+    // All messages live only in this array (no persistence, no network).
+    const messages = [];
+    const MAX_MESSAGE_LENGTH = 200;
+
+    const form = document.getElementById("message-form");
+    const nameInput = document.getElementById("name");
+    const statusSelect = document.getElementById("status");
+    const messageInput = document.getElementById("message");
+    const errorBox = document.getElementById("error");
+    const messagesList = document.getElementById("messages");
+    const countBadge = document.getElementById("count");
+    const emptyNote = document.getElementById("empty-note");
+
+    function showError(text) {
+      errorBox.textContent = text;
+      errorBox.classList.add("visible");
+    }
+
+    function clearError() {
+      errorBox.textContent = "";
+      errorBox.classList.remove("visible");
+    }
+
+    function renderMessages() {
+      // Rebuild the list from the array only.
+      messagesList.textContent = "";
+
+      emptyNote.style.display = messages.length === 0 ? "block" : "none";
+      countBadge.textContent = String(messages.length);
+
+      for (const [index, entry] of messages.entries()) {
+        const li = document.createElement("li");
+        li.className = "message";
+
+        const dot = document.createElement("span");
+        dot.className = "status-dot status-" + entry.status;
+
+        const content = document.createElement("div");
+        content.className = "message-content";
+
+        const meta = document.createElement("div");
+        meta.className = "message-meta";
+
+        const nameEl = document.createElement("span");
+        nameEl.className = "message-name";
+        nameEl.textContent = entry.name; // safe: user input via textContent
+
+        const statusEl = document.createElement("span");
+        statusEl.className = "message-status";
+        statusEl.textContent = entry.status;
+
+        const textEl = document.createElement("p");
+        textEl.className = "message-text";
+        textEl.textContent = entry.message; // safe: user input via textContent
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "delete-btn";
+        deleteBtn.dataset.index = String(index);
+        deleteBtn.textContent = "Delete";
+
+        meta.appendChild(nameEl);
+        meta.appendChild(statusEl);
+        content.appendChild(meta);
+        content.appendChild(textEl);
+        li.appendChild(dot);
+        li.appendChild(content);
+        li.appendChild(deleteBtn);
+        messagesList.appendChild(li);
+      }
+    }
+
+    // One delegated listener handles every Delete button (re-rendered each time).
+    messagesList.addEventListener("click", function (event) {
+      const button = event.target.closest(".delete-btn");
+      if (!button || !messagesList.contains(button)) return;
+
+      const index = Number(button.dataset.index);
+      if (!Number.isInteger(index) || index < 0 || index >= messages.length) return;
+
+      messages.splice(index, 1); // delete only this message
+      renderMessages();
+    });
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const name = nameInput.value.trim();
+      const status = statusSelect.value;
+      const message = messageInput.value.trim();
+
+      clearError();
+
+      if (name === "") {
+        showError("User name cannot be empty.");
+        nameInput.focus();
+        return;
+      }
+
+      if (message === "") {
+        showError("Message cannot be empty.");
+        messageInput.focus();
+        return;
+      }
+
+      // Spec (PART 4): a message is at most 200 characters.
+      if (message.length > MAX_MESSAGE_LENGTH) {
+        showError("Message is too long (" + message.length + " characters). Maximum is " + MAX_MESSAGE_LENGTH + ".");
+        messageInput.focus();
+        return;
+      }
+
+      messages.push({ name, status, message });
+      renderMessages();
+
+      messageInput.value = "";
+      messageInput.focus();
+    });
+
+    nameInput.addEventListener("input", clearError);
+    messageInput.addEventListener("input", clearError);
+
+    renderMessages();
+  </script>
+</body>
+</html>

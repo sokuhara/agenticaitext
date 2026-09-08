@@ -211,11 +211,22 @@ th{background:var(--accent-soft);font-weight:700}
       機能を足すたびに全部を手で確かめるのは無理です。だから、確かめられる部分を先にテストにしておきます。<strong>PART 5でやったのは、その準備でした。</strong>
     </div>
 
-    <h3><span class="n">6.1.2</span>始める前の確認</h3>
+    <h3><span class="n">6.1.2</span>出発点のファイル</h3>
 
-    <p><code>pytest</code> を実行して、<span class="mark">いま通ることを確認してください。</span></p>
+    <p>PART 5と同じく、<span class="mark">全員が同じフォルダから始めます。</span>PART 5を終えた状態（Flask版、Deleteと200文字制限はサーバ側、テスト2つ）を用意しました。自分のフォルダではなく、これを使ってください。</p>
 
-<pre><code>pytest</code></pre>
+    <p><a href="starter/part6/vibe-chat-part6-starter.zip" download><strong>vibe-chat-part6-starter.zip をダウンロード</strong></a></p>
+
+    <p>展開すると <code>vibe-chat</code> フォルダができます。VS Codeでそのフォルダを開き、ターミナルで：</p>
+
+<pre><code>pip install flask pytest
+pytest</code></pre>
+
+    <p><code>2 passed</code> と出れば準備完了です。<strong>PART 5で作った自分のフォルダは、別の場所に残しておけば消えません。</strong>仮想環境を使っている人は、PART 5と同じ要領で <code>vibe-chat</code> の中に作ってください。</p>
+
+    <h3><span class="n">6.1.3</span>始める前の確認</h3>
+
+    <p>機能を足す前に、<span class="mark">いま <code>pytest</code> が通っていることを確認してください。</span>上で <code>2 passed</code> を見ていれば済んでいます。</p>
 
     <p>落ちている状態で機能を足すと、<strong>あとで落ちたのが元からなのか、今回の変更のせいなのか分からなくなります。</strong></p>
   </section>
@@ -363,7 +374,7 @@ Do not edit the file yet. Show the plan only.</div>
     </table>
 
     <p><code>vibe-chat</code> フォルダを右クリックして圧縮し、<code>PART6_学籍番号.zip</code> という名前で次のフォームからアップロードします。</p>
-    <p><a href="FORM_URL_PART6" target="_blank" rel="noopener"><strong>FORM_URL_PART6</strong></a></p>
+    <p><a href="https://forms.gle/oHNPNnV438cLrz928" target="_blank" rel="noopener"><strong>https://forms.gle/oHNPNnV438cLrz928</strong></a></p>
 
     <div class="note">
       <span class="tag">2番がいちばん重要です</span>
