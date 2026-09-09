@@ -24,3 +24,17 @@ def test_empty_message_is_rejected(client):
     assert response.status_code == 400
     assert b"Message cannot be empty." in response.data
     assert vibe_chat.messages == []
+
+
+def test_message_with_banned_word_is_rejected(client):
+    response = client.post("/", data={"name": "Ada", "status": "Present", "message": "This is SPAM"})
+    assert response.status_code == 400
+    assert b"Message contains a banned word." in response.data
+    assert vibe_chat.messages == []
+
+
+def test_message_without_banned_word_is_accepted(client):
+    response = client.post("/", data={"name": "Ada", "status": "Present", "message": "Hello Mumbai"}, follow_redirects=True)
+    assert response.status_code == 200
+    assert len(vibe_chat.messages) == 1
+    assert vibe_chat.messages[0]["message"] == "Hello Mumbai"

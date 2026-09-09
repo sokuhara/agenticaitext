@@ -11,6 +11,9 @@ app = Flask(__name__)
 MAX_MESSAGE_LENGTH = 200
 STATUSES = ("Present", "Away", "Focus")
 
+# Words that must not appear in a message (PART 5). Compared case-insensitively.
+BANNED_WORDS = ["spam", "scam", "idiot"]
+
 # All messages live only in this list. Each item: {"id": int, "name": str, "status": str, "message": str}
 messages = []
 _next_id = 1
@@ -18,6 +21,11 @@ _next_id = 1
 
 def _render(error=None, status_code=200):
     return render_template("index.html", messages=messages, error=error), status_code
+
+
+def contains_banned_word(text: str) -> bool:
+    lowered = text.lower()
+    return any(word in lowered for word in BANNED_WORDS)
 
 
 @app.route("/", methods=["GET"])
@@ -33,9 +41,6 @@ def post_message():
     status = request.form.get("status", "Present")
     message = request.form.get("message", "").strip()
 
-    if name == "":
-        return _render(error="User name cannot be empty.", status_code=400)
-
     if message == "":
         return _render(error="Message cannot be empty.", status_code=400)
 
@@ -44,6 +49,9 @@ def post_message():
             error=f"Message is too long ({len(message)} characters). Maximum is {MAX_MESSAGE_LENGTH}.",
             status_code=400,
         )
+
+    if contains_banned_word(message):
+        return _render(error="Message contains a banned word.", status_code=400)
 
     if status not in STATUSES:
         status = "Present"

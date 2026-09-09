@@ -160,7 +160,7 @@ th{background:var(--accent-soft);font-weight:700}
 <body>
 
 <nav class="rail" aria-label="章の一覧">
-  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html" aria-current="page">付B</a><a href="appendix-c.html">付C</a></div>
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="appendix-a.html">付A</a><a href="appendix-b.html" aria-current="page">付B</a><a href="appendix-c.html">付C</a></div>
 </nav>
 
 <div class="wrap">
@@ -168,7 +168,7 @@ th{background:var(--accent-soft);font-weight:700}
   <header class="masthead">
     <div class="eyebrow">APPENDIX B</div>
     <h1>Node.js／TypeScript版（原構成）</h1>
-    <p class="lede">本編PART 5〜7はPythonで書かれていますが、もとになった開発はNode.js、TypeScript、Hono、React、AWS CDKという構成でした。ここに原構成の記録を残します。既存のTypeScriptプロジェクトで進める場合は、こちらを参照してください。</p>
+    <p class="lede">本編PART 5〜6はPythonで書かれていますが、もとになった開発はNode.js、TypeScript、Hono、React、AWS CDKという構成でした。ここに原構成の記録を残します。既存のTypeScriptプロジェクトで進める場合は、こちらを参照してください。</p>
   </header>
 
   <div class="bridge">
@@ -185,8 +185,8 @@ th{background:var(--accent-soft);font-weight:700}
       <li><span class="n">B.1</span><a href="#sb-1">この付録の位置づけ</a></li>
       <li><span class="n">B.2</span><a href="#sb-2">対応表</a></li>
       <li><span class="n">B.3</span><a href="#sb-3">PART 5相当：モノレポ環境の強化</a></li>
-      <li><span class="n">B.4</span><a href="#sb-4">PART 6相当：実装</a></li>
-      <li><span class="n">B.5</span><a href="#sb-5">PART 7相当：リリース</a></li>
+      <li><span class="n">B.4</span><a href="#sb-4">PART 5相当：実装</a></li>
+      <li><span class="n">B.5</span><a href="#sb-5">PART 6相当：リリース</a></li>
       <li><span class="n">B.6</span><a href="#sb-6">どちらを選ぶか</a></li>
     </ol>
   </nav>
@@ -195,7 +195,7 @@ th{background:var(--accent-soft);font-weight:700}
   <section class="sec" id="sb-1">
     <h2><span class="n">B.1</span>この付録の位置づけ</h2>
 
-    <p>本教材のPART 5〜7は、もともとNode.jsとTypeScriptで書かれた開発の記録でした。本編をPythonに移したのは、次の2つの理由によります。</p>
+    <p>本教材のPART 5〜6は、もともとNode.jsとTypeScriptで書かれた開発の記録でした。本編をPythonに移したのは、次の2つの理由によります。</p>
 
     <ul>
       <li><strong>読めないコードはレビューできない。</strong>PART 2で「出力をまったく読めないなら、正しい答えと自信満々の誤答を区別できない」と書きました。TypeScriptとReactが初見の読者にとって、この前提は成立しません。</li>
@@ -269,7 +269,7 @@ th{background:var(--accent-soft);font-weight:700}
   </section>
 
   <section class="sec" id="sb-4">
-    <h2><span class="n">B.4</span>PART 6相当：実装</h2>
+    <h2><span class="n">B.4</span>PART 5相当：実装</h2>
 
     <h3><span class="n">B.4.1</span>共通部分（shared）</h3>
 
@@ -308,7 +308,7 @@ curl -o docs/ref/vite/llms.txt https://vite.dev/llms.txt</code></pre>
   </section>
 
   <section class="sec" id="sb-5">
-    <h2><span class="n">B.5</span>PART 7相当：リリース</h2>
+    <h2><span class="n">B.5</span>PART 6相当：リリース</h2>
 
     <p>AWS CDKをTypeScriptで書き、cdk-nagでルールチェックを行います。デプロイ前の確認は <code>cdk synth</code>、CI/CDはGitHub Actionsです。</p>
 

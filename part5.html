@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PART 5 テストで完了条件を作る</title>
+<title>PART 5 テストで完了条件を作り、安全に機能を足す</title>
 <style>
 :root{
   --paper:#f6f5f2;
@@ -160,22 +160,22 @@ th{background:var(--accent-soft);font-weight:700}
 <body>
 
 <nav class="rail" aria-label="章の一覧">
-  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html" aria-current="page">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html" aria-current="page">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
 </nav>
 
 <div class="wrap">
 
   <header class="masthead">
     <div class="eyebrow">PART 5</div>
-    <h1>テストで完了条件を作る</h1>
-    <p class="lede">PART 4では、直ったかどうかを毎回あなたが手で確かめました。この章では、その確認を機械にやらせます。Vibe ChatをFlaskアプリに変え、テストを書かせ、わざと壊して落ちることを確認します。</p>
+    <h1>テストで完了条件を作り、安全に機能を足す</h1>
+    <p class="lede">Vibe ChatをFlask化し、完了条件をテストにします。テストが不具合を見つけられることを確かめたあと、新しい要求を追加しながら既存機能を守ります。</p>
   </header>
 
   <div class="bridge">
     <dl>
       <dt>前章まで</dt><dd>PART 4で、AIが作ったアプリを自分でテストし、Clineに直させました。手で確認する大変さも分かったはずです。</dd>
       <dt>この章</dt><dd>同じVibe Chatを、ClineにFlaskアプリへ作り変えさせます。あわせてテストを書かせ、それが本当に効いているかを確かめます。</dd>
-      <dt>次章へ</dt><dd>PART 6では、この形のまま機能を足していきます。テストがあるので、壊れたらすぐ分かります。</dd>
+      <dt>次章へ</dt><dd>PART 6では、Clineが行っていたツール呼び出し、再試行、停止、人間の承認をPythonで組み立てます。</dd>
     </dl>
   </div>
 
@@ -187,8 +187,10 @@ th{background:var(--accent-soft);font-weight:700}
       <li><span class="n">5.3</span><a href="#s5-3">ClineにFlask化を依頼する</a></li>
       <li><span class="n">5.4</span><a href="#s5-4">テストを実行する</a></li>
       <li><span class="n">5.5</span><a href="#s5-5">わざと壊して、落ちることを確認する</a></li>
-      <li><span class="n">5.6</span><a href="#s5-6">提出物</a></li>
-      <li><span class="n">5.7</span><a href="#s5-7">この章で分かったこと</a></li>
+      <li><span class="n">5.6</span><a href="#s5-6">安全に変更する5つの手順</a></li>
+      <li><span class="n">5.7</span><a href="#s5-7">新しい要求を追加する</a></li>
+      <li><span class="n">5.8</span><a href="#s5-8">提出物</a></li>
+      <li><span class="n">5.9</span><a href="#s5-9">この章で分かったこと</a></li>
     </ol>
   </nav>
 
@@ -538,72 +540,183 @@ Do not edit the file yet.</div>
   </section>
 
   <section class="sec" id="s5-6">
-    <h2><span class="n">5.6</span>提出物</h2>
+    <h2><span class="n">5.6</span>実装を進める5つの手順</h2>
 
-    <p>出すのは <strong>zip ファイル1つ</strong>です。中身は次の5ファイル。</p>
+    <p><strong>最初に、5.5でコメントアウトした行を元に戻し、<code>pytest</code>を実行してください。<code>2 passed</code>を確認してから先へ進みます。</strong></p>
 
+    <p>この章では、次の5手順で機能を足します。<span class="mark">先にこれを覚えてください。</span>5.7で、この順に進めます。</p>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　<strong>完了条件を書く</strong>　何ができたら終わりか</p>
+      <p><strong>2</strong>　<strong>変わる場所を予想する</strong>　どのファイルのどこが変わるか</p>
+      <p><strong>3</strong>　<strong>Planで依頼する</strong>　計画を読んでから実装させる</p>
+      <p><strong>4</strong>　<strong>差分を承認する</strong>　予想と合っているか確かめる</p>
+      <p><strong>5</strong>　<strong><code>pytest</code> とブラウザで確認する</strong>　両方やる</p>
+    </div>
+
+    <h3><span class="n">5.6.1</span>手順を飛ばすと何が起きるか</h3>
+
+    <table>
+      <thead><tr><th>飛ばした手順</th><th>起きること</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong> 完了条件</td><td>Agentが勝手に決める。「完成しました」の意味が分からない</td></tr>
+        <tr><td><strong>2</strong> 予想</td><td><span class="mark">差分を読んでも、それが妥当か判断できない</span></td></tr>
+        <tr><td><strong>3</strong> Plan</td><td>実装が始まってから方針の誤りに気づく</td></tr>
+        <tr><td><strong>4</strong> 承認</td><td>関係ない場所まで書き換えられる</td></tr>
+        <tr><td><strong>5</strong> 確認</td><td>テストは通るが画面が壊れている、が起こる</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">2番がいちばん飛ばされます</span>
+      予想を書かずに差分を見ると、<span class="mark">読んでいるつもりで読めていません。</span>「それらしいコードだからSave」になります。<br><br>
+      先に「<code>app.py</code> のこの関数と、<code>templates/index.html</code> のこの部分が変わるはずだ」と書いておくと、<strong>差分が予想と違ったときに気づけます。</strong>
+    </div>
+  </section>
+
+
+  <section class="sec" id="s5-7">
+    <h2><span class="n">5.7</span>予定外の変更要求</h2>
+
+    <p>動くものが一度できたあとに、要件が変わります。<span class="mark">実務ではこちらが普通です。</span></p>
+
+    <div class="warn">
+      <span class="tag">緊急連絡</span>
+      投稿の内容に、他人を傷つける言葉が含まれていた、という報告がありました。<br><br>
+      <strong>禁止語を含む投稿を登録できないようにしてください。</strong>禁止語の一覧は <code>app.py</code> の中にリストとして持ちます。<br><br>
+      登録を拒否したときは、画面に理由を表示します。<span class="mark">既存の機能は1つも壊さないでください。</span>
+    </div>
+
+    <h3><span class="n">5.7.1</span>まず、自分で予想する</h3>
+
+    <p>Agentに投げる前に書いてください。<span class="mark">予想を書いてから差分を見るのと、いきなり差分を見るのとでは、レビューの質がまったく違います。</span></p>
+
+    <ul>
+      <li>データはどう変わるか（禁止語のリストをどこに置くか）</li>
+      <li>処理はどう変わるか（送信のどの時点で判定するか）</li>
+      <li>画面はどう変わるか（拒否の理由をどこに出すか）</li>
+      <li><strong>既存のテストのうち、どれが落ちるか</strong></li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">最後の項目を考えてください</span>
+      既存のテストは「空の名前は登録されない」「空のメッセージは登録されない」でした。<span class="mark">禁止語の判定を足すと、これらは落ちますか。</span><br><br>
+      落ちないはずです。落ちるとしたら、<strong>実装が既存の処理を壊しています。</strong>
+    </div>
+
+    <h3><span class="n">5.7.2</span>完了条件を書く</h3>
+
+    <table>
+      <thead><tr><th></th><th>条件</th><th>確かめ方</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>禁止語を含む投稿は登録されない</td><td><span class="mark">テスト</span></td></tr>
+        <tr><td><strong>2</strong></td><td>禁止語を含まない投稿は、これまでどおり登録される</td><td><span class="mark">テスト</span></td></tr>
+        <tr><td><strong>3</strong></td><td>拒否されたとき、理由が画面に出る</td><td>人間が見る</td></tr>
+        <tr><td><strong>4</strong></td><td>既存のテストが全部通ったまま</td><td><span class="mark">テスト</span></td></tr>
+      </tbody>
+    </table>
+
+    <p>2番を忘れないでください。<strong>「禁止語を弾く」だけを頼むと、全部弾く実装でもテストが通ります。</strong></p>
+
+    <h3><span class="n">5.7.3</span>依頼する</h3>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Add a banned-word check to the Flask Vibe Chat.
+
+Requirements:
+- Keep a list of banned words in app.py
+- A message containing a banned word must not be added to the list
+- Show the reason on the page when a message is rejected
+- A message without banned words must still be added as before
+- Add a test for a rejected message
+- Add a test for an accepted message
+- Do not change the existing tests
+
+Edit app.py, templates/index.html and tests/test_app.py only.
+Keep the plan under 10 lines.
+Do not edit the file yet. Show the plan only.</div>
+
+    <h3><span class="n">5.7.4</span>差分を見るときに確かめること</h3>
+
+    <table>
+      <thead><tr><th>確認</th><th>なぜ</th></tr></thead>
+      <tbody>
+        <tr><td>既存の空チェックが残っているか</td><td><span class="mark">新しい判定に置き換えられていないか</span></td></tr>
+        <tr><td>禁止語の判定は、大文字小文字を区別するか</td><td>どちらでもよいが、<strong>意図して決まっているか</strong></td></tr>
+        <tr><td>拒否の理由は、どこに出るか</td><td>画面で確認できる形か</td></tr>
+        <tr><td>既存のテストが書き換えられていないか</td><td>書き換えられていたら理由を確かめる</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">5.7.5</span>確認する</h3>
+
+<pre><code>pytest</code></pre>
+
+    <p>4つのテストが通るはずです。<span class="mark">既存の2つと、今回の2つ。</span></p>
+
+    <p>そのあとブラウザで、禁止語を含む投稿と含まない投稿を、それぞれ試してください。</p>
+
+    <div class="note">
+      <span class="tag">ここで5.4のテストが効いています</span>
+      機能を足しましたが、<span class="mark">既存の動作が壊れていないことを、コマンド1回で確かめられました。</span><br><br>
+      テストがなければ、送信、削除、空チェック、禁止語。<strong>4つを毎回手で確かめることになります。</strong>
+    </div>
+  </section>
+
+
+  <section class="sec" id="s5-8">
+    <h2><span class="n">5.8</span>提出物</h2>
+    <p>完成した <code>vibe-chat</code> フォルダを、<strong>zipファイル1つ</strong>で提出します。</p>
     <pre><code>vibe-chat/
 ├── app.py
 ├── requirements.txt
 ├── templates/index.html
 ├── tests/test_app.py
-└── REPORT.txt      ← 追加する</code></pre>
-
-    <p><code>REPORT.txt</code> に書くのは2つだけです。</p>
-
-    <table>
-      <thead><tr><th></th><th>書くこと</th></tr></thead>
-      <tbody>
-        <tr><td><strong>1</strong></td><td>5.5でコメントアウトした行（ファイル名と、その行が何をしているか）</td></tr>
-        <tr><td><strong>2</strong></td><td>そのとき <code>pytest</code> が落ちた出力。そのまま貼る</td></tr>
-      </tbody>
-    </table>
-
-    <p><code>vibe-chat</code> フォルダを右クリックして圧縮し、<code>PART5_学籍番号.zip</code> という名前で次のフォームからアップロードします。</p>
+└── REPORT.txt</code></pre>
+    <p><code>REPORT.txt</code>には、次の4点を書いてください。</p>
+    <ol>
+      <li>5.5でコメントアウトした行と、その行が行っていた処理</li>
+      <li>5.5でテストが失敗したときの<code>pytest</code>の出力</li>
+      <li>5.7.1で書いた、変更されるファイルと場所の予想</li>
+      <li>実際の差分と予想の違い。予想どおりなら、そのように書く</li>
+    </ol>
+    <p><code>PART5_学籍番号.zip</code>という名前で、次のフォームからアップロードします。</p>
     <p><a href="https://forms.gle/NENs6C13u5PcsBwMA" target="_blank" rel="noopener"><strong>https://forms.gle/NENs6C13u5PcsBwMA</strong></a></p>
-
-    <div class="note">
-      <span class="tag">2番がいちばん重要です</span>
-      <span class="mark">通ったテストの出力は、誰でも出せます。</span>落ちたときの出力は、テストが効いている証拠です。<br><br>
-      どこをコメントアウトしたか、どのテストが落ちたか。<strong>この対応が書けていれば、テストを理解していることになります。</strong>
-    </div>
   </section>
 
-  <section class="sec" id="s5-7">
-    <h2><span class="n">5.7</span>この章で分かったこと</h2>
+  <section class="sec" id="s5-9">
+    <h2><span class="n">5.9</span>この章で分かったこと</h2>
 
-    <p>PART 4では、Clineにテストさせても報告を信じられず、結局あなたが手で確かめました。</p>
+    <p>機能を1つ足しました。<span class="mark">既存の動作が壊れていないことは、<code>pytest</code> が教えてくれました。</span></p>
 
-    <p>この章では、その一部を機械に渡しました。<span class="mark">「空の名前は登録されない」は、いま <code>pytest</code> の1コマンドで判定できます。</span></p>
+    <p>PART 4では、直すたびにSendとDeleteをあなたが手で確かめました。この章では、それをコマンド1回で済ませました。</p>
+
+    <div class="warn">
+      <span class="tag">テストは正しさを保証しません</span>
+      テストが通っても、<span class="mark">仕様が間違っていれば、間違ったとおりに正しく動くだけです。</span><br><br>
+      禁止語のリストに何を入れるか。拒否したとき何を表示するか。<strong>それを決めるのは人間です。</strong>テストは、決めたことが守られているかを見ているだけです。
+    </div>
+
+    <h3><span class="n">5.9.1</span>ここまでで身についたもの</h3>
 
     <table>
-      <thead><tr><th></th><th>誰が確かめるか</th></tr></thead>
+      <thead><tr><th>PART</th><th>身についたこと</th></tr></thead>
       <tbody>
-        <tr><td>画面が開く</td><td>人間</td></tr>
-        <tr><td>送ると増える</td><td>人間</td></tr>
-        <tr><td>空の名前を弾く</td><td><strong>機械</strong></td></tr>
-        <tr><td>空のメッセージを弾く</td><td><strong>機械</strong></td></tr>
-        <tr><td>完了条件を決める</td><td><span class="mark">人間</span></td></tr>
-        <tr><td>Planを認める</td><td><span class="mark">人間</span></td></tr>
-        <tr><td>差分を承認する</td><td><span class="mark">人間</span></td></tr>
+        <tr><td><strong>3</strong></td><td>Agentにファイルを作らせ、承認する</td></tr>
+        <tr><td><strong>4</strong></td><td>自分でテストし、問題を見つけ、直させる</td></tr>
+        <tr><td><strong>5</strong></td><td>完了条件を決め、機械に判定させる</td></tr>
+        <tr><td><strong>5</strong></td><td>完了条件をテストにし、テスト自体を確かめ、既存機能を壊さずに機能を足す</td></tr>
       </tbody>
     </table>
 
-    <div class="warn">
-      <span class="tag">機械に渡せないもの</span>
-      <span class="mark">何を正しい動作とするか。</span>これは人間が決めます。決めなければ、テストは書けません。<br><br>
-      Agentは、決まった条件を満たすコードを書けます。<strong>条件そのものは書けません。</strong>
-    </div>
+    <p>ここまで、Agentは既製品でした。<span class="mark">Clineが何をしているかは、外から見ていただけです。</span></p>
 
-    <p>PART 6では、この形のまま機能を足していきます。<span class="mark">テストがあるので、既存の機能を壊したらすぐ分かります。</span></p>
-
-    <p>Git、Linter、CIといった道具は、<a href="appendix-c.html">付録C</a>にあります。<strong>チームで開発するときに必要になります。</strong>いまは1人で作っているので、まだ要りません。</p>
+    <p>PART 6では、その中身を自分で作ります。<strong>ツール呼び出し、ループ、停止条件、人間の承認。</strong>Clineがやっていたことを、Pythonで書きます。</p>
   </section>
 
 
   <nav class="pager">
     <a class="prev" href="part4.html"><span class="dir">← PREV</span><span class="ttl">PART 4　このアプリ、本当に提出できる？</span></a>
-    <a class="next" href="part6.html"><span class="dir">NEXT →</span><span class="ttl">PART 6　テストを盾に機能を足す</span></a>
+    <a class="next" href="part6.html"><span class="dir">NEXT →</span><span class="ttl">PART 6　自分でAgentを組み立てる</span></a>
   </nav>
 
 </div>

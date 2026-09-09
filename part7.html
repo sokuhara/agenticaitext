@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PART 7 自分でAgentを組み立てる</title>
+<title>PART 7 Agentic AIで動画制作を回す</title>
 <style>
 :root{
   --paper:#f6f5f2;
@@ -11,8 +11,8 @@
   --ink-soft:#565651;
   --line:#dedcd5;
   --card:#ffffff;
-  --accent:#7c3aed;
-  --accent-soft:#f0eafe;
+  --accent:#c2410c;
+  --accent-soft:#fdeee4;
   --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -160,34 +160,34 @@ th{background:var(--accent-soft);font-weight:700}
 <body>
 
 <nav class="rail" aria-label="章の一覧">
-  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html" aria-current="page">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html" aria-current="page">7</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
 </nav>
 
 <div class="wrap">
 
   <header class="masthead">
     <div class="eyebrow">PART 7</div>
-    <h1>自分でAgentを組み立てる</h1>
-    <p class="lede">ここまではClineを使いました。この章では、Agentの中身を自分で作ります。Python、LangChain、LangGraph、MCPを使います。Agentに判断、再試行、人間の承認を追加します。</p>
+    <h1>Agentic AIで動画制作を回す</h1>
+    <p class="lede">最終課題です。あなたは小さな制作チームのプロデューサーです。世界の人にムンバイへ来てもらうための短い動画を、複数の道具と2回の承認を挟みながら仕上げる制作Agentを、手元のVS Codeで動かします。作るのは動画そのものではなく、動画を仕上げる仕事の流れです。</p>
   </header>
 
   <div class="bridge">
     <dl>
-      <dt>前章まで</dt><dd>PART 6では、テストを使ってVibe Chatへ機能を追加しました。</dd>
-      <dt>この章</dt><dd>失敗するテストを1件用意します。Agentに原因を調べさせ、修正と再試行を行わせます。最後は人間の承認で止めます。</dd>
-      <dt>次章へ</dt><dd>PART 8では、同じ考え方を動画制作へ応用します。</dd>
+      <dt>前章まで</dt><dd>PART 6で、Agentの中身を自分で組み立てました。ツール呼び出し、分岐、停止条件、人間の承認、中断と再開です。</dd>
+      <dt>この章</dt><dd>同じ設計を、コーディング以外の仕事に当てはめます。企画、承認、素材、組み立て、検査、修正。人間が承認するのは、企画と公開判断です。</dd>
+      <dt>次章へ</dt><dd>Agentのリリースと運用については、付録Cにまとめてあります。</dd>
     </dl>
   </div>
 
   <nav class="toc" aria-label="この章の目次">
     <h2>この章の内容</h2>
     <ol>
-      <li><span class="n">7.1</span><a href="#s7-1">素のPythonで最小のAgentを作る</a></li>
-      <li><span class="n">7.2</span><a href="#s7-2">LangChainで部品をつなぐ</a></li>
-      <li><span class="n">7.3</span><a href="#s7-3">LangGraphで仕事の流れを設計する</a></li>
-      <li><span class="n">7.4</span><a href="#s7-4">人間の承認・中断・再開</a></li>
-      <li><span class="n">7.5</span><a href="#s7-5">発展：MCPで現在の状況につなぐ</a></li>
-      <li><span class="n">7.6</span><a href="#s7-6">提出物</a></li>
+      <li><span class="n">7.1</span><a href="#s7-1">動画制作を「仕事の流れ」に分ける</a></li>
+      <li><span class="n">7.2</span><a href="#s7-2">参考：Wan2.1を自分で動かしてみる（任意）</a></li>
+      <li><span class="n">7.3</span><a href="#s7-3">素材の規約</a></li>
+      <li><span class="n">7.4</span><a href="#s7-4">本番：制作Agentを動かす</a></li>
+      <li><span class="n">7.5</span><a href="#s7-5">公開できない理由を確認する</a></li>
+      <li><span class="n">7.6</span><a href="#s7-6">提出と相互評価</a></li>
     </ol>
   </nav>
 
@@ -195,954 +195,504 @@ th{background:var(--accent-soft);font-weight:700}
   <section class="sec" id="s7-0" style="margin-bottom:44px">
     <h2><span class="n">7.0</span>この章で何をするか</h2>
 
-    <div class="prompt"><span class="tag">MISSION</span>失敗しているテストを1件、Agentに修正させてください。テストが成功しても、Agentを終了させません。差分を表示し、人間の承認を待つようにします。</div>
+    <p>PART 6で作ったAgentには、<strong>状態、ツール、分岐、承認</strong>がありました。<span class="mark">その設計を、コーディング以外の仕事へ移します。</span>題材は動画制作です。</p>
 
-    <h3><span class="n">7.0.1</span>始める前の準備</h3>
+    <div class="prompt"><span class="tag">FINAL MISSION</span>AGEWEC Mumbai。
+世界の人にムンバイへ来てもらうための、60秒以下の動画を1本仕上げなさい。
+仕上げるのはあなたではなく、あなたが動かす制作Agentです。
+Agentは、企画を書き、あなたの承認を待ち、素材が揃ったら組み立て、検査し、あなたの公開判断で止まります。</div>
 
-    <p>PART 6と同じく、<span class="mark">全員が同じフォルダから始めます。</span>PART 6を終えた vibe-chat（禁止語まで入り、テスト4つ）に、この章のAgentのコードを <code>agent/</code> フォルダとして同梱してあります。</p>
+    <h3>やること</h3>
 
-    <p><a href="starter/part7/vibe-chat-part7-starter.zip" download><strong>vibe-chat-part7-starter.zip をダウンロード</strong></a></p>
+    <p>制作Agentで60秒以下の動画を1本仕上げます。素材は7.3の規約の範囲で自分で作ります。企画、承認、素材、編集、検査、公開判断の順に、約90分。</p>
 
-<pre><code>vibe-chat/
-├── app.py                 PART 6完了時のFlaskアプリ
-├── templates/index.html
-├── tests/test_app.py      テスト4つ
-├── requirements.txt
-└── agent/
-    ├── config.py          接続先。最初にここを書く
-    ├── tools.py           7.1  Agentが使う道具（制限つき）
-    ├── agent_plain.py     7.1  素のPythonのAgent
-    ├── demo_structured.py 7.2  構造化出力の小演習
-    ├── agent_langchain.py 7.2  LangChain版のAgent
-    ├── agent_graph.py     7.3〜7.4  流れ・停止条件・承認
-    ├── break_app.py       7.0  わざと壊す
-    └── requirements.txt</code></pre>
-
-    <h4>1　展開して、入れる</h4>
-
-    <p>展開した <code>vibe-chat</code> をVS Codeで開き、ターミナルで：</p>
-
-<pre><code>pip install -r requirements.txt
-pip install -r agent/requirements.txt
-pytest</code></pre>
-
-    <p><code>4 passed</code> と出れば準備完了です。</p>
-
-    <h4>2　接続先を書く</h4>
-
-    <p><code>agent/config.py</code> を開き、PART 3でClineに入れたのと同じ4つを書きます。</p>
-
-    <table>
-      <thead><tr><th>変数</th><th>入れるもの</th></tr></thead>
-      <tbody>
-        <tr><td><code>BASE_URL</code></td><td>自分のサーバ（<code>https://pc11.okuharalab.com/v1</code> など。3.1.3の表）</td></tr>
-        <tr><td><code>MODEL</code></td><td>そのサーバのModel ID（<code>qwen38_1:latest</code> など。番号を揃える）</td></tr>
-        <tr><td><code>CF_ACCESS_CLIENT_ID</code></td><td>配布されたClient ID</td></tr>
-        <tr><td><code>CF_ACCESS_CLIENT_SECRET</code></td><td>配布されたClient Secret</td></tr>
-      </tbody>
-    </table>
+    <p>7.2は参考です。動画生成モデルを自分の手で1回動かしてみたい人向けで、やらなくても本番には影響しません。</p>
 
     <div class="warn">
-      <span class="tag">config.py は提出しない・共有しない</span>
-      Client Secret が入っています。<span class="mark">提出のzipからは <code>agent/config.py</code> を除いてください。</span>
+      <span class="tag">映像の見栄えは評価しません</span>
+      評価するのは、工程の分解、承認の位置、戻り先の設計、素材の出典です。<span class="mark">きれいな動画を1本作った人より、承認で止まり、検査で落ち、戻って直した記録がある人を評価します。</span><br><br>
+      観客としての反応（面白いか、行きたくなるか）は、7.6の相互評価で別に集めます。
     </div>
 
-    <h4>3　わざと壊す</h4>
+    <h3>準備</h3>
 
-    <p>PART 5の5.5と同じく、<code>app.py</code> の「空の名前を弾く行」をコメントアウトします。手でやっても、次のスクリプトでも構いません。</p>
+    <p>本番のAgentは手元のVS Codeで動かします。PART 6と同じ形のフォルダを用意しました。</p>
 
-<pre><code>python agent/break_app.py
-pytest</code></pre>
+    <p><a href="starter/part7/agewec-mumbai-starter.zip" download><strong>agewec-mumbai-starter.zip をダウンロード</strong></a></p>
 
-    <p><code>1 failed, 3 passed</code> になれば準備完了です。<span class="mark">この失敗を調査し、修正し、テストを通すことが、この章のAgentの目標です。</span></p>
+<pre><code>agewec-mumbai/
+├── agent/
+│   ├── config.py          接続先。PART 6と同じ4つを書く
+│   ├── video_tools.py     ffmpegの処理（正規化、連結、字幕、ナレーション）
+│   ├── edit_tools.py      編集Agentに渡す道具。呼ぶたびにログを残す
+│   ├── agent_video.py     制作Agent本体（LangGraph）
+│   └── requirements.txt
+├── assets/
+│   └── SOURCES.txt        素材の出典ログ。1カット1行
+└── README.md</code></pre>
 
-    <div class="note">
-      <span class="tag">Agentには修正場所を教えません</span>
-      Agentには「テストが失敗しています。原因を調べて修正してください」とだけ伝えます。<strong>どの行を壊したかは教えません。</strong>Agentが自力で見つけられるかを見ます。
-    </div>
+<pre><code>pip install -r agent/requirements.txt</code></pre>
 
-    <h3><span class="n">7.0.2</span>この章の完成条件</h3>
-
-    <div class="flow-steps">
-      <p><strong>1</strong>　Agentが、失敗したテストを読む</p>
-      <p><strong>2</strong>　修正対象のファイルを提案する</p>
-      <p><strong>3</strong>　修正して <code>pytest</code> を実行する</p>
-      <p><strong>4</strong>　成功しても、<strong>差分を示して人間の承認で止まる</strong></p>
-    </div>
-
-    <p>4番が重要です。Agentは自分で完了を決めません。最終判断を人間へ返します。Clineでは、この機能が最初から用意されていました。この章では自分で実装します。</p>
-
-    <div class="note">
-      <span class="tag">この章の進め方</span>
-      コードはすべて <code>agent/</code> に入っています。<span class="mark">写経はしません。</span>各節で「読む → 動かす → 1か所変える」を繰り返します。<br><br>
-      <strong>7.1</strong>　必修。素のPythonのAgentを読み、動かす。ライブラリが何を代行しているかを知るため<br>
-      <strong>7.2</strong>　講師デモ。同じことをLangChainで書くとどう見えるか<br>
-      <strong>7.3〜7.4</strong>　必修。停止条件と承認。<strong>revise で差し戻し、MAX_ATTEMPTS を変えて動かす</strong><br>
-      <strong>7.5</strong>　発展。MCP<br><br>
-      LangGraphの目的は、コードを短くすることではありません。処理の流れを明確にすることです。
-    </div>
+    <p>ffmpegは <code>imageio-ffmpeg</code> に同梱されているので、別途インストールは不要です。<code>agent/config.py</code> にPART 6と同じ4つ（Base URL、Model ID、Client ID、Client Secret）を書いてください。<span class="mark">config.py は提出しません。</span></p>
   </section>
+
 
   <section class="sec" id="s7-1">
-    <h2><span class="n">7.1</span>素のPythonで最小のAgentを作る</h2>
+    <h2><span class="n">7.1</span>動画制作を「仕事の流れ」に分ける</h2>
 
-    <p>PART 3では、ツール呼び出しの4手順を学びました。ホストがツールを示します。モデルがツールを選びます。ホストが実行します。ホストが結果をモデルへ返します。7.1では、この処理をPythonで書きます。</p>
-
-    <h3><span class="n">7.1.1</span>ツールに制約を付ける</h3>
-
-    <p>自分で作るツールにも制約が必要です。プロジェクト外のファイルを読めないようにします。テストの実行時間も制限します。</p>
-
-<pre><code>&quot;&quot;&quot;Tools the agent may use. Every tool is a plain Python function with limits built in.
-
-PROJECT_ROOT is the vibe-chat folder (the parent of this agent/ folder), whatever the
-current working directory is.
-&quot;&quot;&quot;
-
-import difflib
-import subprocess
-import sys
-from pathlib import Path
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
-# Files the agent may overwrite: .py files directly under the project root, or under tests/.
-WRITE_ROOTS = [PROJECT_ROOT, PROJECT_ROOT / &quot;tests&quot;]
-
-# Files whose &quot;before&quot; state we keep, so we can show a diff without git.
-WATCHED_FILES = [&quot;app.py&quot;, &quot;tests/test_app.py&quot;]
-
-
-def _safe_path(path: str) -&gt; Path:
-    &quot;&quot;&quot;Resolve a path and refuse anything outside the project.&quot;&quot;&quot;
-    target = (PROJECT_ROOT / path).resolve()
-    if PROJECT_ROOT not in target.parents and target != PROJECT_ROOT:
-        raise ValueError(&quot;Files outside the project cannot be accessed.&quot;)
-    return target
-
-
-def read_file(path: str) -&gt; str:
-    &quot;&quot;&quot;Read a file inside the project (first 4000 characters).&quot;&quot;&quot;
-    return _safe_path(path).read_text(encoding=&quot;utf-8&quot;)[:4000]
-
-
-def write_file(path: str, content: str) -&gt; str:
-    &quot;&quot;&quot;Overwrite a .py file directly under the project root or under tests/.&quot;&quot;&quot;
-    target = _safe_path(path)
-    if not any(root == target.parent for root in WRITE_ROOTS):
-        raise ValueError(&quot;Only files directly under the project root or under tests/ may be written.&quot;)
-    if target.suffix != &quot;.py&quot;:
-        raise ValueError(&quot;Only .py files may be written.&quot;)
-    target.write_text(content, encoding=&quot;utf-8&quot;)
-    return f&quot;Updated {path}&quot;
-
-
-def run_tests() -&gt; str:
-    &quot;&quot;&quot;Run pytest in the project and return the tail of its output.&quot;&quot;&quot;
-    r = subprocess.run(
-        [sys.executable, &quot;-m&quot;, &quot;pytest&quot;, &quot;-q&quot;],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    return (r.stdout + r.stderr)[-4000:]
-
-
-def tests_pass() -&gt; bool:
-    r = subprocess.run([sys.executable, &quot;-m&quot;, &quot;pytest&quot;, &quot;-q&quot;], cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=120)
-    return r.returncode == 0
-
-
-# ---- diff without git ---------------------------------------------------------
-
-def snapshot() -&gt; dict:
-    &quot;&quot;&quot;Remember the current content of the watched files.&quot;&quot;&quot;
-    out = {}
-    for rel in WATCHED_FILES:
-        p = PROJECT_ROOT / rel
-        out[rel] = p.read_text(encoding=&quot;utf-8&quot;) if p.exists() else &quot;&quot;
-    return out
-
-
-def make_diff(before: dict) -&gt; str:
-    &quot;&quot;&quot;Unified diff between a snapshot and the files as they are now.&quot;&quot;&quot;
-    chunks = []
-    for rel, old in before.items():
-        p = PROJECT_ROOT / rel
-        new = p.read_text(encoding=&quot;utf-8&quot;) if p.exists() else &quot;&quot;
-        if old == new:
-            continue
-        chunks.append(&quot;&quot;.join(difflib.unified_diff(
-            old.splitlines(keepends=True), new.splitlines(keepends=True),
-            fromfile=f&quot;{rel} (before)&quot;, tofile=f&quot;{rel} (after)&quot;)))
-    return &quot;\n&quot;.join(chunks) if chunks else &quot;(no changes)&quot;
-
-
-TOOLS = {&quot;read_file&quot;: read_file, &quot;write_file&quot;: write_file, &quot;run_tests&quot;: run_tests}</code></pre>
-
-    <p><code>agent/tools.py</code> です。<code>_safe_path</code>は、プロジェクト外へのアクセスを防ぎます。<code>WRITE_ROOTS</code>は、書き込み先を制限します。この2つがない場合、Agentは不要なファイルを読む、または変更する可能性があります。</p>
-
-    <div class="warn">
-      <span class="tag">これは演習用に危険を縮めた書き換えツールです</span>
-      この例はファイル全体を上書きします。実務では、差分を表示し、人間が承認した後で適用する方法が安全です。この演習では、書き込み先を2つのディレクトリに制限します。
-    </div>
-
-    <h3><span class="n">7.1.2</span>ツールの定義とループ</h3>
-
-<pre><code>&quot;&quot;&quot;7.1 — The smallest possible agent, in plain Python.
-
-Run from the vibe-chat folder:   python agent/agent_plain.py
-
-The loop below is the whole idea of an agent:
-  1. we give the model a list of tools (SCHEMA)
-  2. the model answers with tool calls (or a final message)
-  3. WE run the tool and send the result back
-  4. repeat, with a hard limit on the number of steps
-&quot;&quot;&quot;
-
-import json
-
-import requests
-
-from config import BASE_URL, MODEL, HEADERS, API_KEY
-from tools import TOOLS
-
-SCHEMA = [
-    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
-        &quot;name&quot;: &quot;read_file&quot;,
-        &quot;description&quot;: &quot;Read a file inside the project. Use it to look at app.py and tests/test_app.py.&quot;,
-        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;,
-                       &quot;properties&quot;: {&quot;path&quot;: {&quot;type&quot;: &quot;string&quot;}},
-                       &quot;required&quot;: [&quot;path&quot;]}}},
-    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
-        &quot;name&quot;: &quot;write_file&quot;,
-        &quot;description&quot;: &quot;Overwrite a .py file inside the project with new content.&quot;,
-        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;,
-                       &quot;properties&quot;: {&quot;path&quot;: {&quot;type&quot;: &quot;string&quot;},
-                                      &quot;content&quot;: {&quot;type&quot;: &quot;string&quot;}},
-                       &quot;required&quot;: [&quot;path&quot;, &quot;content&quot;]}}},
-    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
-        &quot;name&quot;: &quot;run_tests&quot;,
-        &quot;description&quot;: &quot;Run pytest and return the result.&quot;,
-        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: {}}}},
-]
-
-SYSTEM = (
-    &quot;You are a careful coding agent working inside a small Flask project. &quot;
-    &quot;Use the tools to read files, edit files and run the tests. &quot;
-    &quot;Fix the failing test by fixing the application code, not by changing the test. &quot;
-    &quot;When the tests pass, reply with a short summary of what you changed.&quot;
-)
-
-
-def chat(messages):
-    &quot;&quot;&quot;One call to the OpenAI-compatible endpoint of the shared server.&quot;&quot;&quot;
-    r = requests.post(
-        f&quot;{BASE_URL}/chat/completions&quot;,
-        headers={**HEADERS, &quot;Authorization&quot;: f&quot;Bearer {API_KEY}&quot;, &quot;Content-Type&quot;: &quot;application/json&quot;},
-        json={&quot;model&quot;: MODEL, &quot;messages&quot;: messages, &quot;tools&quot;: SCHEMA, &quot;temperature&quot;: 0},
-        timeout=300,
-    )
-    r.raise_for_status()
-    return r.json()[&quot;choices&quot;][0][&quot;message&quot;]
-
-
-def agent(goal: str, max_steps: int = 12) -&gt; str:
-    messages = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM}, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: goal}]
-    for step in range(max_steps):
-        msg = chat(messages)
-        messages.append(msg)
-        calls = msg.get(&quot;tool_calls&quot;) or []
-        if not calls:
-            return msg.get(&quot;content&quot;) or &quot;(no content)&quot;       # no tool call: the model is done
-        for call in calls:
-            name = call[&quot;function&quot;][&quot;name&quot;]
-            args = json.loads(call[&quot;function&quot;].get(&quot;arguments&quot;) or &quot;{}&quot;)
-            shown = {k: (v[:60] + &quot;…&quot; if isinstance(v, str) and len(v) &gt; 60 else v) for k, v in args.items()}
-            print(f&quot;[{step}] {name}({shown})&quot;)
-            try:
-                result = TOOLS[name](**args)
-            except Exception as e:                              # a failure is also a result
-                result = f&quot;ERROR: {e}&quot;
-            messages.append({&quot;role&quot;: &quot;tool&quot;, &quot;tool_call_id&quot;: call[&quot;id&quot;], &quot;content&quot;: str(result)})
-    return &quot;Stopped: reached the maximum number of steps.&quot;
-
-
-if __name__ == &quot;__main__&quot;:
-    print(agent(&quot;Run the tests, find out why one of them fails, and fix it.&quot;))</code></pre>
-
-    <div class="warn">
-      <span class="tag">動かないときに最初に見るところ</span>
-      接続先は、Clineと同じ共有サーバです。<span class="mark">Clineで動いていれば、<code>config.py</code> の4つを揃えるだけで動きます。</span><br><br>
-      <code>401</code> / <code>403</code> / HTMLのログイン画面が返る → Client ID / Secret<br>
-      <code>model ... not found</code> → <code>BASE_URL</code> のサーバ番号と <code>MODEL</code> の番号が合っているか<br>
-      <code>502</code> → そのサーバのOllamaが落ちている。講師に言う<br>
-      途中で止まる → <code>max_steps</code> に達した。何をしていたかは <code>[n] ツール名(引数)</code> の行に出ています
-    </div>
-
-    <h3><span class="n">7.1.3</span>このループに、Agentの核が入っています</h3>
+    <p>「動画を作って」は、ひとつの仕事ではありません。分けると、こうなります。</p>
 
     <table>
-      <thead><tr><th>コードの場所</th><th>PART 3で説明したこと</th></tr></thead>
+      <thead><tr><th>工程</th><th>誰が</th><th>何を決めるか</th></tr></thead>
       <tbody>
-        <tr><td><code>SCHEMA</code></td><td>ホストがツール一覧を渡す</td></tr>
-        <tr><td><code>msg["tool_calls"]</code></td><td>モデルが呼び出しを提案する</td></tr>
-        <tr><td><code>TOOLS[name](**args)</code></td><td><strong>ホストが実行する</strong></td></tr>
-        <tr><td><code>{"role": "tool", ...}</code></td><td>結果をモデルに戻す</td></tr>
-        <tr><td><code>for step in range(...)</code></td><td>ループ</td></tr>
+        <tr><td>1　要点を決める</td><td><span class="mark">人間</span></td><td>この動画で伝える3つのこと。Agentは決めない</td></tr>
+        <tr><td>2　絵コンテと原稿</td><td>Agent（27B）</td><td>6〜8カット。各カットの生成プロンプト、秒数、字幕。ナレーション原稿</td></tr>
+        <tr><td>3　<strong>承認</strong></td><td><span class="mark">人間</span></td><td>プロンプトを1行ずつ読む。<strong>素材を作る前</strong>に止まる</td></tr>
+        <tr><td>4　素材を作る</td><td><span class="mark">人間</span>＋外の道具</td><td>各カットを7.3の規約の範囲で生成し、<code>assets/</code> に置く。出典を記録</td></tr>
+        <tr><td>5　編集</td><td><span class="mark">Agent（27B＋ツール）</span></td><td>戻ってきた素材を見て、順番、トリム、つなぎ、字幕の時刻を決め、ツールを呼ぶ</td></tr>
+        <tr><td>6　検査</td><td>機械</td><td>尺、要点の字幕、出典ログ、ナレーションの長さ</td></tr>
+        <tr><td>7　<strong>公開判断</strong></td><td><span class="mark">人間</span></td><td>見て、承認するか止めるか</td></tr>
       </tbody>
     </table>
 
-    <p><code>TOOLS[name](**args)</code>がツールを実行します。この行で、ファイルの読み書きやテストが実行されます。</p>
+    <p>モデルを呼ぶのは2と5ですが、<span class="mark">2と5は別の種類の仕事です。</span>2は「書く」。文章を入れて JSON を返す、ツールなし。5は「指揮する」。素材を見て、道具をどの順にどう使うかを自分で決める。PART 6で作った、ツールを持つ Agent です。</p>
 
-    <p>モデルはツールの使用を提案します。実際にツールを実行するのは、このPythonプログラムです。</p>
+    <p>4が人間の手にあるのは、素材を作る手段が Agent の外にあるからです。Colab の Wan2.1 は1本に数分かかり、生成サービスはクレジットを消費し、自分で撮るなら現場に行く。<span class="mark">どの手段でも、1回の生成で出るのは数秒で、それを何本も作る工程は人間の段取りです。</span>Agent に回させると、時間とクレジットが判断なしに溶けます。人間が7.3の手段で作り、Agent は待ちます。</p>
 
-    <div class="warn">
-      <span class="tag">この実装に足りないもの</span>
-      この実装には、承認、差分表示、失敗後の戻り先がありません。また、中断後に再開できません。<br><br>
-      <span class="mark">7.2以降は、この不足を順に埋めていく作業です。</span>
-    </div>
+    <h3>固定の手順と、オーケストレーション</h3>
+
+    <p>道具を組み合わせるやり方は2つあります。</p>
+
+    <table>
+      <thead><tr><th></th><th>固定の手順（スクリプト）</th><th>オーケストレーション（Agent）</th></tr></thead>
+      <tbody>
+        <tr><td>誰が順番を決めるか</td><td>書いた人。毎回同じ</td><td>モデル。その場の状況で変わる</td></tr>
+        <tr><td>向いている場面</td><td>入力の形が決まっていて、同じ結果が要る</td><td>入力がばらつく。欠けたり余ったりする</td></tr>
+        <tr><td>この章では</td><td>検査（6）。正規化・連結などの<strong>道具そのもの</strong></td><td>編集（5）。<strong>道具をどう使うか</strong></td></tr>
+        <tr><td>危うさ</td><td>想定外の入力で壊れる</td><td>何をしたかが見えにくい。だから<strong>ログ</strong>を取る</td></tr>
+      </tbody>
+    </table>
+
+    <p>素材は3つのサービスから来て、長さも向きもばらばらで、生成に失敗したカットもある。<span class="mark">「cut3が無いなら cut1 の別の場所を使う」「縦の素材は短く」と、その場で決める必要があります。</span>これは固定の手順では書き切れません。だから編集はオーケストレーションにし、その前後を固定の検査と人間の承認で挟みます。<strong>自由に判断させる範囲を、判断させない層で囲む。</strong>これが PART 6 から一貫した形です。</p>
+
+    <h3>1本の生成では作れないもの</h3>
+
+    <p>動画生成モデルは、1回の生成で2〜5秒の映像を返します。次の生成は前の生成を知りません。<span class="mark">「電車が減速して止まり、ドアが開いて景色が変わる」のような時間の連続は、1回では作れません。</span>カットに分け、順番と秒数を決め、つなぐ。それが工程です。素材を作り始めれば、すぐに分かります。</p>
   </section>
+
 
   <section class="sec" id="s7-2">
-    <h2><span class="n">7.2</span>LangChainで部品をつなぐ</h2>
+    <h2><span class="n">7.2</span>参考：Wan2.1を自分で動かしてみる（任意）</h2>
 
-    <p>LangChainは、7.1で書いた処理を部品として提供します。最初に6つの概念を確認します。</p>
+    <p><strong>任意です。</strong>生成サービスの裏で何が起きているかを見たい人は、Google ColabのGPU（T4）で動画生成モデル Wan2.1（1.3B）を1回動かしてみてください。プロンプトは1文、出力は約2秒・480p。GPUが取れない日もあり、生成に5〜10分かかるので、<span class="mark">授業中ではなく、空いた時間に</span>。</p>
 
-    <h3><span class="n">7.2.1</span>LangChainの6つの概念</h3>
-
-    <table>
-      <thead><tr><th>概念</th><th>役割</th><th>この章で使う場所</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Model I/O</strong></td><td>モデルへ入力し、出力を受け取る</td><td>旅行案内とAgentのモデル呼び出し</td></tr>
-        <tr><td><strong>Chain</strong></td><td>Prompt、Model、出力処理を順番につなぐ</td><td>旅行案内の構造化出力</td></tr>
-        <tr><td><strong>Agent</strong></td><td>次に使うツールをモデルが選ぶ</td><td>テスト失敗の調査と修正</td></tr>
-        <tr><td><strong>Retrieval</strong></td><td>外部データを取得して回答に使う</td><td>7.5の厨房ボード</td></tr>
-        <tr><td><strong>Memory</strong></td><td>途中の状態や会話を保持する</td><td>7.4の中断と再開</td></tr>
-        <tr><td><strong>Callbacks</strong></td><td>処理中のイベントを記録・表示する</td><td>今回は概念だけ。必修コードには入れない</td></tr>
-      </tbody>
-    </table>
-
-    <div class="note">
-      <span class="tag">全部を使う必要はありません</span>
-      必要な部品だけを使います。最初にModel I/OとChainを試します。その後、Agent、Memory、Retrievalへ進みます。
-    </div>
-
-    <h3><span class="n">7.2.2</span>小演習：旅行案内を決まった形で出す</h3>
-
-    <p>自由な文章から特定の項目を取り出すことは困難です。次のプログラムは、出力を<strong>場所、地域、行き方、見どころ</strong>の4項目に固定します。</p>
-
-<pre><code>python agent/demo_structured.py</code></pre>
-
-<pre><code>&quot;&quot;&quot;7.2.2 — LangChain: force the model to answer in a fixed shape.
-
-Run from the vibe-chat folder:   python agent/demo_structured.py
-&quot;&quot;&quot;
-
-from pydantic import BaseModel, Field
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
-
-from config import BASE_URL, MODEL, HEADERS, API_KEY
-
-
-class Destination(BaseModel):
-    name: str = Field(description=&quot;Name of the place&quot;)
-    city: str = Field(description=&quot;City or region&quot;)
-    access: str = Field(description=&quot;How to get there from central Mumbai&quot;)
-    highlight: str = Field(description=&quot;What makes it worth the trip&quot;)
-
-
-prompt = ChatPromptTemplate.from_messages([
-    (&quot;system&quot;, &quot;You are a travel adviser for Mumbai.&quot;),
-    (&quot;human&quot;, &quot;Suggest one place to visit within about one hour of central Mumbai.&quot;),
-])
-
-model = ChatOpenAI(base_url=BASE_URL, api_key=API_KEY, model=MODEL, temperature=0,
-                   default_headers=HEADERS)
-structured_model = model.with_structured_output(Destination, method=&quot;function_calling&quot;)
-
-# Prompt -&gt; Model -&gt; Destination
-chain = prompt | structured_model
-result = chain.invoke({})
-
-print(&quot;Place:    &quot;, result.name)
-print(&quot;City:     &quot;, result.city)
-print(&quot;Access:   &quot;, result.access)
-print(&quot;Highlight:&quot;, result.highlight)</code></pre>
-
-    <div class="note">
-      <span class="tag">接続先はClineと同じ</span>
-      <code>ChatOpenAI</code> に <code>base_url</code> と <code>default_headers</code> を渡しているだけで、中身は共有サーバのQwenです。<code>with_structured_output()</code> で、出力をPydanticの形式へ変換します。
-    </div>
-
-    <h4>学生が行うこと</h4>
-    <ol>
-      <li>プログラムを実行し、4項目が別々に表示されることを確認します。</li>
-      <li><code>Destination</code>へ<code>recommended_food</code>を追加します（<code>agent/demo_structured.py</code> を直接編集）。</li>
-      <li>もう一度実行し、食べ物も出力されることを確認します。</li>
-      <li>自由文ではなく構造化する利点を1文で書きます。</li>
-    </ol>
-
-    <p>これがChainです。人間が処理の順番を決めています。モデルはツールを選んでいません。そのため、これはまだAgentではありません。</p>
-
-    <h3><span class="n">7.2.3</span>ChainからAgentへ進む</h3>
-
-    <p>ここから、7.1で自分で書いたツール呼び出しをLangChainへ置き換えます。LangChainは、この部分を部品として提供します。</p>
-
-    <table>
-      <thead><tr><th>7.1で自分で書いたもの</th><th>7.2でLangChainに任せるもの</th></tr></thead>
-      <tbody>
-        <tr><td><code>SCHEMA</code>（JSON Schema）</td><td>関数の型ヒントとdocstringから生成</td></tr>
-        <tr><td><code>tool_calls</code> の取り出し</td><td>Agentが処理</td></tr>
-        <tr><td>実行結果を会話へ追加する</td><td>Agentが処理</td></tr>
-        <tr><td><code>for step in range(...)</code></td><td>Agentが処理</td></tr>
-      </tbody>
-    </table>
-
-<pre><code>python agent/agent_langchain.py</code></pre>
-
-<pre><code>&quot;&quot;&quot;7.2.3 — The same agent as 7.1, but LangChain/LangGraph run the loop.
-
-Run from the vibe-chat folder:   python agent/agent_langchain.py
-&quot;&quot;&quot;
-
-from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
-
-from config import BASE_URL, MODEL, HEADERS, API_KEY
-import tools as t
-
-
-# The docstring of each tool is what the model sees. 7.2.4 asks you to change them.
-@tool
-def read_file(path: str) -&gt; str:
-    &quot;&quot;&quot;Read a file inside the project. Use it to look at app.py and tests/test_app.py.&quot;&quot;&quot;
-    return t.read_file(path)
-
-
-@tool
-def write_file(path: str, content: str) -&gt; str:
-    &quot;&quot;&quot;Overwrite a .py file inside the project with new content.&quot;&quot;&quot;
-    return t.write_file(path, content)
-
-
-@tool
-def run_tests() -&gt; str:
-    &quot;&quot;&quot;Run pytest and return the result.&quot;&quot;&quot;
-    return t.run_tests()
-
-
-model = ChatOpenAI(base_url=BASE_URL, api_key=API_KEY, model=MODEL, temperature=0,
-                   default_headers=HEADERS)
-
-SYSTEM = (
-    &quot;You are a careful coding agent working inside a small Flask project. &quot;
-    &quot;Fix the failing test by fixing the application code, not by changing the test. &quot;
-    &quot;When the tests pass, reply with a short summary of what you changed.&quot;
-)
-
-agent_executor = create_react_agent(model, [read_file, write_file, run_tests], prompt=SYSTEM)
-
-
-def run(goal: str) -&gt; str:
-    result = agent_executor.invoke({&quot;messages&quot;: [(&quot;user&quot;, goal)]}, {&quot;recursion_limit&quot;: 30})
-    return result[&quot;messages&quot;][-1].content
-
-
-if __name__ == &quot;__main__&quot;:
-    print(run(&quot;Run the tests, find out why one of them fails, and fix it.&quot;))</code></pre>
-
-    <p><code>llm.bind_tools()</code>は、モデルとツールを接続するだけです。<code>agent_executor</code>は、ツール呼び出しのループも実行します。7.3では<code>agent_executor</code>を使います。</p>
-
-    <p>7.1で手書きした <code>SCHEMA</code> が、関数のシグネチャとdocstringから自動的に作られます。</p>
-
-    <div class="warn">
-      <span class="tag">Agentを作る関数の名前は変わります</span>
-      LangChainのAPIは変更されることがあります。<code>create_agent</code>が見つからない場合は、使用中のバージョンと公式ドキュメントを確認してください。関数名が変わっても、基本処理は7.1のループと同じです。
-    </div>
-
-    <h3><span class="n">7.2.4</span>演習：docstringを変えて比較する</h3>
-
-    <div class="note">
-      <span class="tag">やること</span>
-      最初に、現在のdocstringで実行結果を記録します。次に、<code>agent/agent_langchain.py</code> の <code>read_file</code> のdocstringを「データを取得する」へ変更します。同じ依頼を実行し、<span class="mark">どのツールが選ばれたかを比較してください。</span><br><br>
-      最後に元の具体的なdocstringへ戻します。曖昧な説明がツール選択へ与えた影響を1文で書きます。
-    </div>
-
-    <p>ツールのdocstringは、モデルが読む説明です。モデルは、その説明を使ってツールを選びます。</p>
-
-    <div class="note">
-      <span class="tag">ライブラリは道具です</span>
-      LangChainを使っても、基本処理は7.1と同じです。処理が分からない場合は、7.1のコードを確認してください。実行前に、使用中のバージョンと公式ドキュメントも確認します。
-    </div>
-  </section>
-
-  <section class="sec" id="s7-3">
-    <h2><span class="n">7.3</span>LangGraphで仕事の流れを設計する</h2>
-
-    <p>次に、処理の流れを作ります。失敗後の分岐、再試行の上限、人間へ確認する位置を決めます。</p>
-
-    <h3><span class="n">7.3.1</span>作る流れ</h3>
-
-    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:18px 12px">
-      <svg viewBox="0 0 720 300" style="width:100%;max-width:720px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LangGraphの経路図">
-        <defs>
-          <marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
-            <path d="M0,0 L9,4.5 L0,9 z" fill="#9aa0ab"/>
-          </marker>
-        </defs>
-        <g font-family="system-ui, sans-serif" font-size="14" text-anchor="middle">
-          <g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5">
-            <rect x="16"  y="120" width="92"  height="42" rx="9"/>
-            <rect x="160" y="120" width="118" height="42" rx="9"/>
-            <rect x="330" y="120" width="92"  height="42" rx="9"/>
-            <rect x="474" y="42"  width="98"  height="42" rx="9"/>
-            <rect x="474" y="232" width="98"  height="42" rx="9"/>
-          </g>
-          <rect x="612" y="42" width="86" height="42" rx="9" fill="#eef0f2" stroke="#b9bec7" stroke-width="1.5"/>
-          <g fill="var(--ink)" font-weight="700">
-            <text x="62"  y="147">plan</text>
-            <text x="219" y="147">implement</text>
-            <text x="376" y="147">check</text>
-            <text x="523" y="69">review</text>
-            <text x="523" y="259">give up</text>
-            <text x="655" y="69">終了</text>
-          </g>
-          <g stroke="#9aa0ab" stroke-width="1.6" fill="none" marker-end="url(#ah)">
-            <path d="M108,141 H152"/>
-            <path d="M278,141 H322"/>
-            <path d="M422,134 H448 V63 H466"/>
-            <path d="M572,63 H604"/>
-            <path d="M422,150 H460 V253 H466"/>
-            <path d="M376,162 V196 H219 V166"/>
-            <path d="M523,84 V104 H240 V116" stroke-dasharray="5 4"/>
-          </g>
-          <g font-size="12" fill="#6c727d" font-weight="600">
-            <rect x="424" y="86"  width="48" height="18" rx="9" fill="#fff"/><text x="448" y="99">pass</text>
-            <rect x="416" y="192" width="88" height="18" rx="9" fill="#fff"/><text x="460" y="205">fail（3回）</text>
-            <rect x="258" y="187" width="104" height="18" rx="9" fill="#fff"/><text x="310" y="200">fail（3回未満）</text>
-            <rect x="556" y="24"  width="96" height="18" rx="9" fill="#fff"/><text x="604" y="37">approve / stop</text>
-            <rect x="328" y="95"  width="50" height="18" rx="9" fill="#fff"/><text x="353" y="108">revise</text>
-          </g>
-        </g>
-      </svg>
-      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:6px">
-        実線が正常な経路、破線が <code>revise</code> による差し戻し
-      </div>
-    </div>
-
-
-    <p>LLMを呼ぶ場所は<code>implement</code>だけです。ほかの処理は通常のPythonです。</p>
-
-
-
-<pre><code>from typing import TypedDict
-
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import StateGraph, START, END
-from langgraph.types import interrupt, Command
-
-import tools as t
-from agent_langchain import agent_executor
-
-MAX_ATTEMPTS = 3        # 7.3.2: the stop condition. Try changing it.
-
-
-class State(TypedDict, total=False):
-    goal: str
-    attempts: int
-    before: dict          # snapshot of the watched files, taken in plan
-    check_output: str
-    passed: bool
-    diff: str
-    decision: str
-    review_feedback: str
-
-
-def plan(state: State) -&gt; State:
-    return {**state, &quot;attempts&quot;: 0, &quot;before&quot;: t.snapshot()}
-
-
-def implement(state: State) -&gt; State:
-    # The only place the model is called.
-    prompt = state[&quot;goal&quot;]
-    if state.get(&quot;check_output&quot;):
-        prompt += f&quot;\n\nResult of the last test run:\n{state[&#x27;check_output&#x27;]}&quot;
-    if state.get(&quot;review_feedback&quot;):
-        prompt += f&quot;\n\nFeedback from the human reviewer:\n{state[&#x27;review_feedback&#x27;]}&quot;
-    agent_executor.invoke({&quot;messages&quot;: [(&quot;user&quot;, prompt)]}, {&quot;recursion_limit&quot;: 30})
-    return {**state, &quot;attempts&quot;: state[&quot;attempts&quot;] + 1}
-
-
-def check(state: State) -&gt; State:
-    # pytest is a node of its own. The model never gets to &quot;say&quot; the tests passed.
-    output = t.run_tests()
-    return {**state, &quot;check_output&quot;: output, &quot;passed&quot;: t.tests_pass()}
-
-
-def route_after_check(state: State) -&gt; str:
-    if state[&quot;passed&quot;]:
-        return &quot;review&quot;
-    if state[&quot;attempts&quot;] &gt;= MAX_ATTEMPTS:
-        return &quot;give_up&quot;
-    return &quot;implement&quot;
-
-
-def give_up(state: State) -&gt; State:
-    print(f&quot;\nGave up after {MAX_ATTEMPTS} attempts. Handing over to a human.\n&quot;)
-    print(state[&quot;check_output&quot;])
-    return state</code></pre>
-
-    <div class="note">
-      <span class="tag">ここではまだ組み立てません</span>
-      ノードと分岐は用意できました。グラフの組み立てと<code>compile()</code>は7.4で行います。まだ<code>review</code>がないため、ここでは実行しません。
-    </div>
-
-    <h3><span class="n">7.3.2</span>停止条件を設計に埋める</h3>
-
-    <p><code>MAX_ATTEMPTS</code>は再試行の上限です。3回失敗した場合、Agentは処理を止め、人間へ結果を返します。</p>
-
-    <p>無限の再試行は、コストと安全性の問題を起こします。</p>
-
-    <p><strong>自分でAgentを作るなら、停止条件も自分で書きます。</strong></p>
-
-    <div class="note">
-      <span class="tag">なぜ check が独立したノードなのか</span>
-      <code>pytest</code> をLLMに「実行したことにさせる」のではなく、グラフのノードとして必ず通します。PART 5で完了条件をテストにしたのは、ここで効いてきます。<span class="mark">Agentが「完了しました」と言えるのは、<code>check</code> ノードが成功を返したときだけ</span>という構造になります。
-    </div>
-  </section>
-
-  <section class="sec" id="s7-4">
-    <h2><span class="n">7.4</span>人間の承認・中断・再開</h2>
-
-    <p><code>review</code>ノードで処理を止め、人間の判断を待ちます。差分は、<code>plan</code> で取った控え（<code>snapshot</code>）と今のファイルを比べて作ります。gitは使いません。</p>
-
-<pre><code>def review(state: State) -&gt; State:
-    diff = t.make_diff(state[&quot;before&quot;])
-    answer = interrupt({
-        &quot;diff&quot;: diff[:4000],
-        &quot;check_output&quot;: state[&quot;check_output&quot;],
-        &quot;question&quot;: &quot;Approve these changes?&quot;,
-        &quot;choices&quot;: [&quot;approve&quot;, &quot;revise&quot;, &quot;stop&quot;],
-    })
-    return {**state, &quot;diff&quot;: diff,
-            &quot;decision&quot;: answer[&quot;decision&quot;],
-            &quot;review_feedback&quot;: answer.get(&quot;feedback&quot;, &quot;&quot;)}
-
-
-def route_after_review(state: State) -&gt; str:
-    if state[&quot;decision&quot;] == &quot;revise&quot;:
-        return &quot;implement&quot;          # send the feedback back to the agent
-    return END                      # approve and stop both end here</code></pre>
-
-    <h3><span class="n">7.4.1</span>ここで初めて組み立てる</h3>
-
-<pre><code>graph = StateGraph(State)
-graph.add_node(&quot;plan&quot;, plan)
-graph.add_node(&quot;implement&quot;, implement)
-graph.add_node(&quot;check&quot;, check)
-graph.add_node(&quot;review&quot;, review)
-graph.add_node(&quot;give_up&quot;, give_up)
-graph.add_edge(START, &quot;plan&quot;)
-graph.add_edge(&quot;plan&quot;, &quot;implement&quot;)
-graph.add_edge(&quot;implement&quot;, &quot;check&quot;)
-graph.add_conditional_edges(&quot;check&quot;, route_after_check)
-graph.add_conditional_edges(&quot;review&quot;, route_after_review)
-graph.add_edge(&quot;give_up&quot;, END)
-app = graph.compile(checkpointer=MemorySaver())
-
-
-def main():
-    config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;task-001&quot;}}
-    result = app.invoke({&quot;goal&quot;: &quot;Run the tests, find out why one of them fails, and fix it.&quot;}, config)
-
-    # While the graph is paused at `review`, show the diff and ask the human.
-    while &quot;__interrupt__&quot; in result:
-        payload = result[&quot;__interrupt__&quot;][0].value
-        print(&quot;\n&quot; + &quot;=&quot; * 60)
-        print(&quot;TESTS:\n&quot; + payload[&quot;check_output&quot;].strip().splitlines()[-1])
-        print(&quot;-&quot; * 60)
-        print(&quot;DIFF:\n&quot; + payload[&quot;diff&quot;])
-        print(&quot;=&quot; * 60)
-        decision = &quot;&quot;
-        while decision not in (&quot;approve&quot;, &quot;revise&quot;, &quot;stop&quot;):
-            decision = input(&quot;approve / revise / stop &gt; &quot;).strip().lower()
-        feedback = input(&quot;What should be changed? &gt; &quot;) if decision == &quot;revise&quot; else &quot;&quot;
-        result = app.invoke(Command(resume={&quot;decision&quot;: decision, &quot;feedback&quot;: feedback}), config)
-
-    print(&quot;\nFinished. Decision:&quot;, result.get(&quot;decision&quot;, &quot;(gave up)&quot;))
-
-
-if __name__ == &quot;__main__&quot;:
-    main()</code></pre>
-
-    <h4>動かす</h4>
-
-<pre><code>python agent/break_app.py      # まだ壊していなければ
-python agent/agent_graph.py</code></pre>
-
-    <p>Agentが直してテストが通ると、画面に差分が出て <code>approve / revise / stop &gt;</code> で止まります。<span class="mark">ここが7.0.2の4番です。</span>Agentは自分で終わりません。</p>
-
-    <h4>必ず1回は revise する</h4>
-
-    <p>差分を読んで、1回目は <code>revise</code> を選び、直してほしい点を英語で1行書きます。例：</p>
-
-<pre><code>Do not change tests/test_app.py. Fix app.py only.
-Keep the error message exactly "User name cannot be empty."</code></pre>
-
-    <p>Agentは、前回のテスト結果とあなたの指摘を受け取って <code>implement</code> からやり直します。<strong>2回目の差分が1回目とどう違うかを、REPORT.txt に書きます（7.6）。</strong>納得したら <code>approve</code>。</p>
-
-    <h4>停止条件を変えてみる</h4>
-
-    <p><code>agent/agent_graph.py</code> の <code>MAX_ATTEMPTS = 3</code> を <code>1</code> にして、もう一度壊して動かします。1回で直せなければ <code>give_up</code> に行き、人間に引き継がれます。<span class="mark">「Agentが諦める」もあなたが設計した動作です。</span>戻すのを忘れずに。</p>
-
-    <p><code>revise</code>を選ぶと、処理は<code>implement</code>へ戻ります。Agentは、前回のテスト結果と人間の指摘を使って再修正します。</p>
-
-    <p>承認機能には、差し戻しの経路と指摘を渡す仕組みが必要です。</p>
-
-    <div class="warn">
-      <span class="tag">MemorySaverはメモリ上の保存です</span>
-      <code>thread_id</code> により、<strong>同じPythonプロセスの中では</strong>途中の状態を指定して再開できます。<span class="mark">プログラムを終了すると MemorySaver の状態は消えます。</span><br><br>
-      別の日にも再開したい場合は、SQLiteやPostgreSQLなど永続的なcheckpointerを使います。この章では、演習中に止めて再開するところまでで十分です。
-    </div>
-
-    <div class="warn">
-      <span class="tag">副作用は承認の後ろに置く</span>
-      <code>interrupt()</code> を含むノードは、<strong>再開時に先頭から実行されることを前提に書いてください。</strong>承認前に外部への書き込みを置くと、再開のたびに同じ処理が繰り返されます。<br><br>
-      <span class="mark">メール送信、課金、ファイル削除などの副作用は、承認の後に別のノードとして置きます。</span>ノードを小さく分けるのは、見やすさのためだけではありません。
-    </div>
-
-    <h3><span class="n">7.4.2</span>どこに承認を置くか</h3>
-
-    <table>
-      <thead><tr><th>置くべきところ</th><th>理由</th></tr></thead>
-      <tbody>
-        <tr><td>取り消せない操作の前</td><td>削除、送信、公開、課金。戻せないものは必ず止める</td></tr>
-        <tr><td>影響範囲が広がるとき</td><td>変更ファイル数や行数がしきい値を超えたら止める</td></tr>
-        <tr><td>Agentが行き詰まったとき</td><td><code>give_up</code> は失敗ではなく、正しい終わり方のひとつ</td></tr>
-        <tr><td>外部に出るとき</td><td>ネットワーク送信、外部APIの呼び出し</td></tr>
-      </tbody>
-    </table>
-
-    <p>演習0で書いてもらった<strong>「人間が残すべき確認」</strong>の列を思い出してください。<span class="mark">あのとき言葉で書いたものを、いまコードとして置いています。</span></p>
-  </section>
-
-  <section class="sec" id="s7-5">
-    <h2><span class="n">7.5</span>発展：MCPで現在の状況につなぐ</h2>
-
-    <p>ここまでは、ツールを自分で作りました。MCPは、既存の外部ツールをAgentへ接続するための共通規格です。</p>
-
-    <p>この節では、読み取り専用のMCPツールを1つ作ります。外部データの変化によって、Agentの判断が変わることを確認します。</p>
-
-    <div class="note">
-      <span class="tag">ここでClineに戻る理由</span>
-      自作AgentからMCPへ接続するには、追加の接続コードが必要です。この節では、MCPクライアントとしてClineを使います。目的は、別プロセスのツールを共通形式で接続することです。自作Agentからの接続は<a href="appendix-c.html">付録C</a>で扱います。
-    </div>
-
-    <table>
-      <thead><tr><th>7.1で書いたツール</th><th>7.5のMCPツール</th></tr></thead>
-      <tbody>
-        <tr><td>Agentと同じPythonプロセスにある関数</td><td>別プロセスのサーバが提供する関数</td></tr>
-        <tr><td>自分でSchemaを書く</td><td>サーバからツール定義を受け取る</td></tr>
-        <tr><td>自分のリポジトリに密結合</td><td>同じサーバをClineなど別クライアントも使える</td></tr>
-      </tbody>
-    </table>
-
-    <div class="warn">
-      <span class="tag">最初に繋ぐものの選び方</span>
-      最初からPlaywright、Git、データベース、AWSを使うと、接続、認証、権限の問題が同時に発生します。この演習では、サーバを1つ、読み取り専用ツールを1つだけ使います。
-    </div>
-
-    <h3><span class="n">7.5.1</span>厨房ボードサーバを立てる</h3>
-
-<pre><code>pip install mcp</code></pre>
-
-<pre><code># tools/kitchen_board_mcp.py
-import json
-from pathlib import Path
-
-from mcp.server.fastmcp import FastMCP
-
-mcp = FastMCP("Kitchen Board")
-
-DATA_PATH = Path(__file__).parent.parent / "data" / "kitchen_board.json"
-
-
-@mcp.tool()
-def get_kitchen_board() -&gt; list[dict]:
-    &quot;&quot;&quot;現在の厨房ボードを取得する。注文の優先順位を判断するときだけ使う。&quot;&quot;&quot;
-    return json.loads(DATA_PATH.read_text(encoding="utf-8"))
-
-
-if __name__ == "__main__":
-    mcp.run(transport="stdio")</code></pre>
-
-<pre><code>// data/kitchen_board.json
-[
-  {"order_id": 31, "table": 12, "item": "Prawn Curry",
-   "status": "pending", "wait_minutes": 14, "allergy_alert": true},
-  {"order_id": 32, "table": 4,  "item": "Chicken Biryani",
-   "status": "pending", "wait_minutes": 11, "allergy_alert": false},
-  {"order_id": 33, "table": 8,  "item": "Masala Dosa",
-   "status": "cooking", "wait_minutes": 9,  "allergy_alert": false}
-]</code></pre>
-
-<pre><code>{
-  "mcpServers": {
-    "kitchen-board": {
-      "command": "python",
-      "args": ["tools/kitchen_board_mcp.py"]
-    }
-  }
-}</code></pre>
-
-    <div class="warn">
-      <span class="tag">この設定はCline用です</span>
-      この<code>mcpServers</code>設定はCline用です。7.3の自作Agentは、この設定を読みません。自作Agentには別のMCPクライアントが必要です。
-    </div>
-
-    <h4>接続の確認</h4>
-
-    <div class="prompt"><span class="tag">PROMPT</span>MCPの get_kitchen_board を1回だけ呼び、
-返ってきた order_id をそのまま3件表示してください。</div>
-
-    <p>実行履歴にツール名が表示され、3件の番号が返れば接続成功です。</p>
-
-    <h3><span class="n">7.5.2</span>ミッション：厨房ボードを読め</h3>
-
-    <div class="warn">
-      <span class="tag">状況</span>
-      12時18分。ボードには注文が並んでいます。待ち時間が長い注文、アレルギー警告のある注文、すでに調理中の注文が混ざっています。<br><br>
-      <span class="mark">Agentに「次に取るべき2つの行動」を判断させなさい。ただし、注文一覧はAgentの中にはありません。</span>MCPから取得しなければ、判断できません。
-    </div>
-
-    <div class="prompt"><span class="tag">PROMPT</span>あなたは厨房の補助Agentです。
-
-現在の注文一覧を MCP の get_kitchen_board から取得し、
-次に取るべき行動を2つ、理由とともに示してください。
-
-ただし、アレルギー警告のある注文は、
-「調理開始」ではなく「人間の確認が必要」と報告してください。</div>
-
-<pre><code>kitchen-board.get_kitchen_board({})
-  ↓
-現在の注文データが返る
-  ↓
-Agent:
-「Order 32 の調理を開始する。待ち時間11分で、警告はない。
- Order 31 は待ち時間14分と最長だが、甲殻類アレルギー警告があるため、
- 調理開始ではなく人間の確認が必要である。」</code></pre>
-
-    <p>Order 31は待ち時間が最長です。しかし、アレルギー警告があります。そのため、Agentは調理を開始せず、人間へ確認を求めます。</p>
-
-    <h3><span class="n">7.5.3</span>状況を変えて、もう一度聞く</h3>
-
-    <div class="warn">
-      <span class="tag">緊急連絡</span>
-      Table 4 の注文はキャンセルされました。<br>
-      Table 15 は待ち時間18分、アレルギー警告なしです。
-    </div>
-
-    <p><code>data/kitchen_board.json</code>を変更します。その後、同じ質問をもう一度送ります。Agentのコードとプロンプトは変更しません。</p>
-
-    <p>優先順位が変わります。ここで確かめてほしいのは4つです。</p>
-
-    <ul>
-      <li>Agentは注文一覧を<strong>覚えていたのではない</strong></li>
-      <li>毎回、MCP経由で<strong>現在の状況</strong>を取得している</li>
-      <li>外部データが変われば、<strong>判断も変わる</strong></li>
-      <li>ただし、アレルギーの判断は<strong>人間に返す</strong></li>
-    </ul>
-
-    <div class="note">
-      <span class="tag">ここがMCPの価値です</span>
-      <span class="mark">MCPが面白くなるのは、Agentが「いまの状況」を取りに行って、行動を変えるときです。</span><br><br>
-      Agentは店の状況を事前に知りません。MCPツールを使って、現在の状況を取得します。
-    </div>
-
-    <h3><span class="n">7.5.4</span>何が起きているか</h3>
+    <p><a href="starter/part7/part7_practice_wan.ipynb" download><strong>part7_practice_wan.ipynb をダウンロード</strong></a>　→ Colab で開く（ブラウザの Colab か、VS Code の Google Colab 拡張のどちらでも）。ランタイムは <strong>T4 GPU</strong> を選びます。</p>
 
     <div class="flow-steps">
-      <p><strong>1</strong>　<code>kitchen_board_mcp.py</code> がAgentとは別のプロセスで動く</p>
-      <p><strong>2</strong>　Agentは起動時に「使える道具の名前・説明・引数」を受け取る</p>
-      <p><strong>3</strong>　Agentが <code>get_kitchen_board</code> を選ぶ</p>
-      <p><strong>4</strong>　MCPサーバが現在のデータを返す</p>
-      <p><strong>5</strong>　返った結果を読んで、Agentが次の判断をする</p>
+      <p><strong>1</strong>　セル1でライブラリを入れる（2〜3分）</p>
+      <p><strong>2</strong>　セル2の <code>PROMPT</code> を、駅に近づく車窓の1文にする。<span class="mark">決めるのはこの1行だけ</span></p>
+      <p><strong>3</strong>　セル3〜4を実行。重みのダウンロードと生成で <strong>5〜10分</strong></p>
+      <p><strong>4</strong>　できた <code>practice_cut.mp4</code> を見る</p>
+      <p><strong>5</strong>　<code>SEED</code> を変えてもう1回。<strong>同じ電車にならない</strong>ことを見る</p>
     </div>
 
-    <p>処理は7.1の4手順と同じです。MCPでは、ツールが別のプロセスで動きます。</p>
-
-    <h3><span class="n">7.5.5</span>次にできること</h3>
+    <p>見てほしいのは3つです。</p>
 
     <table>
-      <thead><tr><th>今回</th><th>次にできること</th></tr></thead>
+      <thead><tr><th></th><th>気づくこと</th><th>工程での答え</th></tr></thead>
       <tbody>
-        <tr><td>JSONの厨房ボード</td><td>SQLiteや業務APIの現在データ</td></tr>
-        <tr><td>読み取り専用</td><td>人間承認付きの更新操作</td></tr>
+        <tr><td>長さ</td><td>1回で2秒。60秒は20〜30回分</td><td>カットに分けて、秒数を決める</td></tr>
+        <tr><td>一貫性</td><td>SEEDを変えると別の電車、別の光</td><td>絵コンテで様式を揃え、承認で見る</td></tr>
+        <tr><td>制御</td><td>決めたのは1文。カメラも間も、モデルが決めた</td><td>プロンプトを人間が読んでから生成する</td></tr>
       </tbody>
     </table>
 
-    <p>2行目へ進むときは、7.4で決めた承認の位置を思い出してください。<strong>読み取りから書き込みへ変わった瞬間に、取り消せない操作が入ります。</strong></p>
-
-    <div class="note">
-      <span class="tag">つなぐときの原則</span>
-      <span class="mark">有効化するツールは、その作業に必要な最小限にする。</span>信頼できるサーバだけを使う。<br><br>
-      有効なツールの定義は、モデルへ毎回渡されます。使わないツールは無効にしてください。MCPサーバは、与えられた権限の範囲で操作を行います。信頼できるサーバだけを接続してください。
-    </div>
-
-    <p>この章では、ツール呼び出し、ループ、分岐、停止条件、人間の承認、中断、再開、外部データ取得を実装しました。PART 8では、同じ仕組みを動画制作へ応用します。</p>
+    <p>できたクリップは、本番の1カットに使って構いません。出典は <code>Colab Wan2.1 (course notebook)</code> と書きます。</p>
   </section>
 
+
+  <section class="sec" id="s7-3">
+    <h2><span class="n">7.3</span>素材の規約</h2>
+
+    <p>本番の素材は、次の4つの手段で作ったものだけを使います。</p>
+
+    <table>
+      <thead><tr><th></th><th>手段</th><th>出典ログの書き方</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>授業のColabノート（Wan2.1）</td><td><code>Colab Wan2.1 (course notebook)</code></td></tr>
+        <tr><td><strong>2</strong></td><td>動画生成・画像生成サービスを、<strong>自分のアカウント</strong>で使う。<span class="mark">そのサービスの利用規約に従うこと</span></td><td>サービス名</td></tr>
+        <tr><td><strong>3</strong></td><td>自分で撮った写真・動画</td><td><code>own photo</code> / <code>own video</code></td></tr>
+        <tr><td><strong>4</strong></td><td>利用条件が明示されたフリー素材サイト（Pexels、Pixabayなど）の、商用可・帰属不要の素材</td><td>サイト名と素材のURL</td></tr>
+      </tbody>
+    </table>
+
+    <p>講師は特定のサービスを指定しません。契約もしません。<span class="mark">何を使うかは、あなたが利用規約を読んで決めます。</span></p>
+
+    <h3>出典ログ SOURCES.txt</h3>
+
+    <p><code>assets/SOURCES.txt</code> に、<strong>カットごとに1行</strong>書きます。</p>
+
+<pre><code>cut1 | Colab Wan2.1 (course notebook) | slow pan over a Mumbai suburban train at dawn, wide shot | 2026-09-10
+cut2 | Kling | Marine Drive at night from above, streetlights curving along the bay | 2026-09-10
+cut3 | own video | - | 2026-09-08
+cut4 | Pexels: https://www.pexels.com/video/... | - | 2026-09-10</code></pre>
+
+    <p>検査（7.4.4）は、この行が無いカットを落とします。<span class="mark">出典を書けない素材は、使えない素材です。</span></p>
+  </section>
+
+
+  <section class="sec" id="s7-4">
+    <h2><span class="n">7.4</span>本番：制作Agentを動かす</h2>
+
+    <h3><span class="n">7.4.1</span>要点3つを決める（人間）</h3>
+
+    <p><code>agent/agent_video.py</code> の冒頭を開きます。</p>
+
+<pre><code>THEME = &quot;AGEWEC Mumbai: why the world should come and see Mumbai&quot;
+# Each key point: (the statement, the words that must appear in a subtitle for it to count)
+KEY_POINTS = [
+    (&quot;The suburban railway carries about 7 million passengers a day&quot;, &quot;7 million&quot;),
+    (&quot;Marine Drive at night, the &#x27;Queen&#x27;s Necklace&#x27;&quot;, &quot;marine drive&quot;),
+    (&quot;Street food: vada pav and pav bhaji&quot;, &quot;vada pav&quot;),
+]
+MAX_SECONDS = 60          # the check: the video must be at most this long
+MIN_SECONDS = 20          # and at least this long
+NUM_CUTS = 6              # 5 to 8 works well
+MAX_ROUNDS = 3            # how many times the loop may go back to draft</code></pre>
+
+    <p><code>KEY_POINTS</code> を自分の3つに書き換えます。各行は「伝える文」と「字幕に必ず入る言葉」の組です。<span class="mark">2つ目の言葉を検査が探します。</span>短い固有名詞や数字が向いています。</p>
+
+    <div class="warn">
+      <span class="tag">事実には根拠を</span>
+      「1日700万人」のような数字を要点にするなら、出典を1つ控えておいてください。ナレーションに載せた事実は、7.5で確認します。<strong>作り話の観光情報は、PR動画では一番の害です。</strong>
+    </div>
+
+    <h3><span class="n">7.4.2</span>流れを読む</h3>
+
+<pre><code>&quot;&quot;&quot;PART 7 — A production workflow for a short PR video.
+
+    draft ──► approve_storyboard ──► wait_for_clips ──► edit ──► check ──pass──► review ──► END
+                     │ (interrupt)         │ (interrupt)   ▲         │ fail
+                     └─ revise ─────────►draft             └─────────┘ (back to edit, MAX_ROUNDS)
+
+Two nodes talk to the model, and they are different kinds of node:
+
+  draft  — the model WRITES a plan (storyboard, narration). Plain text in, JSON out. No tools.
+  edit   — the model ORCHESTRATES: it looks at the clips that actually came back, decides the
+           order, the trims, the transitions and the subtitle timing, and calls the editing
+           tools itself. This is the agent from PART 6, pointed at a different job.
+
+Everything else is fixed code or a human decision.
+
+Run from the agewec-mumbai folder:   python agent/agent_video.py
+&quot;&quot;&quot;</code></pre>
+
+    <p>PART 6と同じ形に、中断が3か所。<strong>絵コンテの承認</strong>、<strong>素材待ち</strong>、<strong>公開判断</strong>。2つ目は「Agentが人間の作業を待つ」中断です。そして <code>edit</code> は、PART 6の <code>implement</code> と同じく<span class="mark">ツールを持つ Agent が中で動く</span>ノードです。</p>
+
+    <h3><span class="n">7.4.3</span>企画と承認</h3>
+
+<pre><code>def draft(state: State) -&gt; State:
+    &quot;&quot;&quot;The model writes the storyboard and the narration. It does not touch any file.&quot;&quot;&quot;
+    feedback = state.get(&quot;feedback&quot;, &quot;&quot;)
+    prompt = f&quot;&quot;&quot;You are planning a PR video of at most {MAX_SECONDS} seconds.
+Theme: {THEME}
+Key points that MUST appear, each in at least one subtitle:
+{chr(10).join(&#x27;- &#x27; + k for k, _ in KEY_POINTS)}
+
+Return ONLY a JSON object with:
+- &quot;storyboard&quot;: a list of exactly {NUM_CUTS} cuts. Each cut: {{&quot;cut&quot;: n, &quot;seconds&quot;: 5-10, &quot;prompt&quot;: &quot;a text-to-video prompt for this shot, one sentence, no real people&#x27;s faces, no logos&quot;, &quot;subtitle&quot;: &quot;one short line shown on screen&quot;}}
+- &quot;narration&quot;: the voice-over for the whole video, at most {int(MAX_SECONDS * 2.3)} words, plain English.
+{(&#x27;Feedback from the human reviewer, apply it: &#x27; + feedback) if feedback else &#x27;&#x27;}&quot;&quot;&quot;
+    text = model.invoke(prompt).content
+    m = re.search(r&quot;\{.*\}&quot;, text, re.S)
+    data = json.loads(m.group(0))
+    return {**state, &quot;storyboard&quot;: data[&quot;storyboard&quot;], &quot;narration&quot;: data[&quot;narration&quot;],
+            &quot;round&quot;: state.get(&quot;round&quot;, 0) + 1}
+
+
+def approve_storyboard(state: State) -&gt; State:
+    &quot;&quot;&quot;Interrupt 1: the human reads every prompt before any clip is generated.&quot;&quot;&quot;
+    lines = [f&quot;cut{c[&#x27;cut&#x27;]}  {c[&#x27;seconds&#x27;]}s  subtitle: {c[&#x27;subtitle&#x27;]}\n        prompt: {c[&#x27;prompt&#x27;]}&quot;
+             for c in state[&quot;storyboard&quot;]]
+    answer = interrupt({
+        &quot;storyboard&quot;: &quot;\n&quot;.join(lines),
+        &quot;narration&quot;: state[&quot;narration&quot;],
+        &quot;question&quot;: &quot;Approve this storyboard? (approve / revise / stop)&quot;,
+    })
+    return {**state, &quot;decision&quot;: answer[&quot;decision&quot;], &quot;feedback&quot;: answer.get(&quot;feedback&quot;, &quot;&quot;)}</code></pre>
+
+    <p><code>draft</code> はモデルを呼ぶ唯一のノードです。JSONで絵コンテと原稿を返させ、ファイルには触らせません。<code>approve_storyboard</code> で止まり、<span class="mark">あなたはプロンプトを1行ずつ読みます。</span>ここで見るのは：</p>
+
+    <ul>
+      <li>要点3つが、どこかのカットの字幕に入っているか</li>
+      <li>プロンプトに、人の顔・著名人・ロゴが混ざっていないか（7.3）</li>
+      <li>秒数の合計が60を超えていないか。<strong>超えていたら revise で戻す</strong></li>
+    </ul>
+
+    <p>気になる点があれば <code>revise</code> と、直してほしいことを1行。モデルは指摘を受けて書き直します。</p>
+
+    <h3><span class="n">7.4.4</span>素材待ち</h3>
+
+<pre><code>def wait_for_clips(state: State) -&gt; State:
+    &quot;&quot;&quot;Interrupt 2: the human generates the clips with the allowed tools and puts them in assets/.&quot;&quot;&quot;
+    expected = [f&quot;assets/cut{c[&#x27;cut&#x27;]}.mp4&quot; for c in state[&quot;storyboard&quot;]]
+    answer = interrupt({
+        &quot;instruction&quot;: &quot;Generate each cut with the allowed tools, save them as the files below, &quot;
+                       &quot;and write one line per cut in assets/SOURCES.txt. Missing cuts are fine; &quot;
+                       &quot;the editor will work with what is there. Then type: done&quot;,
+        &quot;files&quot;: expected,
+    })
+    return {**state, &quot;decision&quot;: answer[&quot;decision&quot;]}</code></pre>
+
+    <p>止まっている間に、あなたは7.3の手段で各カットを作り、<code>assets/cut1.mp4 …</code> に置き、<code>SOURCES.txt</code> に1行ずつ書きます。<span class="mark">全部揃わなくても構いません。</span>無いカットは、編集Agentが「無い」と知ったうえで組み立てます。<code>done</code> と打つと次へ進みます。</p>
+
+    <h3><span class="n">7.4.5</span>編集：オーケストレーション</h3>
+
+    <p>編集Agentに渡す道具です。それぞれ小さく、判断を持たず、呼ばれるたびにログを残します。</p>
+
+<pre><code>@tool
+def list_assets() -&gt; str:
+    &quot;&quot;&quot;List the clips in assets/ with their length in seconds, width and height, and whether SOURCES.txt has a line for them.&quot;&quot;&quot;
+    sources = vt.read_sources()
+    rows = []
+    for p in sorted(vt.ASSETS.glob(&quot;cut*.mp4&quot;)):
+        n = int(p.stem[3:])
+        w, h = vt.probe_size(p)
+        rows.append({&quot;cut&quot;: n, &quot;file&quot;: p.name, &quot;seconds&quot;: round(vt.probe_duration(p), 1),
+                     &quot;width&quot;: w, &quot;height&quot;: h, &quot;has_source&quot;: n in sources})
+    _log(f&quot;list_assets -&gt; {len(rows)} clips&quot;)
+    return json.dumps(rows)
+
+
+@tool
+def contact_sheet() -&gt; str:
+    &quot;&quot;&quot;Make one image with a frame from each clip (first, middle, last) so you can see what each cut shows. Returns the image path.&quot;&quot;&quot;
+    paths = sorted(vt.ASSETS.glob(&quot;cut*.mp4&quot;))
+    vt.BUILD.mkdir(exist_ok=True)
+    tiles = []
+    for p in paths:
+        d = vt.probe_duration(p)
+        for k, t in enumerate((0.2, d / 2, max(0.2, d - 0.3))):
+            out = vt.BUILD / f&quot;sheet_{p.stem}_{k}.png&quot;
+            vt.frame_at(p, t, out)
+            tiles.append(Image.open(out).resize((320, 180)))
+    cols = 3
+    rows = (len(tiles) + cols - 1) // cols
+    sheet = Image.new(&quot;RGB&quot;, (320 * cols, 180 * rows), &quot;black&quot;)
+    for i, im in enumerate(tiles):
+        sheet.paste(im, ((i % cols) * 320, (i // cols) * 180))
+    out = vt.BUILD / &quot;contact_sheet.png&quot;
+    sheet.save(out)
+    _log(&quot;contact_sheet -&gt; build/contact_sheet.png&quot;)
+    return str(out)
+
+
+@tool
+def add_to_timeline(cut: int, seconds: float, start: float = 0.0) -&gt; str:
+    &quot;&quot;&quot;Append a clip to the timeline: cut number, how many seconds to use, and where in the clip to start (seconds). Clips are normalized to 1280x720 here.&quot;&quot;&quot;
+    src = vt.ASSETS / f&quot;cut{cut}.mp4&quot;
+    if not src.exists():
+        return f&quot;ERROR: {src.name} does not exist&quot;
+    dst = vt.BUILD / f&quot;t{len(_timeline) + 1}_cut{cut}.mp4&quot;
+    vt.normalize_clip(src, dst, seconds, start=start)
+    _timeline.append({&quot;cut&quot;: cut, &quot;seconds&quot;: seconds, &quot;start&quot;: start, &quot;file&quot;: str(dst)})
+    _log(f&quot;add_to_timeline(cut={cut}, seconds={seconds}, start={start})&quot;)
+    return f&quot;timeline now has {len(_timeline)} clips, total {sum(c[&#x27;seconds&#x27;] for c in _timeline):.1f}s&quot;
+
+
+@tool
+def clear_timeline() -&gt; str:
+    &quot;&quot;&quot;Empty the timeline to start the order again.&quot;&quot;&quot;
+    _timeline.clear()
+    _log(&quot;clear_timeline&quot;)
+    return &quot;timeline cleared&quot;
+
+
+@tool
+def join_timeline(fade: float = 0.6) -&gt; str:
+    &quot;&quot;&quot;Join the timeline clips in order with a crossfade of `fade` seconds between each pair. Writes build/joined.mp4 and returns its length.&quot;&quot;&quot;
+    if not _timeline:
+        return &quot;ERROR: timeline is empty&quot;
+    vt.concat_with_crossfade([c[&quot;file&quot;] for c in _timeline], vt.BUILD / &quot;joined.mp4&quot;, fade=fade)
+    d = vt.probe_duration(vt.BUILD / &quot;joined.mp4&quot;)
+    _log(f&quot;join_timeline(fade={fade}) -&gt; {d:.1f}s&quot;)
+    return f&quot;joined.mp4 is {d:.1f}s&quot;
+
+
+@tool
+def add_subtitles(subtitles_json: str) -&gt; str:
+    &quot;&quot;&quot;Burn subtitles onto build/joined.mp4. subtitles_json is a JSON list of {&quot;start&quot;: seconds, &quot;end&quot;: seconds, &quot;text&quot;: &quot;...&quot;}. Writes build/subtitled.mp4.&quot;&quot;&quot;
+    subs = json.loads(subtitles_json)
+    LAST_SUBTITLES[:] = [s[&quot;text&quot;] for s in subs]
+    vt.burn_subtitles(vt.BUILD / &quot;joined.mp4&quot;, vt.BUILD / &quot;subtitled.mp4&quot;, subs)
+    _log(f&quot;add_subtitles({len(subs)} lines)&quot;)
+    return f&quot;{len(subs)} subtitles burned&quot;
+
+
+@tool
+def add_narration(text: str) -&gt; str:
+    &quot;&quot;&quot;Turn the narration text into speech and put it under build/subtitled.mp4. Writes output.mp4 and returns the audio and video lengths.&quot;&quot;&quot;
+    audio_len = vt.narrate(text, vt.BUILD / &quot;narration.mp3&quot;)
+    vt.mux_audio(vt.BUILD / &quot;subtitled.mp4&quot;, vt.BUILD / &quot;narration.mp3&quot;, vt.PROJECT_ROOT / &quot;output.mp4&quot;)
+    video_len = vt.probe_duration(vt.PROJECT_ROOT / &quot;output.mp4&quot;)
+    _log(f&quot;add_narration({len(text.split())} words) -&gt; audio {audio_len:.1f}s, video {video_len:.1f}s&quot;)
+    return f&quot;output.mp4 written. audio {audio_len:.1f}s, video {video_len:.1f}s&quot;
+
+
+EDIT_TOOLS = [list_assets, contact_sheet, add_to_timeline, clear_timeline, join_timeline, add_subtitles, add_narration]</code></pre>
+
+    <p>Agent本体は、PART 6の <code>create_react_agent</code> と同じです。違うのは、渡す道具と、指示と、<strong>最初のメッセージに画像が入る</strong>ことです。共有サーバの27Bは画像が読めるので、各カットの最初・中間・最後のフレームを並べた一覧（<code>contact_sheet</code>）を見せてから判断させます。</p>
+
+<pre><code>EDITOR_SYSTEM = f&quot;&quot;&quot;You are the editor of a short PR video. You have tools to inspect the clips and to build the video.
+Work like this:
+1. Call list_assets, then contact_sheet, and look at the sheet before deciding anything.
+2. Decide the order and the length of each clip. Follow the storyboard where the clips allow it;
+   if a clip is missing, too short, or does not show what its prompt asked for, say so and adapt
+   (reorder, reuse a good clip for two beats, drop a cut).
+3. Build the timeline with add_to_timeline, then join_timeline, then add_subtitles, then add_narration.
+4. The finished video must be between {MIN_SECONDS} and {MAX_SECONDS} seconds.
+   Each of these phrases must appear in some subtitle: {&#x27;, &#x27;.join(repr(w) for _, w in KEY_POINTS)}.
+   The narration must not be longer than the video: cut words before you cut clips.
+5. Finish with a short summary of the decisions you made and why, especially where you departed from the storyboard.
+Never invent clip numbers that list_assets did not return.&quot;&quot;&quot;
+
+editor = create_react_agent(model, et.EDIT_TOOLS, prompt=EDITOR_SYSTEM)
+
+
+def edit(state: State) -&gt; State:
+    et.LOG.clear()
+    et._timeline.clear()
+    brief = {&quot;storyboard&quot;: state[&quot;storyboard&quot;], &quot;narration&quot;: state[&quot;narration&quot;]}
+    text = &quot;Storyboard and narration as approved:\n&quot; + json.dumps(brief, indent=1)
+    if state.get(&quot;feedback&quot;):
+        text += &quot;\n\nThe last attempt failed the check. Fix these:\n&quot; + state[&quot;feedback&quot;]
+    # The contact sheet is made first so the model can SEE the clips in its first message.
+    sheet = et.contact_sheet.invoke({})
+    msg = HumanMessage(content=[{&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: text}, et.image_message(sheet)])
+    result = editor.invoke({&quot;messages&quot;: [msg]}, {&quot;recursion_limit&quot;: 40})
+    summary = result[&quot;messages&quot;][-1].content
+    return {**state, &quot;edit_summary&quot;: summary, &quot;edit_rounds&quot;: state.get(&quot;edit_rounds&quot;, 0) + 1}</code></pre>
+
+    <p>指示（<code>EDITOR_SYSTEM</code>）に書いてあるのは、順番の決め方ではありません。<span class="mark">見てから決めること、絵コンテからずれたら理由を言うこと、守る制約、最後に決定をまとめること</span>です。順番そのものは、素材を見た Agent が決めます。</p>
+
+    <div class="note">
+      <span class="tag">何をしたかは、ログで追う</span>
+      オーケストレーションの弱点は、何が起きたかが見えにくいことです。だから道具の側でログを取ります。<code>add_to_timeline(cut=1, seconds=8, start=0.5)</code> のような行が順に残り、<span class="mark">公開判断（7.4.7）で、Agentの決定の要約と一緒に人間に見せます。</span>終了後は <code>EDIT_LOG.txt</code> に書き出されます。
+    </div>
+
+    <h3><span class="n">7.4.6</span>検査</h3>
+
+<pre><code>def check(state: State) -&gt; State:
+    problems = []
+    out = vt.PROJECT_ROOT / &quot;output.mp4&quot;
+    if not out.exists():
+        problems.append(&quot;output.mp4 was not written: the editor did not finish the tool sequence&quot;)
+    else:
+        dur = vt.probe_duration(out)
+        if not (MIN_SECONDS &lt;= dur &lt;= MAX_SECONDS):
+            problems.append(f&quot;length is {dur:.1f}s, must be between {MIN_SECONDS} and {MAX_SECONDS}s&quot;)
+        narr = vt.BUILD / &quot;narration.mp3&quot;
+        if narr.exists() and vt.probe_duration(narr) &gt; dur + 0.5:
+            problems.append(&quot;narration is longer than the video: shorten the narration&quot;)
+        subs_text = &quot; &quot;.join(et.LAST_SUBTITLES).lower()      # the subtitles the editor actually burned
+        for statement, words in KEY_POINTS:
+            if words.lower() not in subs_text:
+                problems.append(f&quot;no subtitle mentions &#x27;{words}&#x27; (key point: {statement})&quot;)
+        sources = vt.read_sources()
+        for c in et._timeline:
+            if c[&quot;cut&quot;] not in sources:
+                problems.append(f&quot;cut{c[&#x27;cut&#x27;]} is on the timeline but has no line in assets/SOURCES.txt&quot;)
+    text = &quot;OK&quot; if not problems else &quot;\n&quot;.join(&quot;- &quot; + p for p in problems)
+    print(&quot;\nCHECK:&quot;, text)
+    return {**state, &quot;check_output&quot;: text, &quot;passed&quot;: not problems, &quot;feedback&quot;: &quot;&quot; if not problems else text}</code></pre>
+
+    <p>検査は固定の手順です。編集Agentが何を決めていても、ここは同じ物差しで測ります。落ちた理由は文で出て、<code>feedback</code> として <code>edit</code> に戻ります（<code>MAX_ROUNDS</code> 回まで）。</p>
+
+    <table>
+      <thead><tr><th>検査</th><th>落ちたとき編集Agentがやること</th></tr></thead>
+      <tbody>
+        <tr><td>output.mp4 ができているか</td><td>道具の順序をやり直す</td></tr>
+        <tr><td>尺が20〜60秒か</td><td>クリップを削る／伸ばす</td></tr>
+        <tr><td>ナレーションが動画より短いか</td><td>原稿を削ってから音声を作り直す</td></tr>
+        <tr><td>要点の言葉が字幕にあるか</td><td>字幕を直す</td></tr>
+        <tr><td>使ったカット全部に出典ログがあるか</td><td>これだけは人間。<code>SOURCES.txt</code> に書く</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">7.4.7</span>動かす</h3>
+
+<pre><code>python agent/agent_video.py</code></pre>
+
+    <p>最初に <code>draft</code> が数十秒かかります（27Bの応答待ち）。素材を置いて <code>done</code> と打つと、編集Agentが道具を呼ぶ様子が <code>[tool] …</code> の行で流れます。最後に <code>output.mp4</code> と、Agentの決定の要約、ツールのログが出て、公開判断で止まります。</p>
+
+    <div class="note">
+      <span class="tag">必ず1回は revise を通す</span>
+      1回目の絵コンテに文句がなくても、何か1つ指摘して戻してください。<span class="mark">戻せることを確かめるのが目的です。</span>PART 6と同じで、承認の仕組みは差し戻せるように作ります。
+    </div>
+  </section>
+
+
+  <section class="sec" id="s7-5">
+    <h2><span class="n">7.5</span>公開できない理由を確認する</h2>
+
+    <p><code>output.mp4</code> ができました。検査も通りました。<span class="mark">それでも、そのまま公開はできません。</span>検査は「形が整っているか」しか見ていないからです。</p>
+
+    <table>
+      <thead><tr><th>公開前に人間が確かめること</th><th>なぜ機械では無理か</th></tr></thead>
+      <tbody>
+        <tr><td>ナレーションの事実は正しいか（数字、地名、歴史）</td><td>27Bは事実を「それらしく」書く。根拠は持っていない</td></tr>
+        <tr><td>素材の出典は本当か。規約に反していないか</td><td>ログの行があることは確かめられるが、中身の真偽は確かめられない</td></tr>
+        <tr><td>ムンバイに住む人が見て、嫌な気持ちにならないか</td><td>「魅力」の裏返しの偏見は、機械には見えない</td></tr>
+        <tr><td>要点は「来てもらう」動画として意味を持っているか</td><td>字幕に言葉があることと、伝わることは別</td></tr>
+      </tbody>
+    </table>
+
+    <p>この4つの確認をして、<code>approve</code> を押す。それがプロデューサーの仕事です。<strong>Agentがやったのは、書くことと、素材を見てつなぐことと、測ることです。</strong>つなぎ方の判断はAgentに委ねましたが、その判断はログで追え、検査で測られ、あなたが最後に見ました。</p>
+  </section>
+
+
   <section class="sec" id="s7-6">
-    <h2><span class="n">7.6</span>提出物</h2>
+    <h2><span class="n">7.6</span>提出と相互評価</h2>
 
-    <p>出すのは <strong>zip ファイル1つ</strong>です。<code>vibe-chat</code> フォルダに <code>REPORT.txt</code> を足し、<code>agent/config.py</code> を除いて圧縮します。</p>
+    <p>提出は2つに分かれます。<strong>動画は観客に、工程は講師に</strong>見せます。</p>
 
-<pre><code>vibe-chat/
-├── app.py, templates/, tests/
-├── agent/                 ← config.py は入れない
-└── REPORT.txt             ← 追加する</code></pre>
+    <table>
+      <thead><tr><th>何を</th><th>どこへ</th><th>誰が見る</th><th>観点</th></tr></thead>
+      <tbody>
+        <tr><td><code>output.mp4</code> を Google Drive に置き、共有を「リンクを知っている全員」にして、その URL</td><td>nmims2026 の <strong>Assignment 2</strong> カード</td><td>クラスメイト7人</td><td>Q1〜Q8。世界の観客として「ムンバイに行きたくなるか」</td></tr>
+        <tr><td><code>agewec-mumbai</code> フォルダの zip（<code>config.py</code> を除く。<code>assets/</code>、<code>SOURCES.txt</code>、<code>EDIT_LOG.txt</code>、<code>REPORT.txt</code> を含む）</td><td>Google フォーム</td><td>講師</td><td>工程の分解、承認の位置、戻り先、出典</td></tr>
+      </tbody>
+    </table>
 
-    <p><code>REPORT.txt</code> に書くのは3つです。</p>
+    <h3>REPORT.txt に書くこと</h3>
 
     <table>
       <thead><tr><th></th><th>書くこと</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td><code>revise</code> で渡した指摘（1行）と、それで2回目の差分がどう変わったか</td></tr>
-        <tr><td><strong>2</strong></td><td><code>MAX_ATTEMPTS = 1</code> にしたとき何が起きたか（1回で直った／give_up に行った）</td></tr>
-        <tr><td><strong>3</strong></td><td>7.5をやった場合だけ：<code>kitchen_board.json</code> を変える前後で、Agentの判断がどう変わったか</td></tr>
+        <tr><td><strong>1</strong></td><td>絵コンテの承認で <code>revise</code> した指摘（1行）と、それで絵コンテがどう変わったか</td></tr>
+        <tr><td><strong>2</strong></td><td>編集Agentが絵コンテからずらした点（<code>EDIT_LOG.txt</code> の決定要約から1つ）と、その判断に納得したか</td></tr>
+        <tr><td><strong>3</strong></td><td>ナレーションの事実で、根拠を確かめた1つと、その出典</td></tr>
+        <tr><td><strong>4</strong></td><td>検査で落ちたことがあれば、その文と、Agentがどう直したか。落ちなかったなら「落ちなかった」</td></tr>
       </tbody>
     </table>
 
-    <div class="note">
-      <span class="tag">1番が中心です</span>
-      <span class="mark">一発で承認したものより、差し戻して直させた記録のほうを評価します。</span>承認の仕組みは、承認するために作るのではありません。差し戻せるようにするために作ります。<br><br>
-      1回目の差分に文句がなくても、<strong>何か1つ指摘して戻してください。</strong>戻せることを確かめるのが目的です。
-    </div>
-
-    <p><code>vibe-chat</code> フォルダを右クリックして圧縮し、<code>PART7_学籍番号.zip</code> という名前で次のフォームからアップロードします。</p>
+    <p><code>agewec-mumbai</code> フォルダを右クリックして圧縮し、<code>PART7_学籍番号.zip</code> という名前で次のフォームからアップロードします。</p>
     <p><a href="FORM_URL_PART7" target="_blank" rel="noopener"><strong>FORM_URL_PART7</strong></a></p>
 
-    <h3><span class="n">7.6.1</span>考えておくこと</h3>
+    <h3>相互評価</h3>
 
-    <p>次章の準備です。答えは書かなくて構いません。</p>
+    <p>Drive の共有は、<span class="mark">提出から1か月間は解除しないでください。</span>相互評価と採点がその間に行われます。<br><br>nmims2026 に動画のリンクを提出すると、クラスメイトの動画が7本割り当てられます。<span class="mark">観客として見て、Q1〜Q8に答えてください。</span>工程の良し悪しはここでは見ません。「来たくなるか」「人に見せたくなるか」だけです。</p>
 
-    <blockquote>
-      あなたが作ったAgentの「停止条件」「承認の位置」「戻り先」は、コードを直す仕事に固有のものでしたか。<br>
-      それとも、まったく別の仕事にも当てはまりますか。
-    </blockquote>
+    <div class="prompt"><span class="tag">FINAL</span>最初の質問に戻ります。「Agentic AIは何ができるか」。
+この章の答えは、「人間が決めた要点と承認の中で、書き、素材を見て組み立て、測ることができる」です。
+テーマを決めたのも、プロンプトを読んだのも、素材を作ったのも、事実を確かめたのも、公開すると決めたのも、あなたです。
+それがプロデューサーの仕事で、これからは誰もがその席に座ります。</div>
   </section>
 
 
-
-  
-
-
   <nav class="pager">
-    <a class="prev" href="part6.html"><span class="dir">← PREV</span><span class="ttl">PART 6　テストを盾に機能を足す</span></a>
-    <a class="next" href="part8.html"><span class="dir">NEXT →</span><span class="ttl">PART 8　Agentic AIで動画制作を回す</span></a>
+    <a class="prev" href="part6.html"><span class="dir">← PREV</span><span class="ttl">PART 6　自分でAgentを組み立てる</span></a>
+    <a class="next" href="appendix-a.html"><span class="dir">NEXT →</span><span class="ttl">APPENDIX A　ローカルLLMで進める（Ollama編）</span></a>
   </nav>
 
 </div>

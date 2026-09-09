@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PART 5 Turn the check into tests</title>
+<title>PART 5 Turn finish conditions into tests and add a feature safely</title>
 <style>
 :root{
   --paper:#f6f5f2;
@@ -160,22 +160,22 @@ th{background:var(--accent-soft);font-weight:700}
 <body>
 
 <nav class="rail" aria-label="Parts">
-  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html" aria-current="page">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html" aria-current="page">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
 </nav>
 
 <div class="wrap">
 
   <header class="masthead">
     <div class="eyebrow">PART 5</div>
-    <h1>Turn the check into tests</h1>
-    <p class="lede">In Part 4 you verified every fix by hand. Here you hand part of that to a machine. You move Vibe Chat to Flask, have tests written, and then break the code on purpose to see the tests fail.</p>
+    <h1>Turn finish conditions into tests and add a feature safely</h1>
+    <p class="lede">Move Vibe Chat to Flask, turn finish conditions into tests, check that the tests can catch a fault, and then use them while adding a new requirement.</p>
   </header>
 
   <div class="bridge">
     <dl>
       <dt>Previously</dt><dd>In Part 4 you tested the app yourself and had Cline fix what you found. You also felt how long manual checking takes.</dd>
       <dt>This part</dt><dd>Cline converts the same Vibe Chat into a Flask app and writes tests. You then check whether those tests actually do anything.</dd>
-      <dt>Next</dt><dd>Part 6 adds features to this app. With tests in place, breaking something shows up immediately.</dd>
+      <dt>Next</dt><dd>Part 6 builds in Python the tool calling, retry, stopping and human approval that Cline has been handling for you.</dd>
     </dl>
   </div>
 
@@ -187,8 +187,10 @@ th{background:var(--accent-soft);font-weight:700}
       <li><span class="n">5.3</span><a href="#s5-3">Ask Cline to move it to Flask</a></li>
       <li><span class="n">5.4</span><a href="#s5-4">Run the tests</a></li>
       <li><span class="n">5.5</span><a href="#s5-5">Break it on purpose</a></li>
-      <li><span class="n">5.6</span><a href="#s5-6">What to hand in</a></li>
-      <li><span class="n">5.7</span><a href="#s5-7">What we know so far</a></li>
+      <li><span class="n">5.6</span><a href="#s5-6">Five steps for a safe change</a></li>
+      <li><span class="n">5.7</span><a href="#s5-7">Add the new requirement</a></li>
+      <li><span class="n">5.8</span><a href="#s5-8">What to hand in</a></li>
+      <li><span class="n">5.9</span><a href="#s5-9">What we know so far</a></li>
     </ol>
   </nav>
 
@@ -542,73 +544,182 @@ Do not edit the file yet.</div>
   </section>
 
   <section class="sec" id="s5-6">
-    <h2><span class="n">5.6</span>What to hand in</h2>
+    <h2><span class="n">5.6</span>Five steps for every change</h2>
 
-    <p>You hand in <strong>one zip file</strong> containing these five files.</p>
+    <p>You add the feature in these five steps. <span class="mark">Learn them first.</span> 5.7 walks through them in order.</p>
 
+    <div class="flow-steps">
+      <p><strong>1</strong>　<strong>Write the finish conditions</strong>　what has to be true to be done</p>
+      <p><strong>2</strong>　<strong>Predict what will change</strong>　which file, and where in it</p>
+      <p><strong>3</strong>　<strong>Ask in Plan mode</strong>　read the plan before it builds</p>
+      <p><strong>4</strong>　<strong>Approve the diff</strong>　compare it with your prediction</p>
+      <p><strong>5</strong>　<strong>Check with <code>pytest</code> and the browser</strong>　both of them</p>
+    </div>
+
+    <h3><span class="n">5.6.1</span>What happens if you skip one</h3>
+
+    <table>
+      <thead><tr><th>Skipped</th><th>What follows</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong> conditions</td><td>The agent works to its own idea of finished, and you have nothing to compare against</td></tr>
+        <tr><td><strong>2</strong> prediction</td><td><span class="mark">You read the diff without being able to judge it</span></td></tr>
+        <tr><td><strong>3</strong> plan</td><td>You notice the wrong approach after it has been built</td></tr>
+        <tr><td><strong>4</strong> approval</td><td>Unrelated code gets rewritten</td></tr>
+        <tr><td><strong>5</strong> checking</td><td>Tests pass while the page is broken</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">Step 2 is the one people skip</span>
+      Read a diff without a prediction and <span class="mark">you will think you are reading it when you are not.</span> It becomes "looks like reasonable code, Save".<br><br>
+      Write down "this function in <code>app.py</code> and this part of <code>templates/index.html</code> should change" beforehand. <span class="mark">Then a diff that touches something else stands out immediately.</span>
+    </div>
+  </section>
+
+
+  <section class="sec" id="s5-7">
+    <h2><span class="n">5.7</span>An unplanned change request</h2>
+
+    <p>Requirements change after something already works. <span class="mark">In real work, this is the normal case.</span></p>
+
+    <div class="warn">
+      <span class="tag">Urgent</span>
+      Suppose a report comes in: someone posted a message containing language aimed at hurting another person.<br><br>
+      <strong>Make it impossible to post a message containing a banned word.</strong> Keep the list of banned words in <code>app.py</code>.<br><br>
+      When a post is refused, show the reason on the page. <span class="mark">Do not break anything that already works.</span>
+    </div>
+
+    <h3><span class="n">5.7.1</span>Predict first</h3>
+
+    <p>Write this before you ask. <span class="mark">Predicting and then reading a diff is a completely different activity from reading one cold.</span></p>
+
+    <ul>
+      <li>How does the data change? Where does the banned-word list live?</li>
+      <li>How does the logic change? At what point in sending is the check made?</li>
+      <li>How does the page change? Where does the reason appear?</li>
+      <li><strong>Which of the existing tests would fail?</strong></li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Think about that last one</span>
+      The existing tests were "an empty name is rejected" and "an empty message is rejected". <span class="mark">Would adding a banned-word check make those fail?</span><br><br>
+      They should not. <span class="mark">If they do fail, the new check has been put somewhere it interferes with the old one.</span> <strong>That is worth finding before you approve the diff.</strong>
+    </div>
+
+    <h3><span class="n">5.7.2</span>Write the finish conditions</h3>
+
+    <table>
+      <thead><tr><th></th><th>Condition</th><th>Who checks</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>A message with a banned word is not posted</td><td><span class="mark">A test</span></td></tr>
+        <tr><td><strong>2</strong></td><td>A message without one is posted as before</td><td><span class="mark">A test</span></td></tr>
+        <tr><td><strong>3</strong></td><td>When refused, the reason appears on the page</td><td>A person looks</td></tr>
+        <tr><td><strong>4</strong></td><td>Every existing test still passes</td><td><span class="mark">A test</span></td></tr>
+      </tbody>
+    </table>
+
+    <p>Do not forget number 2. <strong>Ask only for "block banned words" and an implementation that blocks everything also passes.</strong></p>
+
+    <h3><span class="n">5.7.3</span>Ask for it</h3>
+
+    <div class="prompt"><span class="tag">PROMPT</span>Add a banned-word check to the Flask Vibe Chat.
+
+Requirements:
+- Keep a list of banned words in app.py
+- A message containing a banned word must not be added to the list
+- Show the reason on the page when a message is rejected
+- A message without banned words must still be added as before
+- Add a test for a rejected message
+- Add a test for an accepted message
+- Do not change the existing tests
+
+Edit app.py, templates/index.html and tests/test_app.py only.
+Keep the plan under 10 lines.
+Do not edit the file yet. Show the plan only.</div>
+
+    <h3><span class="n">5.7.4</span>What to look for in the diff</h3>
+
+    <table>
+      <thead><tr><th>Check</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Is the empty-input check still there?</td><td><span class="mark">Has it been replaced by the new one?</span></td></tr>
+        <tr><td>Is the word match case sensitive?</td><td>Either is fine, but <strong>was it decided on purpose?</strong></td></tr>
+        <tr><td>Where does the reason appear?</td><td>Somewhere you can actually see it</td></tr>
+        <tr><td>Have the existing tests been changed?</td><td>If so, ask why</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">5.7.5</span>Check it</h3>
+
+<pre><code>pytest</code></pre>
+
+    <p>You should have four passing tests. <span class="mark">The two from before, and the two from this change.</span></p>
+
+    <p>Then try both cases in the browser: a message with a banned word, and one without.</p>
+
+    <div class="note">
+      <span class="tag">This is where the tests from 5.4 pay off</span>
+      You added a feature, and <span class="mark">one command told you the existing behaviour still holds.</span><br><br>
+      Without tests, this would mean checking sending, deleting, empty input and banned words by hand. <span class="mark">Four checks after every single change.</span> <strong>And the list only grows.</strong>
+    </div>
+  </section>
+
+
+  <section class="sec" id="s5-8">
+    <h2><span class="n">5.8</span>What to hand in</h2>
+    <p>Submit <strong>one zip file</strong> containing the completed <code>vibe-chat</code> folder.</p>
     <pre><code>vibe-chat/
 ├── app.py
 ├── requirements.txt
 ├── templates/index.html
 ├── tests/test_app.py
-└── REPORT.txt      ← add this</code></pre>
-
-    <p><code>REPORT.txt</code> has two entries, nothing else.</p>
-
-    <table>
-      <thead><tr><th></th><th>Write</th></tr></thead>
-      <tbody>
-        <tr><td><strong>1</strong></td><td>The line you commented out in 5.5 (file name, and what the line does)</td></tr>
-        <tr><td><strong>2</strong></td><td>The <code>pytest</code> output from when it failed, pasted as is</td></tr>
-      </tbody>
-    </table>
-
-    <p>Right-click the <code>vibe-chat</code> folder, compress it, name it <code>PART5_StudentID.zip</code>, and upload it here.</p>
+└── REPORT.txt</code></pre>
+    <p>Write these four items in <code>REPORT.txt</code>:</p>
+    <ol>
+      <li>The line you disabled in 5.5 and what it did.</li>
+      <li>The failing <code>pytest</code> output from 5.5.</li>
+      <li>Your prediction in 5.7.1 about which files and parts would change.</li>
+      <li>How the actual diff differed from your prediction. If it matched, say so.</li>
+    </ol>
+    <p>Name the archive <code>PART5_student-number.zip</code> and upload it here:</p>
     <p><a href="https://forms.gle/NENs6C13u5PcsBwMA" target="_blank" rel="noopener"><strong>https://forms.gle/NENs6C13u5PcsBwMA</strong></a></p>
-
-    <div class="note">
-      <span class="tag">Entry 2 matters most</span>
-      <span class="mark">Anyone can produce a passing test run.</span> A failing one is evidence that the test does something.<br><br>
-      Which line you commented out, and which test failed. <strong>Getting that pairing right shows you understood the test.</strong>
-    </div>
   </section>
 
-  <section class="sec" id="s5-7">
-    <h2><span class="n">5.7</span>What we know so far</h2>
+  <section class="sec" id="s5-9">
+    <h2><span class="n">5.9</span>What we know so far</h2>
 
-    <p>In Part 4 you had Cline run the tests, could not trust the report, and ended up checking by hand.</p>
+    <p>You added one feature. <span class="mark"><code>pytest</code> told you the existing behaviour was intact.</span></p>
 
-    <p>Here you handed part of that over. <span class="mark">"An empty name is rejected" is now one <code>pytest</code> command.</span></p>
+    <p>In Part 4 you checked Send and Delete by hand after every fix. <span class="mark">Here the checking was one command.</span></p>
+
+    <div class="warn">
+      <span class="tag">Tests do not guarantee correctness</span>
+      A test can pass while <span class="mark">the specification behind it is wrong, in which case the code is wrongly correct.</span><br><br>
+      What goes in the banned-word list. What to show when a post is refused. <strong>Those are decisions a person makes.</strong> The tests only confirm that what you decided is still holding.
+    </div>
+
+    <h3><span class="n">5.9.1</span>What you have picked up so far</h3>
 
     <table>
-      <thead><tr><th></th><th>Who checks it</th></tr></thead>
+      <thead><tr><th>Part</th><th>What you learned to do</th></tr></thead>
       <tbody>
-        <tr><td>The page opens</td><td>You</td></tr>
-        <tr><td>Sending adds to the list</td><td>You</td></tr>
-        <tr><td>Empty name rejected</td><td><strong>A machine</strong></td></tr>
-        <tr><td>Empty message rejected</td><td><strong>A machine</strong></td></tr>
-        <tr><td>Deciding what "done" means</td><td><span class="mark">You</span></td></tr>
-        <tr><td>Accepting a plan</td><td><span class="mark">You</span></td></tr>
-        <tr><td>Approving a diff</td><td><span class="mark">You</span></td></tr>
+        <tr><td><strong>3</strong></td><td>Have an agent create files, and approve each one</td></tr>
+        <tr><td><strong>4</strong></td><td>Test it yourself, find a problem, have it fixed</td></tr>
+        <tr><td><strong>5</strong></td><td>Decide what "done" means and hand the checking to a machine</td></tr>
+        <tr><td><strong>6</strong></td><td>Add features with tests behind you</td></tr>
       </tbody>
     </table>
 
-    <div class="warn">
-      <span class="tag">What cannot be handed over</span>
-      <span class="mark">What counts as correct behaviour.</span> You decide that. Without it, there is nothing to write a test against.<br><br>
-      An agent can write code that satisfies a condition. <strong>It cannot write the condition.</strong>
-    </div>
+    <p>Up to now the agent has been someone else's product. <span class="mark">You have been watching Cline from the outside, approving what it proposed.</span></p>
 
-    <p>In Part 6 you add features to this same app. <span class="mark">The tests are there, so breaking something existing shows up immediately.</span></p>
-
-    <p>Git, linters and CI are in <a href="appendix-c.html">Appendix C</a>. <span class="mark">They matter once more than one person changes the same code.</span> <strong>Working alone, as you are here, they would only add steps.</strong></p>
+    <p>In Part 5 you build the inside of it. <strong>Tool calling, the loop, stopping conditions and human approval.</strong> You will write in Python what Cline has been doing.</p>
   </section>
 
 
 
   <nav class="pager">
     <a class="prev" href="part4.html"><span class="dir">← PREV</span><span class="ttl">PART 4　Test it, then have it fixed</span></a>
-    <a class="next" href="part6.html"><span class="dir">NEXT →</span><span class="ttl">PART 6　Add features without breaking things</span></a>
+    <a class="next" href="part6.html"><span class="dir">NEXT →</span><span class="ttl">PART 6　Build the agent yourself</span></a>
   </nav>
 
 </div>

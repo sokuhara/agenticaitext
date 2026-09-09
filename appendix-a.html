@@ -160,7 +160,7 @@ th{background:var(--accent-soft);font-weight:700}
 <body>
 
 <nav class="rail" aria-label="章の一覧">
-  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html" aria-current="page">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="appendix-a.html" aria-current="page">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
 </nav>
 
 <div class="wrap">
@@ -240,7 +240,7 @@ th{background:var(--accent-soft);font-weight:700}
 
     <p>Qwen3.8 27Bは、Ollamaライブラリのデフォルトビルドが約18GBのQ4_K_M量子化で、tool calling（ツール呼び出し）とthinkingに対応しています。Coding Agentが必要とするのはまさにこのtool callingなので、ここが対応しているかどうかがモデル選びの分かれ目になります。24GB程度のVRAMがあれば、実用的なコンテキスト長で載ります。</p>
 
-    <p>Qwen3.5 4Bも同様にツール呼び出しに対応しています。PART 2の演習1のように、対象が明確で1回の変更が小さい作業には十分です。ただしPART 6のような長い実装イテレーションを任せるには小さすぎます。<span class="mark">4Bは小さく正確な依頼まで</span>と割り切り、PART 5以降は27Bで進めてください。</p>
+    <p>Qwen3.5 4Bも同様にツール呼び出しに対応しています。PART 2の演習1のように、対象が明確で1回の変更が小さい作業には十分です。ただしPART 5のような長い実装イテレーションを任せるには小さすぎます。<span class="mark">4Bは小さく正確な依頼まで</span>と割り切り、PART 5以降は27Bで進めてください。</p>
 
     <div class="note">
       <span class="tag">確認しておくこと</span>
@@ -271,7 +271,7 @@ ollama ps</code></pre>
     <h3><span class="n">A.3.2</span>コンテキスト長を明示的に伸ばす</h3>
     <p><span class="mark">ここが一番の落とし穴です。</span>Ollamaのデフォルトのコンテキスト長は、Coding Agentの用途には短すぎます。気づかないうちに会話履歴が切り詰められ、エージェントが「さっき作ったファイル」を忘れて破綻します。モデル自体が長いコンテキストに対応していても、<code>num_ctx</code> を明示しなければ意味がありません。</p>
 
-    <p>Modelfileで、用途に合わせた設定を焼いた派生モデルを作っておくのが確実です。<span class="mark">PART 7で自作Agentを動かすときも、この設定が効きます。</span>コード側で <code>num_ctx</code> を指定して回るのは1回の呼び出しだけで、モデル側の既定を変えておくほうが確実です。</p>
+    <p>Modelfileで、用途に合わせた設定を焼いた派生モデルを作っておくのが確実です。<span class="mark">PART 6で自作Agentを動かすときも、この設定が効きます。</span>コード側で <code>num_ctx</code> を指定して回るのは1回の呼び出しだけで、モデル側の既定を変えておくほうが確実です。</p>
 
 <pre><code># Modelfile.agent
 FROM qwen3.8:27b
@@ -475,7 +475,7 @@ cat ~/.continue/.env</code></pre>
       <span class="tag">カスタムヘッダに対応していない場合</span>
       拡張機能のバージョンによっては、ヘッダを追加する欄がないことがあります。その場合の逃げ道は2つです。<br><br>
       <strong>1. トンネルを掘る。</strong><code>cloudflared access tcp</code> でローカルのポートへ転送し、Base URLを <code>http://localhost:&lt;ポート&gt;/v1</code> にします。認証はトンネル側が処理するので、拡張機能はヘッダを知らずに済みます。<br><br>
-      <strong>2. 手元にプロキシを立てる。</strong>ヘッダを足して転送するだけの小さなサーバを書きます。PART 7を終えていれば、数十行で書けます。
+      <strong>2. 手元にプロキシを立てる。</strong>ヘッダを足して転送するだけの小さなサーバを書きます。PART 6を終えていれば、数十行で書けます。
     </div>
 
     <div class="warn">
@@ -527,11 +527,11 @@ cat ~/.continue/.env</code></pre>
           <td>クラウドを使わない場合は <code>packages/infra/</code> をDocker Compose構成に置き換えます。GitHub Actions、gitleaks、Renovate、pre-commitはそのまま使えます。</td>
         </tr>
         <tr>
-          <td><a href="part6.html">PART 6</a><br>コーディング</td>
+          <td><a href="part5.html">PART 5</a><br>コーディング</td>
           <td>本編がローカル前提で書かれているため読み替えは不要です。コンテキスト使用率70%での引き継ぎ、参照資料を短く保つ方針は、いずれもローカルモデルを想定した記述です。</td>
         </tr>
         <tr>
-          <td><a href="part7.html">PART 7</a><br>リリース</td>
+          <td><a href="part6.html">PART 6</a><br>リリース</td>
           <td>本編がすでにデプロイ先を選べる形になっています（7.2.1）。MCPの節（7.3）も、モデルとも言語とも独立した層として書かれているため読み替えは不要です。</td>
         </tr>
       </tbody>
@@ -545,7 +545,7 @@ cat ~/.continue/.env</code></pre>
     <p>症状としては、エージェントが直前に作ったファイルを忘れる、同じ修正を何度も提案する、計画の途中から辻褄が合わなくなる、といった形で出ます。エラーが出ないので気づきにくいのが厄介です。A.3.2の <code>num_ctx</code> 設定を最初に済ませておいてください。</p>
 
     <h3><span class="n">A.6.2</span>差分編集の失敗</h3>
-    <p>Clineのファイル書き換えは、置換対象の文字列が厳密に一致することを要求します。ローカルモデルはここでリトライが増えがちです。対策は、1回の依頼で触るファイル数と変更量を小さくすること。PART 6の「イテレーションを細かく切る」という方針を、より細かく適用してください。</p>
+    <p>Clineのファイル書き換えは、置換対象の文字列が厳密に一致することを要求します。ローカルモデルはここでリトライが増えがちです。対策は、1回の依頼で触るファイル数と変更量を小さくすること。PART 5の「イテレーションを細かく切る」という方針を、より細かく適用してください。</p>
 
     <h3><span class="n">A.6.3</span>ツール呼び出しが本文として出力される</h3>
     <p>ツール呼び出しを実行せず、呼び出しの内容をそのままテキストとして書き出してしまうことがあります。この種の不具合はランタイム側の更新で直ることが多いので、同じ症状が続く場合はOllamaのバージョンとモデルタグの組み合わせを変えて試してください。</p>
@@ -679,7 +679,7 @@ cat ~/.continue/.env</code></pre>
       Featureとして入れるか、uvが同梱されたイメージを使ってください。<code>postCreateCommand</code> には <code>uv sync</code> のような、すでにPATHにあるものだけを書きます。
     </div>
 
-    <p>Node.jsのFeatureを入れているのは、MCPサーバの多くがnpx経由で配布されているためです。アプリケーション側でJavaScriptを書くわけではありません（PART 7）。</p>
+    <p>Node.jsのFeatureを入れているのは、MCPサーバの多くがnpx経由で配布されているためです。アプリケーション側でJavaScriptを書くわけではありません（PART 6）。</p>
 
     <p>GitHub Codespacesを使う場合も、同じ <code>devcontainer.json</code> がそのまま効きます。手元にDockerがない受講者がいるなら、そちらのほうが確実です。</p>
   </section>
@@ -864,7 +864,7 @@ cat controls.txt | ollama run qwen3.5:4b</code></pre>
   <section class="sec" id="sa-12">
     <h2><span class="n">A.12</span>ブラウザのColabでGPUを有効にする</h2>
 
-    <p>PART 8では、VS CodeからColabへ接続します。<span class="mark">その方法がうまくいかない場合は、ブラウザでColabを開いても進められます。</span></p>
+    <p>PART 7では、VS CodeからColabへ接続します。<span class="mark">その方法がうまくいかない場合は、ブラウザでColabを開いても進められます。</span></p>
 
     <p>ただし、<strong>GPUは自分で有効にする必要があります。</strong>忘れると動画の生成が終わりません。</p>
 
@@ -908,7 +908,7 @@ cat controls.txt | ollama run qwen3.5:4b</code></pre>
 
 
   <nav class="pager">
-    <a class="prev" href="part8.html"><span class="dir">← PREV</span><span class="ttl">PART 8　Agentic AIで動画制作を回す</span></a>
+    <a class="prev" href="part7.html"><span class="dir">← PREV</span><span class="ttl">PART 7　Agentic AIで動画制作を回す</span></a>
     <a class="next" href="appendix-b.html"><span class="dir">NEXT →</span><span class="ttl">APPENDIX B　Node.js／TypeScript版（原構成）</span></a>
   </nav>
 

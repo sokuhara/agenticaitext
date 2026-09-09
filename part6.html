@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PART 6 テストを盾に機能を足す</title>
+<title>PART 6 自分でAgentを組み立てる</title>
 <style>
 :root{
   --paper:#f6f5f2;
@@ -11,8 +11,8 @@
   --ink-soft:#565651;
   --line:#dedcd5;
   --card:#ffffff;
-  --accent:#0f9d76;
-  --accent-soft:#e3f6ef;
+  --accent:#7c3aed;
+  --accent-soft:#f0eafe;
   --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -160,264 +160,978 @@ th{background:var(--accent-soft);font-weight:700}
 <body>
 
 <nav class="rail" aria-label="章の一覧">
-  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html" aria-current="page">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html" aria-current="page">6</a><a href="part7.html">7</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
 </nav>
 
 <div class="wrap">
 
   <header class="masthead">
     <div class="eyebrow">PART 6</div>
-    <h1>テストを盾に機能を足す</h1>
-    <p class="lede">動くものができたあと、要件は必ず変わります。実務ではこちらが普通です。この章では、Vibe Chatに機能を足し、途中で予定外の変更要求を受けます。テストがあるので、壊したらすぐ分かります。</p>
+    <h1>自分でAgentを組み立てる</h1>
+    <p class="lede">ここまではClineを使いました。この章では、Agentの中身を自分で作ります。Python、LangChain、LangGraph、MCPを使います。Agentに判断、再試行、人間の承認を追加します。</p>
   </header>
 
   <div class="bridge">
     <dl>
-      <dt>前章まで</dt><dd>PART 5で、Vibe ChatをFlaskアプリに変え、テストで完了条件を作りました。わざと壊して、テストが効いていることも確かめました。</dd>
-      <dt>この章</dt><dd>同じアプリに、予定外の変更要求として届く機能を1つ足します。既存のテストを壊さずに進めます。</dd>
-      <dt>次章へ</dt><dd>PART 7では、ここまで既製のAgentに任せていた仕組みを、自分のPythonコードで組み立てます。</dd>
+      <dt>前章まで</dt><dd>PART 5では、テストを使ってVibe Chatへ機能を追加しました。</dd>
+      <dt>この章</dt><dd>失敗するテストを1件用意します。Agentに原因を調べさせ、修正と再試行を行わせます。最後は人間の承認で止めます。</dd>
+      <dt>次章へ</dt><dd>PART 7では、同じ考え方を動画制作へ応用します。</dd>
     </dl>
   </div>
 
   <nav class="toc" aria-label="この章の目次">
     <h2>この章の内容</h2>
     <ol>
-      <li><span class="n">6.1</span><a href="#s6-1">この章で足すもの</a></li>
-      <li><span class="n">6.2</span><a href="#s6-2">実装を進める5つの手順</a></li>
-      <li><span class="n">6.3</span><a href="#s6-3">予定外の変更要求</a></li>
-      <li><span class="n">6.4</span><a href="#s6-4">提出物</a></li>
-      <li><span class="n">6.5</span><a href="#s6-5">この章で分かったこと</a></li>
+      <li><span class="n">6.1</span><a href="#s6-1">素のPythonで最小のAgentを作る</a></li>
+      <li><span class="n">6.2</span><a href="#s6-2">LangChainで部品をつなぐ</a></li>
+      <li><span class="n">6.3</span><a href="#s6-3">LangGraphで仕事の流れを設計する</a></li>
+      <li><span class="n">6.4</span><a href="#s6-4">人間の承認・中断・再開</a></li>
+      <li><span class="n">6.5</span><a href="#s6-5">発展：MCPで現在の状況につなぐ</a></li>
+      <li><span class="n">6.6</span><a href="#s6-6">提出物</a></li>
     </ol>
   </nav>
 
 
-  <section class="sec" id="s6-1">
-    <h2><span class="n">6.1</span>この章で足すもの</h2>
+  <section class="sec" id="s6-0" style="margin-bottom:44px">
+    <h2><span class="n">6.0</span>この章で何をするか</h2>
 
-    <div class="prompt"><span class="tag">MISSION</span>PART 5で作ったFlask版 Vibe Chat に、機能を1つ足しなさい。
+    <div class="prompt"><span class="tag">MISSION</span>失敗しているテストを1件、Agentに修正させてください。テストが成功しても、Agentを終了させません。差分を表示し、人間の承認を待つようにします。</div>
 
-何を足すかは、この章の途中で届きます。
-既存のテストを1つも壊さずに進めなさい。</div>
+    <h3><span class="n">6.0.1</span>始める前の準備</h3>
 
-    <h3><span class="n">6.1.1</span>なぜテストがあると違うのか</h3>
-
-    <p>PART 4では、直したあとにSendが動くかDeleteが動くかを、<span class="mark">あなたが手で確かめました。</span>Clineの報告は根拠にならなかったからです。</p>
-
-    <p>いまはテストがあります。<strong>機能を足したあと、<code>pytest</code> を1回打つだけで、既存の動作が壊れていないか分かります。</strong></p>
-
-    <div class="note">
-      <span class="tag">これが「テストを盾にする」ということです</span>
-      テストは、正しさを証明するものではありません。<span class="mark">前と同じように動くことを確かめるものです。</span><br><br>
-      機能を足すたびに全部を手で確かめるのは無理です。だから、確かめられる部分を先にテストにしておきます。<strong>PART 5でやったのは、その準備でした。</strong>
-    </div>
-
-    <h3><span class="n">6.1.2</span>出発点のファイル</h3>
-
-    <p>PART 5と同じく、<span class="mark">全員が同じフォルダから始めます。</span>PART 5を終えた状態（Flask版、Deleteと200文字制限はサーバ側、テスト2つ）を用意しました。自分のフォルダではなく、これを使ってください。</p>
+    <p>PART 5と同じく、<span class="mark">全員が同じフォルダから始めます。</span>PART 5を終えた vibe-chat（禁止語まで入り、テスト4つ）に、この章のAgentのコードを <code>agent/</code> フォルダとして同梱してあります。</p>
 
     <p><a href="starter/part6/vibe-chat-part6-starter.zip" download><strong>vibe-chat-part6-starter.zip をダウンロード</strong></a></p>
 
-    <p>展開すると <code>vibe-chat</code> フォルダができます。VS Codeでそのフォルダを開き、ターミナルで：</p>
+<pre><code>vibe-chat/
+├── app.py                 PART 5完了時のFlaskアプリ
+├── templates/index.html
+├── tests/test_app.py      テスト4つ
+├── requirements.txt
+└── agent/
+    ├── config.py          接続先。最初にここを書く
+    ├── tools.py           6.1  Agentが使う道具（制限つき）
+    ├── agent_plain.py     6.1  素のPythonのAgent
+    ├── demo_structured.py 6.2  構造化出力の小演習
+    ├── agent_langchain.py 6.2  LangChain版のAgent
+    ├── agent_graph.py     6.3〜6.4  流れ・停止条件・承認
+    ├── break_app.py       6.4  修正後に不具合を再現する
+    └── requirements.txt</code></pre>
 
-<pre><code>pip install flask pytest
-pytest</code></pre>
+    <h4>1　展開して、入れる</h4>
 
-    <p><code>2 passed</code> と出れば準備完了です。<strong>PART 5で作った自分のフォルダは、別の場所に残しておけば消えません。</strong>仮想環境を使っている人は、PART 5と同じ要領で <code>vibe-chat</code> の中に作ってください。</p>
+    <p>展開した <code>vibe-chat</code> をVS Codeで開き、ターミナルで：</p>
 
-    <h3><span class="n">6.1.3</span>始める前の確認</h3>
+<pre><code>pip install -r requirements.txt
+pip install -r agent/requirements.txt</code></pre>
 
-    <p>機能を足す前に、<span class="mark">いま <code>pytest</code> が通っていることを確認してください。</span>上で <code>2 passed</code> を見ていれば済んでいます。</p>
+    <h4>2　接続先を書く</h4>
 
-    <p>落ちている状態で機能を足すと、<strong>あとで落ちたのが元からなのか、今回の変更のせいなのか分からなくなります。</strong></p>
-  </section>
-
-  <section class="sec" id="s6-2">
-    <h2><span class="n">6.2</span>実装を進める5つの手順</h2>
-
-    <p>この章では、次の5手順で機能を足します。<span class="mark">先にこれを覚えてください。</span>6.3で、この順に進めます。</p>
-
-    <div class="flow-steps">
-      <p><strong>1</strong>　<strong>完了条件を書く</strong>　何ができたら終わりか</p>
-      <p><strong>2</strong>　<strong>変わる場所を予想する</strong>　どのファイルのどこが変わるか</p>
-      <p><strong>3</strong>　<strong>Planで依頼する</strong>　計画を読んでから実装させる</p>
-      <p><strong>4</strong>　<strong>差分を承認する</strong>　予想と合っているか確かめる</p>
-      <p><strong>5</strong>　<strong><code>pytest</code> とブラウザで確認する</strong>　両方やる</p>
-    </div>
-
-    <h3><span class="n">6.2.1</span>手順を飛ばすと何が起きるか</h3>
+    <p><code>agent/config.py</code> を開き、PART 3でClineに入れたのと同じ4つを書きます。</p>
 
     <table>
-      <thead><tr><th>飛ばした手順</th><th>起きること</th></tr></thead>
+      <thead><tr><th>変数</th><th>入れるもの</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong> 完了条件</td><td>Agentが勝手に決める。「完成しました」の意味が分からない</td></tr>
-        <tr><td><strong>2</strong> 予想</td><td><span class="mark">差分を読んでも、それが妥当か判断できない</span></td></tr>
-        <tr><td><strong>3</strong> Plan</td><td>実装が始まってから方針の誤りに気づく</td></tr>
-        <tr><td><strong>4</strong> 承認</td><td>関係ない場所まで書き換えられる</td></tr>
-        <tr><td><strong>5</strong> 確認</td><td>テストは通るが画面が壊れている、が起こる</td></tr>
+        <tr><td><code>BASE_URL</code></td><td>自分のサーバ（<code>https://pc11.okuharalab.com/v1</code> など。3.1.3の表）</td></tr>
+        <tr><td><code>MODEL</code></td><td>そのサーバのModel ID（<code>qwen38_1:latest</code> など。番号を揃える）</td></tr>
+        <tr><td><code>CF_ACCESS_CLIENT_ID</code></td><td>配布されたClient ID</td></tr>
+        <tr><td><code>CF_ACCESS_CLIENT_SECRET</code></td><td>配布されたClient Secret</td></tr>
       </tbody>
     </table>
 
     <div class="warn">
-      <span class="tag">2番がいちばん飛ばされます</span>
-      予想を書かずに差分を見ると、<span class="mark">読んでいるつもりで読めていません。</span>「それらしいコードだからSave」になります。<br><br>
-      先に「<code>app.py</code> のこの関数と、<code>templates/index.html</code> のこの部分が変わるはずだ」と書いておくと、<strong>差分が予想と違ったときに気づけます。</strong>
+      <span class="tag">config.py は提出しない・共有しない</span>
+      Client Secret が入っています。<span class="mark">提出のzipからは <code>agent/config.py</code> を除いてください。</span>
+    </div>
+
+    <h4>3　用意された失敗を確認する</h4>
+    <p>スターターには、最初から不具合が1件入っています。次を実行します。</p>
+    <pre><code>pytest</code></pre>
+    <p><code>1 failed, 3 passed</code>になれば準備完了です。どの行が誤っているかは教えず、Agentに調査と修正を行わせます。</p>
+    <div class="note"><span class="tag">もう一度壊さない理由</span>コードを壊すとテストが失敗することは、PART 5ですでに確認しました。この章の目的は、Agentによる調査、修正、再試行、人間への引き継ぎです。</div>
+
+    <h3><span class="n">6.0.2</span>この章の完成条件</h3>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　Agentが、失敗したテストを読む</p>
+      <p><strong>2</strong>　修正対象のファイルを提案する</p>
+      <p><strong>3</strong>　修正して <code>pytest</code> を実行する</p>
+      <p><strong>4</strong>　成功しても、<strong>差分を示して人間の承認で止まる</strong></p>
+    </div>
+
+    <p>4番が重要です。Agentは自分で完了を決めません。最終判断を人間へ返します。Clineでは、この機能が最初から用意されていました。この章では自分で実装します。</p>
+
+    <div class="note">
+      <span class="tag">この章の進め方</span>
+      コードはすべて <code>agent/</code> に入っています。<span class="mark">写経はしません。</span>各節で「読む → 動かす → 1か所変える」を繰り返します。<br><br>
+      <strong>6.1</strong>　必修。素のPythonのAgentを読み、動かす。ライブラリが何を代行しているかを知るため<br>
+      <strong>6.2</strong>　講師デモ。同じことをLangChainで書くとどう見えるか<br>
+      <strong>6.3〜6.4</strong>　必修。停止条件と承認。<strong>revise で差し戻し、MAX_ATTEMPTS を変えて動かす</strong><br>
+      <strong>6.5</strong>　発展。MCP<br><br>
+      LangGraphの目的は、コードを短くすることではありません。処理の流れを明確にすることです。
+    </div>
+  </section>
+
+  <section class="sec" id="s6-1">
+    <h2><span class="n">6.1</span>素のPythonで最小のAgentを作る</h2>
+
+    <p>PART 3では、ツール呼び出しの4手順を学びました。ホストがツールを示します。モデルがツールを選びます。ホストが実行します。ホストが結果をモデルへ返します。6.1では、この処理をPythonで書きます。</p>
+
+    <h3><span class="n">6.1.1</span>ツールに制約を付ける</h3>
+
+    <p>自分で作るツールにも制約が必要です。プロジェクト外のファイルを読めないようにします。テストの実行時間も制限します。</p>
+
+<pre><code>&quot;&quot;&quot;Tools the agent may use. Every tool is a plain Python function with limits built in.
+
+PROJECT_ROOT is the vibe-chat folder (the parent of this agent/ folder), whatever the
+current working directory is.
+&quot;&quot;&quot;
+
+import difflib
+import subprocess
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Files the agent may overwrite: .py files directly under the project root, or under tests/.
+WRITE_ROOTS = [PROJECT_ROOT, PROJECT_ROOT / &quot;tests&quot;]
+
+# Files whose &quot;before&quot; state we keep, so we can show a diff without git.
+WATCHED_FILES = [&quot;app.py&quot;, &quot;tests/test_app.py&quot;]
+
+
+def _safe_path(path: str) -&gt; Path:
+    &quot;&quot;&quot;Resolve a path and refuse anything outside the project.&quot;&quot;&quot;
+    target = (PROJECT_ROOT / path).resolve()
+    if PROJECT_ROOT not in target.parents and target != PROJECT_ROOT:
+        raise ValueError(&quot;Files outside the project cannot be accessed.&quot;)
+    return target
+
+
+def read_file(path: str) -&gt; str:
+    &quot;&quot;&quot;Read a file inside the project (first 4000 characters).&quot;&quot;&quot;
+    return _safe_path(path).read_text(encoding=&quot;utf-8&quot;)[:4000]
+
+
+def write_file(path: str, content: str) -&gt; str:
+    &quot;&quot;&quot;Overwrite a .py file directly under the project root or under tests/.&quot;&quot;&quot;
+    target = _safe_path(path)
+    if not any(root == target.parent for root in WRITE_ROOTS):
+        raise ValueError(&quot;Only files directly under the project root or under tests/ may be written.&quot;)
+    if target.suffix != &quot;.py&quot;:
+        raise ValueError(&quot;Only .py files may be written.&quot;)
+    target.write_text(content, encoding=&quot;utf-8&quot;)
+    return f&quot;Updated {path}&quot;
+
+
+def run_tests() -&gt; str:
+    &quot;&quot;&quot;Run pytest in the project and return the tail of its output.&quot;&quot;&quot;
+    r = subprocess.run(
+        [sys.executable, &quot;-m&quot;, &quot;pytest&quot;, &quot;-q&quot;],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    return (r.stdout + r.stderr)[-4000:]
+
+
+def tests_pass() -&gt; bool:
+    r = subprocess.run([sys.executable, &quot;-m&quot;, &quot;pytest&quot;, &quot;-q&quot;], cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=120)
+    return r.returncode == 0
+
+
+# ---- diff without git ---------------------------------------------------------
+
+def snapshot() -&gt; dict:
+    &quot;&quot;&quot;Remember the current content of the watched files.&quot;&quot;&quot;
+    out = {}
+    for rel in WATCHED_FILES:
+        p = PROJECT_ROOT / rel
+        out[rel] = p.read_text(encoding=&quot;utf-8&quot;) if p.exists() else &quot;&quot;
+    return out
+
+
+def make_diff(before: dict) -&gt; str:
+    &quot;&quot;&quot;Unified diff between a snapshot and the files as they are now.&quot;&quot;&quot;
+    chunks = []
+    for rel, old in before.items():
+        p = PROJECT_ROOT / rel
+        new = p.read_text(encoding=&quot;utf-8&quot;) if p.exists() else &quot;&quot;
+        if old == new:
+            continue
+        chunks.append(&quot;&quot;.join(difflib.unified_diff(
+            old.splitlines(keepends=True), new.splitlines(keepends=True),
+            fromfile=f&quot;{rel} (before)&quot;, tofile=f&quot;{rel} (after)&quot;)))
+    return &quot;\n&quot;.join(chunks) if chunks else &quot;(no changes)&quot;
+
+
+TOOLS = {&quot;read_file&quot;: read_file, &quot;write_file&quot;: write_file, &quot;run_tests&quot;: run_tests}</code></pre>
+
+    <p><code>agent/tools.py</code> です。<code>_safe_path</code>は、プロジェクト外へのアクセスを防ぎます。<code>WRITE_ROOTS</code>は、書き込み先を制限します。この2つがない場合、Agentは不要なファイルを読む、または変更する可能性があります。</p>
+
+    <div class="warn">
+      <span class="tag">これは演習用に危険を縮めた書き換えツールです</span>
+      この例はファイル全体を上書きします。実務では、差分を表示し、人間が承認した後で適用する方法が安全です。この演習では、書き込み先を2つのディレクトリに制限します。
+    </div>
+
+    <h3><span class="n">6.1.2</span>ツールの定義とループ</h3>
+
+<pre><code>&quot;&quot;&quot;6.1 — The smallest possible agent, in plain Python.
+
+Run from the vibe-chat folder:   python agent/agent_plain.py
+
+The loop below is the whole idea of an agent:
+  1. we give the model a list of tools (SCHEMA)
+  2. the model answers with tool calls (or a final message)
+  3. WE run the tool and send the result back
+  4. repeat, with a hard limit on the number of steps
+&quot;&quot;&quot;
+
+import json
+
+import requests
+
+from config import BASE_URL, MODEL, HEADERS, API_KEY
+from tools import TOOLS
+
+SCHEMA = [
+    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
+        &quot;name&quot;: &quot;read_file&quot;,
+        &quot;description&quot;: &quot;Read a file inside the project. Use it to look at app.py and tests/test_app.py.&quot;,
+        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;,
+                       &quot;properties&quot;: {&quot;path&quot;: {&quot;type&quot;: &quot;string&quot;}},
+                       &quot;required&quot;: [&quot;path&quot;]}}},
+    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
+        &quot;name&quot;: &quot;write_file&quot;,
+        &quot;description&quot;: &quot;Overwrite a .py file inside the project with new content.&quot;,
+        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;,
+                       &quot;properties&quot;: {&quot;path&quot;: {&quot;type&quot;: &quot;string&quot;},
+                                      &quot;content&quot;: {&quot;type&quot;: &quot;string&quot;}},
+                       &quot;required&quot;: [&quot;path&quot;, &quot;content&quot;]}}},
+    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
+        &quot;name&quot;: &quot;run_tests&quot;,
+        &quot;description&quot;: &quot;Run pytest and return the result.&quot;,
+        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: {}}}},
+]
+
+SYSTEM = (
+    &quot;You are a careful coding agent working inside a small Flask project. &quot;
+    &quot;Use the tools to read files, edit files and run the tests. &quot;
+    &quot;Fix the failing test by fixing the application code, not by changing the test. &quot;
+    &quot;When the tests pass, reply with a short summary of what you changed.&quot;
+)
+
+
+def chat(messages):
+    &quot;&quot;&quot;One call to the OpenAI-compatible endpoint of the shared server.&quot;&quot;&quot;
+    r = requests.post(
+        f&quot;{BASE_URL}/chat/completions&quot;,
+        headers={**HEADERS, &quot;Authorization&quot;: f&quot;Bearer {API_KEY}&quot;, &quot;Content-Type&quot;: &quot;application/json&quot;},
+        json={&quot;model&quot;: MODEL, &quot;messages&quot;: messages, &quot;tools&quot;: SCHEMA, &quot;temperature&quot;: 0},
+        timeout=300,
+    )
+    r.raise_for_status()
+    return r.json()[&quot;choices&quot;][0][&quot;message&quot;]
+
+
+def agent(goal: str, max_steps: int = 12) -&gt; str:
+    messages = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM}, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: goal}]
+    for step in range(max_steps):
+        msg = chat(messages)
+        messages.append(msg)
+        calls = msg.get(&quot;tool_calls&quot;) or []
+        if not calls:
+            return msg.get(&quot;content&quot;) or &quot;(no content)&quot;       # no tool call: the model is done
+        for call in calls:
+            name = call[&quot;function&quot;][&quot;name&quot;]
+            args = json.loads(call[&quot;function&quot;].get(&quot;arguments&quot;) or &quot;{}&quot;)
+            shown = {k: (v[:60] + &quot;…&quot; if isinstance(v, str) and len(v) &gt; 60 else v) for k, v in args.items()}
+            print(f&quot;[{step}] {name}({shown})&quot;)
+            try:
+                result = TOOLS[name](**args)
+            except Exception as e:                              # a failure is also a result
+                result = f&quot;ERROR: {e}&quot;
+            messages.append({&quot;role&quot;: &quot;tool&quot;, &quot;tool_call_id&quot;: call[&quot;id&quot;], &quot;content&quot;: str(result)})
+    return &quot;Stopped: reached the maximum number of steps.&quot;
+
+
+if __name__ == &quot;__main__&quot;:
+    print(agent(&quot;Run the tests, find out why one of them fails, and fix it.&quot;))</code></pre>
+
+    <div class="warn">
+      <span class="tag">動かないときに最初に見るところ</span>
+      接続先は、Clineと同じ共有サーバです。<span class="mark">Clineで動いていれば、<code>config.py</code> の4つを揃えるだけで動きます。</span><br><br>
+      <code>401</code> / <code>403</code> / HTMLのログイン画面が返る → Client ID / Secret<br>
+      <code>model ... not found</code> → <code>BASE_URL</code> のサーバ番号と <code>MODEL</code> の番号が合っているか<br>
+      <code>502</code> → そのサーバのOllamaが落ちている。講師に言う<br>
+      途中で止まる → <code>max_steps</code> に達した。何をしていたかは <code>[n] ツール名(引数)</code> の行に出ています
+    </div>
+
+    <h3><span class="n">6.1.3</span>このループに、Agentの核が入っています</h3>
+
+    <table>
+      <thead><tr><th>コードの場所</th><th>PART 3で説明したこと</th></tr></thead>
+      <tbody>
+        <tr><td><code>SCHEMA</code></td><td>ホストがツール一覧を渡す</td></tr>
+        <tr><td><code>msg["tool_calls"]</code></td><td>モデルが呼び出しを提案する</td></tr>
+        <tr><td><code>TOOLS[name](**args)</code></td><td><strong>ホストが実行する</strong></td></tr>
+        <tr><td><code>{"role": "tool", ...}</code></td><td>結果をモデルに戻す</td></tr>
+        <tr><td><code>for step in range(...)</code></td><td>ループ</td></tr>
+      </tbody>
+    </table>
+
+    <p><code>TOOLS[name](**args)</code>がツールを実行します。この行で、ファイルの読み書きやテストが実行されます。</p>
+
+    <p>モデルはツールの使用を提案します。実際にツールを実行するのは、このPythonプログラムです。</p>
+
+    <div class="warn">
+      <span class="tag">この実装に足りないもの</span>
+      この実装には、承認、差分表示、失敗後の戻り先がありません。また、中断後に再開できません。<br><br>
+      <span class="mark">6.2以降は、この不足を順に埋めていく作業です。</span>
+    </div>
+  </section>
+
+  <section class="sec" id="s6-2">
+    <h2><span class="n">6.2</span>LangChainで部品をつなぐ</h2>
+
+    <p>LangChainは、6.1で書いた処理を部品として提供します。最初に6つの概念を確認します。</p>
+
+    <h3><span class="n">6.2.1</span>LangChainの6つの概念</h3>
+
+    <table>
+      <thead><tr><th>概念</th><th>役割</th><th>この章で使う場所</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Model I/O</strong></td><td>モデルへ入力し、出力を受け取る</td><td>旅行案内とAgentのモデル呼び出し</td></tr>
+        <tr><td><strong>Chain</strong></td><td>Prompt、Model、出力処理を順番につなぐ</td><td>旅行案内の構造化出力</td></tr>
+        <tr><td><strong>Agent</strong></td><td>次に使うツールをモデルが選ぶ</td><td>テスト失敗の調査と修正</td></tr>
+        <tr><td><strong>Retrieval</strong></td><td>外部データを取得して回答に使う</td><td>6.5の厨房ボード</td></tr>
+        <tr><td><strong>Memory</strong></td><td>途中の状態や会話を保持する</td><td>6.4の中断と再開</td></tr>
+        <tr><td><strong>Callbacks</strong></td><td>処理中のイベントを記録・表示する</td><td>今回は概念だけ。必修コードには入れない</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">全部を使う必要はありません</span>
+      必要な部品だけを使います。最初にModel I/OとChainを試します。その後、Agent、Memory、Retrievalへ進みます。
+    </div>
+
+    <h3><span class="n">6.2.2</span>小演習：旅行案内を決まった形で出す</h3>
+
+    <p>自由な文章から特定の項目を取り出すことは困難です。次のプログラムは、出力を<strong>場所、地域、行き方、見どころ</strong>の4項目に固定します。</p>
+
+<pre><code>python agent/demo_structured.py</code></pre>
+
+<pre><code>&quot;&quot;&quot;6.2.2 — LangChain: force the model to answer in a fixed shape.
+
+Run from the vibe-chat folder:   python agent/demo_structured.py
+&quot;&quot;&quot;
+
+from pydantic import BaseModel, Field
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+
+from config import BASE_URL, MODEL, HEADERS, API_KEY
+
+
+class Destination(BaseModel):
+    name: str = Field(description=&quot;Name of the place&quot;)
+    city: str = Field(description=&quot;City or region&quot;)
+    access: str = Field(description=&quot;How to get there from central Mumbai&quot;)
+    highlight: str = Field(description=&quot;What makes it worth the trip&quot;)
+
+
+prompt = ChatPromptTemplate.from_messages([
+    (&quot;system&quot;, &quot;You are a travel adviser for Mumbai.&quot;),
+    (&quot;human&quot;, &quot;Suggest one place to visit within about one hour of central Mumbai.&quot;),
+])
+
+model = ChatOpenAI(base_url=BASE_URL, api_key=API_KEY, model=MODEL, temperature=0,
+                   default_headers=HEADERS)
+structured_model = model.with_structured_output(Destination, method=&quot;function_calling&quot;)
+
+# Prompt -&gt; Model -&gt; Destination
+chain = prompt | structured_model
+result = chain.invoke({})
+
+print(&quot;Place:    &quot;, result.name)
+print(&quot;City:     &quot;, result.city)
+print(&quot;Access:   &quot;, result.access)
+print(&quot;Highlight:&quot;, result.highlight)</code></pre>
+
+    <div class="note">
+      <span class="tag">接続先はClineと同じ</span>
+      <code>ChatOpenAI</code> に <code>base_url</code> と <code>default_headers</code> を渡しているだけで、中身は共有サーバのQwenです。<code>with_structured_output()</code> で、出力をPydanticの形式へ変換します。
+    </div>
+
+    <h4>学生が行うこと</h4>
+    <ol>
+      <li>プログラムを実行し、4項目が別々に表示されることを確認します。</li>
+      <li><code>Destination</code>へ<code>recommended_food</code>を追加します（<code>agent/demo_structured.py</code> を直接編集）。</li>
+      <li>もう一度実行し、食べ物も出力されることを確認します。</li>
+      <li>自由文ではなく構造化する利点を1文で書きます。</li>
+    </ol>
+
+    <p>これがChainです。人間が処理の順番を決めています。モデルはツールを選んでいません。そのため、これはまだAgentではありません。</p>
+
+    <h3><span class="n">6.2.3</span>ChainからAgentへ進む</h3>
+
+    <p>ここから、6.1で自分で書いたツール呼び出しをLangChainへ置き換えます。LangChainは、この部分を部品として提供します。</p>
+
+    <table>
+      <thead><tr><th>6.1で自分で書いたもの</th><th>6.2でLangChainに任せるもの</th></tr></thead>
+      <tbody>
+        <tr><td><code>SCHEMA</code>（JSON Schema）</td><td>関数の型ヒントとdocstringから生成</td></tr>
+        <tr><td><code>tool_calls</code> の取り出し</td><td>Agentが処理</td></tr>
+        <tr><td>実行結果を会話へ追加する</td><td>Agentが処理</td></tr>
+        <tr><td><code>for step in range(...)</code></td><td>Agentが処理</td></tr>
+      </tbody>
+    </table>
+
+<pre><code>python agent/agent_langchain.py</code></pre>
+
+<pre><code>&quot;&quot;&quot;6.2.3 — The same agent as 6.1, but LangChain/LangGraph run the loop.
+
+Run from the vibe-chat folder:   python agent/agent_langchain.py
+&quot;&quot;&quot;
+
+from langchain_core.tools import tool
+from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
+
+from config import BASE_URL, MODEL, HEADERS, API_KEY
+import tools as t
+
+
+# The docstring of each tool is what the model sees. 6.2.4 asks you to change them.
+@tool
+def read_file(path: str) -&gt; str:
+    &quot;&quot;&quot;Read a file inside the project. Use it to look at app.py and tests/test_app.py.&quot;&quot;&quot;
+    return t.read_file(path)
+
+
+@tool
+def write_file(path: str, content: str) -&gt; str:
+    &quot;&quot;&quot;Overwrite a .py file inside the project with new content.&quot;&quot;&quot;
+    return t.write_file(path, content)
+
+
+@tool
+def run_tests() -&gt; str:
+    &quot;&quot;&quot;Run pytest and return the result.&quot;&quot;&quot;
+    return t.run_tests()
+
+
+model = ChatOpenAI(base_url=BASE_URL, api_key=API_KEY, model=MODEL, temperature=0,
+                   default_headers=HEADERS)
+
+SYSTEM = (
+    &quot;You are a careful coding agent working inside a small Flask project. &quot;
+    &quot;Fix the failing test by fixing the application code, not by changing the test. &quot;
+    &quot;When the tests pass, reply with a short summary of what you changed.&quot;
+)
+
+agent_executor = create_react_agent(model, [read_file, write_file, run_tests], prompt=SYSTEM)
+
+
+def run(goal: str) -&gt; str:
+    result = agent_executor.invoke({&quot;messages&quot;: [(&quot;user&quot;, goal)]}, {&quot;recursion_limit&quot;: 30})
+    return result[&quot;messages&quot;][-1].content
+
+
+if __name__ == &quot;__main__&quot;:
+    print(run(&quot;Run the tests, find out why one of them fails, and fix it.&quot;))</code></pre>
+
+    <p><code>llm.bind_tools()</code>は、モデルとツールを接続するだけです。<code>agent_executor</code>は、ツール呼び出しのループも実行します。6.3では<code>agent_executor</code>を使います。</p>
+
+    <p>6.1で手書きした <code>SCHEMA</code> が、関数のシグネチャとdocstringから自動的に作られます。</p>
+
+    <div class="warn">
+      <span class="tag">Agentを作る関数の名前は変わります</span>
+      LangChainのAPIは変更されることがあります。<code>create_agent</code>が見つからない場合は、使用中のバージョンと公式ドキュメントを確認してください。関数名が変わっても、基本処理は6.1のループと同じです。
+    </div>
+
+    <h3><span class="n">6.2.4</span>演習：docstringを変えて比較する</h3>
+
+    <div class="note">
+      <span class="tag">やること</span>
+      最初に、現在のdocstringで実行結果を記録します。次に、<code>agent/agent_langchain.py</code> の <code>read_file</code> のdocstringを「データを取得する」へ変更します。同じ依頼を実行し、<span class="mark">どのツールが選ばれたかを比較してください。</span><br><br>
+      最後に元の具体的なdocstringへ戻します。曖昧な説明がツール選択へ与えた影響を1文で書きます。
+    </div>
+
+    <p>ツールのdocstringは、モデルが読む説明です。モデルは、その説明を使ってツールを選びます。</p>
+
+    <div class="note">
+      <span class="tag">ライブラリは道具です</span>
+      LangChainを使っても、基本処理は6.1と同じです。処理が分からない場合は、6.1のコードを確認してください。実行前に、使用中のバージョンと公式ドキュメントも確認します。
     </div>
   </section>
 
   <section class="sec" id="s6-3">
-    <h2><span class="n">6.3</span>予定外の変更要求</h2>
+    <h2><span class="n">6.3</span>LangGraphで仕事の流れを設計する</h2>
 
-    <p>動くものが一度できたあとに、要件が変わります。<span class="mark">実務ではこちらが普通です。</span></p>
+    <p>次に、処理の流れを作ります。失敗後の分岐、再試行の上限、人間へ確認する位置を決めます。</p>
 
-    <div class="warn">
-      <span class="tag">緊急連絡</span>
-      投稿の内容に、他人を傷つける言葉が含まれていた、という報告がありました。<br><br>
-      <strong>禁止語を含む投稿を登録できないようにしてください。</strong>禁止語の一覧は <code>app.py</code> の中にリストとして持ちます。<br><br>
-      登録を拒否したときは、画面に理由を表示します。<span class="mark">既存の機能は1つも壊さないでください。</span>
+    <h3><span class="n">6.3.1</span>作る流れ</h3>
+
+    <div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:18px 12px">
+      <svg viewBox="0 0 720 300" style="width:100%;max-width:720px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LangGraphの経路図">
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 z" fill="#9aa0ab"/>
+          </marker>
+        </defs>
+        <g font-family="system-ui, sans-serif" font-size="14" text-anchor="middle">
+          <g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5">
+            <rect x="16"  y="120" width="92"  height="42" rx="9"/>
+            <rect x="160" y="120" width="118" height="42" rx="9"/>
+            <rect x="330" y="120" width="92"  height="42" rx="9"/>
+            <rect x="474" y="42"  width="98"  height="42" rx="9"/>
+            <rect x="474" y="232" width="98"  height="42" rx="9"/>
+          </g>
+          <rect x="612" y="42" width="86" height="42" rx="9" fill="#eef0f2" stroke="#b9bec7" stroke-width="1.5"/>
+          <g fill="var(--ink)" font-weight="700">
+            <text x="62"  y="147">plan</text>
+            <text x="219" y="147">implement</text>
+            <text x="376" y="147">check</text>
+            <text x="523" y="69">review</text>
+            <text x="523" y="259">give up</text>
+            <text x="655" y="69">終了</text>
+          </g>
+          <g stroke="#9aa0ab" stroke-width="1.6" fill="none" marker-end="url(#ah)">
+            <path d="M108,141 H152"/>
+            <path d="M278,141 H322"/>
+            <path d="M422,134 H448 V63 H466"/>
+            <path d="M572,63 H604"/>
+            <path d="M422,150 H460 V253 H466"/>
+            <path d="M376,162 V196 H219 V166"/>
+            <path d="M523,84 V104 H240 V116" stroke-dasharray="5 4"/>
+          </g>
+          <g font-size="12" fill="#6c727d" font-weight="600">
+            <rect x="424" y="86"  width="48" height="18" rx="9" fill="#fff"/><text x="448" y="99">pass</text>
+            <rect x="416" y="192" width="88" height="18" rx="9" fill="#fff"/><text x="460" y="205">fail（3回）</text>
+            <rect x="258" y="187" width="104" height="18" rx="9" fill="#fff"/><text x="310" y="200">fail（3回未満）</text>
+            <rect x="556" y="24"  width="96" height="18" rx="9" fill="#fff"/><text x="604" y="37">approve / stop</text>
+            <rect x="328" y="95"  width="50" height="18" rx="9" fill="#fff"/><text x="353" y="108">revise</text>
+          </g>
+        </g>
+      </svg>
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:6px">
+        実線が正常な経路、破線が <code>revise</code> による差し戻し
+      </div>
     </div>
 
-    <h3><span class="n">6.3.1</span>まず、自分で予想する</h3>
 
-    <p>Agentに投げる前に書いてください。<span class="mark">予想を書いてから差分を見るのと、いきなり差分を見るのとでは、レビューの質がまったく違います。</span></p>
+    <p>LLMを呼ぶ場所は<code>implement</code>だけです。ほかの処理は通常のPythonです。</p>
 
-    <ul>
-      <li>データはどう変わるか（禁止語のリストをどこに置くか）</li>
-      <li>処理はどう変わるか（送信のどの時点で判定するか）</li>
-      <li>画面はどう変わるか（拒否の理由をどこに出すか）</li>
-      <li><strong>既存のテストのうち、どれが落ちるか</strong></li>
-    </ul>
+
+
+<pre><code>from typing import TypedDict
+
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import StateGraph, START, END
+from langgraph.types import interrupt, Command
+
+import tools as t
+from agent_langchain import agent_executor
+
+MAX_ATTEMPTS = 3        # 6.3.2: the stop condition. Try changing it.
+
+
+class State(TypedDict, total=False):
+    goal: str
+    attempts: int
+    before: dict          # snapshot of the watched files, taken in plan
+    check_output: str
+    passed: bool
+    diff: str
+    decision: str
+    review_feedback: str
+
+
+def plan(state: State) -&gt; State:
+    return {**state, &quot;attempts&quot;: 0, &quot;before&quot;: t.snapshot()}
+
+
+def implement(state: State) -&gt; State:
+    # The only place the model is called.
+    prompt = state[&quot;goal&quot;]
+    if state.get(&quot;check_output&quot;):
+        prompt += f&quot;\n\nResult of the last test run:\n{state[&#x27;check_output&#x27;]}&quot;
+    if state.get(&quot;review_feedback&quot;):
+        prompt += f&quot;\n\nFeedback from the human reviewer:\n{state[&#x27;review_feedback&#x27;]}&quot;
+    agent_executor.invoke({&quot;messages&quot;: [(&quot;user&quot;, prompt)]}, {&quot;recursion_limit&quot;: 30})
+    return {**state, &quot;attempts&quot;: state[&quot;attempts&quot;] + 1}
+
+
+def check(state: State) -&gt; State:
+    # pytest is a node of its own. The model never gets to &quot;say&quot; the tests passed.
+    output = t.run_tests()
+    return {**state, &quot;check_output&quot;: output, &quot;passed&quot;: t.tests_pass()}
+
+
+def route_after_check(state: State) -&gt; str:
+    if state[&quot;passed&quot;]:
+        return &quot;review&quot;
+    if state[&quot;attempts&quot;] &gt;= MAX_ATTEMPTS:
+        return &quot;give_up&quot;
+    return &quot;implement&quot;
+
+
+def give_up(state: State) -&gt; State:
+    print(f&quot;\nGave up after {MAX_ATTEMPTS} attempts. Handing over to a human.\n&quot;)
+    print(state[&quot;check_output&quot;])
+    return state</code></pre>
 
     <div class="note">
-      <span class="tag">最後の項目を考えてください</span>
-      既存のテストは「空の名前は登録されない」「空のメッセージは登録されない」でした。<span class="mark">禁止語の判定を足すと、これらは落ちますか。</span><br><br>
-      落ちないはずです。落ちるとしたら、<strong>実装が既存の処理を壊しています。</strong>
+      <span class="tag">ここではまだ組み立てません</span>
+      ノードと分岐は用意できました。グラフの組み立てと<code>compile()</code>は6.4で行います。まだ<code>review</code>がないため、ここでは実行しません。
     </div>
 
-    <h3><span class="n">6.3.2</span>完了条件を書く</h3>
+    <h3><span class="n">6.3.2</span>停止条件を設計に埋める</h3>
 
-    <table>
-      <thead><tr><th></th><th>条件</th><th>確かめ方</th></tr></thead>
-      <tbody>
-        <tr><td><strong>1</strong></td><td>禁止語を含む投稿は登録されない</td><td><span class="mark">テスト</span></td></tr>
-        <tr><td><strong>2</strong></td><td>禁止語を含まない投稿は、これまでどおり登録される</td><td><span class="mark">テスト</span></td></tr>
-        <tr><td><strong>3</strong></td><td>拒否されたとき、理由が画面に出る</td><td>人間が見る</td></tr>
-        <tr><td><strong>4</strong></td><td>既存のテストが全部通ったまま</td><td><span class="mark">テスト</span></td></tr>
-      </tbody>
-    </table>
+    <p><code>MAX_ATTEMPTS</code>は再試行の上限です。3回失敗した場合、Agentは処理を止め、人間へ結果を返します。</p>
 
-    <p>2番を忘れないでください。<strong>「禁止語を弾く」だけを頼むと、全部弾く実装でもテストが通ります。</strong></p>
+    <p>無限の再試行は、コストと安全性の問題を起こします。</p>
 
-    <h3><span class="n">6.3.3</span>依頼する</h3>
-
-    <div class="prompt"><span class="tag">PROMPT</span>Add a banned-word check to the Flask Vibe Chat.
-
-Requirements:
-- Keep a list of banned words in app.py
-- A message containing a banned word must not be added to the list
-- Show the reason on the page when a message is rejected
-- A message without banned words must still be added as before
-- Add a test for a rejected message
-- Add a test for an accepted message
-- Do not change the existing tests
-
-Edit app.py, templates/index.html and tests/test_app.py only.
-Keep the plan under 10 lines.
-Do not edit the file yet. Show the plan only.</div>
-
-    <h3><span class="n">6.3.4</span>差分を見るときに確かめること</h3>
-
-    <table>
-      <thead><tr><th>確認</th><th>なぜ</th></tr></thead>
-      <tbody>
-        <tr><td>既存の空チェックが残っているか</td><td><span class="mark">新しい判定に置き換えられていないか</span></td></tr>
-        <tr><td>禁止語の判定は、大文字小文字を区別するか</td><td>どちらでもよいが、<strong>意図して決まっているか</strong></td></tr>
-        <tr><td>拒否の理由は、どこに出るか</td><td>画面で確認できる形か</td></tr>
-        <tr><td>既存のテストが書き換えられていないか</td><td>書き換えられていたら理由を確かめる</td></tr>
-      </tbody>
-    </table>
-
-    <h3><span class="n">6.3.5</span>確認する</h3>
-
-<pre><code>pytest</code></pre>
-
-    <p>4つのテストが通るはずです。<span class="mark">既存の2つと、今回の2つ。</span></p>
-
-    <p>そのあとブラウザで、禁止語を含む投稿と含まない投稿を、それぞれ試してください。</p>
+    <p><strong>自分でAgentを作るなら、停止条件も自分で書きます。</strong></p>
 
     <div class="note">
-      <span class="tag">ここでPART 5が効いています</span>
-      機能を足しましたが、<span class="mark">既存の動作が壊れていないことを、コマンド1回で確かめられました。</span><br><br>
-      テストがなければ、送信、削除、空チェック、禁止語。<strong>4つを毎回手で確かめることになります。</strong>
+      <span class="tag">なぜ check が独立したノードなのか</span>
+      <code>pytest</code> をLLMに「実行したことにさせる」のではなく、グラフのノードとして必ず通します。PART 5で完了条件をテストにしたのは、ここで効いてきます。<span class="mark">Agentが「完了しました」と言えるのは、<code>check</code> ノードが成功を返したときだけ</span>という構造になります。
     </div>
   </section>
 
   <section class="sec" id="s6-4">
-    <h2><span class="n">6.4</span>提出物</h2>
+    <h2><span class="n">6.4</span>人間の承認・中断・再開</h2>
 
-    <p>出すのは <strong>zip ファイル1つ</strong>です。PART 5と同じ <code>vibe-chat</code> フォルダに、<code>REPORT.txt</code> を書き換えて入れます。</p>
+    <p><code>review</code>ノードで処理を止め、人間の判断を待ちます。差分は、<code>plan</code> で取った控え（<code>snapshot</code>）と今のファイルを比べて作ります。gitは使いません。</p>
 
-    <pre><code>vibe-chat/
-├── app.py
-├── requirements.txt
-├── templates/index.html
-├── tests/test_app.py
-└── REPORT.txt      ← PART 6 用に書き直す</code></pre>
+<pre><code>def review(state: State) -&gt; State:
+    diff = t.make_diff(state[&quot;before&quot;])
+    answer = interrupt({
+        &quot;diff&quot;: diff[:4000],
+        &quot;check_output&quot;: state[&quot;check_output&quot;],
+        &quot;question&quot;: &quot;Approve these changes?&quot;,
+        &quot;choices&quot;: [&quot;approve&quot;, &quot;revise&quot;, &quot;stop&quot;],
+    })
+    return {**state, &quot;diff&quot;: diff,
+            &quot;decision&quot;: answer[&quot;decision&quot;],
+            &quot;review_feedback&quot;: answer.get(&quot;feedback&quot;, &quot;&quot;)}
 
-    <p><code>REPORT.txt</code> に書くのは2つだけです。</p>
+
+def route_after_review(state: State) -&gt; str:
+    if state[&quot;decision&quot;] == &quot;revise&quot;:
+        return &quot;implement&quot;          # send the feedback back to the agent
+    return END                      # approve and stop both end here</code></pre>
+
+    <h3><span class="n">6.4.1</span>ここで初めて組み立てる</h3>
+
+<pre><code>graph = StateGraph(State)
+graph.add_node(&quot;plan&quot;, plan)
+graph.add_node(&quot;implement&quot;, implement)
+graph.add_node(&quot;check&quot;, check)
+graph.add_node(&quot;review&quot;, review)
+graph.add_node(&quot;give_up&quot;, give_up)
+graph.add_edge(START, &quot;plan&quot;)
+graph.add_edge(&quot;plan&quot;, &quot;implement&quot;)
+graph.add_edge(&quot;implement&quot;, &quot;check&quot;)
+graph.add_conditional_edges(&quot;check&quot;, route_after_check)
+graph.add_conditional_edges(&quot;review&quot;, route_after_review)
+graph.add_edge(&quot;give_up&quot;, END)
+app = graph.compile(checkpointer=MemorySaver())
+
+
+def main():
+    config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;task-001&quot;}}
+    result = app.invoke({&quot;goal&quot;: &quot;Run the tests, find out why one of them fails, and fix it.&quot;}, config)
+
+    # While the graph is paused at `review`, show the diff and ask the human.
+    while &quot;__interrupt__&quot; in result:
+        payload = result[&quot;__interrupt__&quot;][0].value
+        print(&quot;\n&quot; + &quot;=&quot; * 60)
+        print(&quot;TESTS:\n&quot; + payload[&quot;check_output&quot;].strip().splitlines()[-1])
+        print(&quot;-&quot; * 60)
+        print(&quot;DIFF:\n&quot; + payload[&quot;diff&quot;])
+        print(&quot;=&quot; * 60)
+        decision = &quot;&quot;
+        while decision not in (&quot;approve&quot;, &quot;revise&quot;, &quot;stop&quot;):
+            decision = input(&quot;approve / revise / stop &gt; &quot;).strip().lower()
+        feedback = input(&quot;What should be changed? &gt; &quot;) if decision == &quot;revise&quot; else &quot;&quot;
+        result = app.invoke(Command(resume={&quot;decision&quot;: decision, &quot;feedback&quot;: feedback}), config)
+
+    print(&quot;\nFinished. Decision:&quot;, result.get(&quot;decision&quot;, &quot;(gave up)&quot;))
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</code></pre>
+
+    <h4>動かす</h4>
+
+<pre><code>python agent/break_app.py      # まだ壊していなければ
+python agent/agent_graph.py</code></pre>
+
+    <p>Agentが直してテストが通ると、画面に差分が出て <code>approve / revise / stop &gt;</code> で止まります。<span class="mark">ここが6.0.2の4番です。</span>Agentは自分で終わりません。</p>
+
+    <h4>必ず1回は revise する</h4>
+
+    <p>差分を読んで、1回目は <code>revise</code> を選び、直してほしい点を英語で1行書きます。例：</p>
+
+<pre><code>Do not change tests/test_app.py. Fix app.py only.
+Keep the error message exactly "User name cannot be empty."</code></pre>
+
+    <p>Agentは、前回のテスト結果とあなたの指摘を受け取って <code>implement</code> からやり直します。<strong>2回目の差分が1回目とどう違うかを、REPORT.txt に書きます（6.6）。</strong>納得したら <code>approve</code>。</p>
+
+    <h4>停止条件を変えてみる</h4>
+
+    <p><code>agent/agent_graph.py</code> の <code>MAX_ATTEMPTS = 3</code> を <code>1</code> にして、もう一度壊して動かします。1回で直せなければ <code>give_up</code> に行き、人間に引き継がれます。<span class="mark">「Agentが諦める」もあなたが設計した動作です。</span>戻すのを忘れずに。</p>
+
+    <p><code>revise</code>を選ぶと、処理は<code>implement</code>へ戻ります。Agentは、前回のテスト結果と人間の指摘を使って再修正します。</p>
+
+    <p>承認機能には、差し戻しの経路と指摘を渡す仕組みが必要です。</p>
+
+    <div class="warn">
+      <span class="tag">MemorySaverはメモリ上の保存です</span>
+      <code>thread_id</code> により、<strong>同じPythonプロセスの中では</strong>途中の状態を指定して再開できます。<span class="mark">プログラムを終了すると MemorySaver の状態は消えます。</span><br><br>
+      別の日にも再開したい場合は、SQLiteやPostgreSQLなど永続的なcheckpointerを使います。この章では、演習中に止めて再開するところまでで十分です。
+    </div>
+
+    <div class="warn">
+      <span class="tag">副作用は承認の後ろに置く</span>
+      <code>interrupt()</code> を含むノードは、<strong>再開時に先頭から実行されることを前提に書いてください。</strong>承認前に外部への書き込みを置くと、再開のたびに同じ処理が繰り返されます。<br><br>
+      <span class="mark">メール送信、課金、ファイル削除などの副作用は、承認の後に別のノードとして置きます。</span>ノードを小さく分けるのは、見やすさのためだけではありません。
+    </div>
+
+    <h3><span class="n">6.4.2</span>どこに承認を置くか</h3>
+
+    <table>
+      <thead><tr><th>置くべきところ</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td>取り消せない操作の前</td><td>削除、送信、公開、課金。戻せないものは必ず止める</td></tr>
+        <tr><td>影響範囲が広がるとき</td><td>変更ファイル数や行数がしきい値を超えたら止める</td></tr>
+        <tr><td>Agentが行き詰まったとき</td><td><code>give_up</code> は失敗ではなく、正しい終わり方のひとつ</td></tr>
+        <tr><td>外部に出るとき</td><td>ネットワーク送信、外部APIの呼び出し</td></tr>
+      </tbody>
+    </table>
+
+    <p>演習0で書いてもらった<strong>「人間が残すべき確認」</strong>の列を思い出してください。<span class="mark">あのとき言葉で書いたものを、いまコードとして置いています。</span></p>
+  </section>
+
+  <section class="sec" id="s6-5">
+    <h2><span class="n">6.5</span>発展：MCPで現在の状況につなぐ</h2>
+
+    <p>ここまでは、ツールを自分で作りました。MCPは、既存の外部ツールをAgentへ接続するための共通規格です。</p>
+
+    <p>この節では、読み取り専用のMCPツールを1つ作ります。外部データの変化によって、Agentの判断が変わることを確認します。</p>
+
+    <div class="note">
+      <span class="tag">ここでClineに戻る理由</span>
+      自作AgentからMCPへ接続するには、追加の接続コードが必要です。この節では、MCPクライアントとしてClineを使います。目的は、別プロセスのツールを共通形式で接続することです。自作Agentからの接続は<a href="appendix-c.html">付録C</a>で扱います。
+    </div>
+
+    <table>
+      <thead><tr><th>6.1で書いたツール</th><th>6.5のMCPツール</th></tr></thead>
+      <tbody>
+        <tr><td>Agentと同じPythonプロセスにある関数</td><td>別プロセスのサーバが提供する関数</td></tr>
+        <tr><td>自分でSchemaを書く</td><td>サーバからツール定義を受け取る</td></tr>
+        <tr><td>自分のリポジトリに密結合</td><td>同じサーバをClineなど別クライアントも使える</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">最初に繋ぐものの選び方</span>
+      最初からPlaywright、Git、データベース、AWSを使うと、接続、認証、権限の問題が同時に発生します。この演習では、サーバを1つ、読み取り専用ツールを1つだけ使います。
+    </div>
+
+    <h3><span class="n">6.5.1</span>厨房ボードサーバを立てる</h3>
+
+<pre><code>pip install mcp</code></pre>
+
+<pre><code># tools/kitchen_board_mcp.py
+import json
+from pathlib import Path
+
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("Kitchen Board")
+
+DATA_PATH = Path(__file__).parent.parent / "data" / "kitchen_board.json"
+
+
+@mcp.tool()
+def get_kitchen_board() -&gt; list[dict]:
+    &quot;&quot;&quot;現在の厨房ボードを取得する。注文の優先順位を判断するときだけ使う。&quot;&quot;&quot;
+    return json.loads(DATA_PATH.read_text(encoding="utf-8"))
+
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")</code></pre>
+
+<pre><code>// data/kitchen_board.json
+[
+  {"order_id": 31, "table": 12, "item": "Prawn Curry",
+   "status": "pending", "wait_minutes": 14, "allergy_alert": true},
+  {"order_id": 32, "table": 4,  "item": "Chicken Biryani",
+   "status": "pending", "wait_minutes": 11, "allergy_alert": false},
+  {"order_id": 33, "table": 8,  "item": "Masala Dosa",
+   "status": "cooking", "wait_minutes": 9,  "allergy_alert": false}
+]</code></pre>
+
+<pre><code>{
+  "mcpServers": {
+    "kitchen-board": {
+      "command": "python",
+      "args": ["tools/kitchen_board_mcp.py"]
+    }
+  }
+}</code></pre>
+
+    <div class="warn">
+      <span class="tag">この設定はCline用です</span>
+      この<code>mcpServers</code>設定はCline用です。6.3の自作Agentは、この設定を読みません。自作Agentには別のMCPクライアントが必要です。
+    </div>
+
+    <h4>接続の確認</h4>
+
+    <div class="prompt"><span class="tag">PROMPT</span>MCPの get_kitchen_board を1回だけ呼び、
+返ってきた order_id をそのまま3件表示してください。</div>
+
+    <p>実行履歴にツール名が表示され、3件の番号が返れば接続成功です。</p>
+
+    <h3><span class="n">6.5.2</span>ミッション：厨房ボードを読め</h3>
+
+    <div class="warn">
+      <span class="tag">状況</span>
+      12時18分。ボードには注文が並んでいます。待ち時間が長い注文、アレルギー警告のある注文、すでに調理中の注文が混ざっています。<br><br>
+      <span class="mark">Agentに「次に取るべき2つの行動」を判断させなさい。ただし、注文一覧はAgentの中にはありません。</span>MCPから取得しなければ、判断できません。
+    </div>
+
+    <div class="prompt"><span class="tag">PROMPT</span>あなたは厨房の補助Agentです。
+
+現在の注文一覧を MCP の get_kitchen_board から取得し、
+次に取るべき行動を2つ、理由とともに示してください。
+
+ただし、アレルギー警告のある注文は、
+「調理開始」ではなく「人間の確認が必要」と報告してください。</div>
+
+<pre><code>kitchen-board.get_kitchen_board({})
+  ↓
+現在の注文データが返る
+  ↓
+Agent:
+「Order 32 の調理を開始する。待ち時間11分で、警告はない。
+ Order 31 は待ち時間14分と最長だが、甲殻類アレルギー警告があるため、
+ 調理開始ではなく人間の確認が必要である。」</code></pre>
+
+    <p>Order 31は待ち時間が最長です。しかし、アレルギー警告があります。そのため、Agentは調理を開始せず、人間へ確認を求めます。</p>
+
+    <h3><span class="n">6.5.3</span>状況を変えて、もう一度聞く</h3>
+
+    <div class="warn">
+      <span class="tag">緊急連絡</span>
+      Table 4 の注文はキャンセルされました。<br>
+      Table 15 は待ち時間18分、アレルギー警告なしです。
+    </div>
+
+    <p><code>data/kitchen_board.json</code>を変更します。その後、同じ質問をもう一度送ります。Agentのコードとプロンプトは変更しません。</p>
+
+    <p>優先順位が変わります。ここで確かめてほしいのは4つです。</p>
+
+    <ul>
+      <li>Agentは注文一覧を<strong>覚えていたのではない</strong></li>
+      <li>毎回、MCP経由で<strong>現在の状況</strong>を取得している</li>
+      <li>外部データが変われば、<strong>判断も変わる</strong></li>
+      <li>ただし、アレルギーの判断は<strong>人間に返す</strong></li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">ここがMCPの価値です</span>
+      <span class="mark">MCPが面白くなるのは、Agentが「いまの状況」を取りに行って、行動を変えるときです。</span><br><br>
+      Agentは店の状況を事前に知りません。MCPツールを使って、現在の状況を取得します。
+    </div>
+
+    <h3><span class="n">6.5.4</span>何が起きているか</h3>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　<code>kitchen_board_mcp.py</code> がAgentとは別のプロセスで動く</p>
+      <p><strong>2</strong>　Agentは起動時に「使える道具の名前・説明・引数」を受け取る</p>
+      <p><strong>3</strong>　Agentが <code>get_kitchen_board</code> を選ぶ</p>
+      <p><strong>4</strong>　MCPサーバが現在のデータを返す</p>
+      <p><strong>5</strong>　返った結果を読んで、Agentが次の判断をする</p>
+    </div>
+
+    <p>処理は6.1の4手順と同じです。MCPでは、ツールが別のプロセスで動きます。</p>
+
+    <h3><span class="n">6.5.5</span>次にできること</h3>
+
+    <table>
+      <thead><tr><th>今回</th><th>次にできること</th></tr></thead>
+      <tbody>
+        <tr><td>JSONの厨房ボード</td><td>SQLiteや業務APIの現在データ</td></tr>
+        <tr><td>読み取り専用</td><td>人間承認付きの更新操作</td></tr>
+      </tbody>
+    </table>
+
+    <p>2行目へ進むときは、6.4で決めた承認の位置を思い出してください。<strong>読み取りから書き込みへ変わった瞬間に、取り消せない操作が入ります。</strong></p>
+
+    <div class="note">
+      <span class="tag">つなぐときの原則</span>
+      <span class="mark">有効化するツールは、その作業に必要な最小限にする。</span>信頼できるサーバだけを使う。<br><br>
+      有効なツールの定義は、モデルへ毎回渡されます。使わないツールは無効にしてください。MCPサーバは、与えられた権限の範囲で操作を行います。信頼できるサーバだけを接続してください。
+    </div>
+
+    <p>この章では、ツール呼び出し、ループ、分岐、停止条件、人間の承認、中断、再開、外部データ取得を実装しました。PART 7では、同じ仕組みを動画制作へ応用します。</p>
+  </section>
+
+  <section class="sec" id="s6-6">
+    <h2><span class="n">6.6</span>提出物</h2>
+
+    <p>出すのは <strong>zip ファイル1つ</strong>です。<code>vibe-chat</code> フォルダに <code>REPORT.txt</code> を足し、<code>agent/config.py</code> を除いて圧縮します。</p>
+
+<pre><code>vibe-chat/
+├── app.py, templates/, tests/
+├── agent/                 ← config.py は入れない
+└── REPORT.txt             ← 追加する</code></pre>
+
+    <p><code>REPORT.txt</code> に書くのは3つです。</p>
 
     <table>
       <thead><tr><th></th><th>書くこと</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td>6.3.1で依頼する前に書いた「変わる場所の予想」。そのまま貼る</td></tr>
-        <tr><td><strong>2</strong></td><td>実際の差分が予想とどう違ったか。予想どおりなら「どおりだった」でよい</td></tr>
+        <tr><td><strong>1</strong></td><td><code>revise</code> で渡した指摘（1行）と、それで2回目の差分がどう変わったか</td></tr>
+        <tr><td><strong>2</strong></td><td><code>MAX_ATTEMPTS = 1</code> にしたとき何が起きたか（1回で直った／give_up に行った）</td></tr>
+        <tr><td><strong>3</strong></td><td>6.5をやった場合だけ：<code>kitchen_board.json</code> を変える前後で、Agentの判断がどう変わったか</td></tr>
       </tbody>
     </table>
-
-    <p><code>vibe-chat</code> フォルダを右クリックして圧縮し、<code>PART6_学籍番号.zip</code> という名前で次のフォームからアップロードします。</p>
-    <p><a href="https://forms.gle/oHNPNnV438cLrz928" target="_blank" rel="noopener"><strong>https://forms.gle/oHNPNnV438cLrz928</strong></a></p>
 
     <div class="note">
-      <span class="tag">2番がいちばん重要です</span>
-      予想どおりだったなら、そう書けばよいです。<span class="mark">違ったなら、なぜ違ったのかを考えてください。</span><br><br>
-      あなたの予想が浅かったのか、Agentが余計なことをしたのか。<strong>この振り返りが、次の予想を正確にします。</strong>
+      <span class="tag">1番が中心です</span>
+      <span class="mark">一発で承認したものより、差し戻して直させた記録のほうを評価します。</span>承認の仕組みは、承認するために作るのではありません。差し戻せるようにするために作ります。<br><br>
+      1回目の差分に文句がなくても、<strong>何か1つ指摘して戻してください。</strong>戻せることを確かめるのが目的です。
     </div>
 
-      </section>
+    <p><code>vibe-chat</code> フォルダを右クリックして圧縮し、<code>PART6_学籍番号.zip</code> という名前で次のフォームからアップロードします。</p>
+    <p><a href="FORM_URL_PART6" target="_blank" rel="noopener"><strong>FORM_URL_PART6</strong></a></p>
 
-  <section class="sec" id="s6-5">
-    <h2><span class="n">6.5</span>この章で分かったこと</h2>
+    <h3><span class="n">6.6.1</span>考えておくこと</h3>
 
-    <p>機能を1つ足しました。<span class="mark">既存の動作が壊れていないことは、<code>pytest</code> が教えてくれました。</span></p>
+    <p>次章の準備です。答えは書かなくて構いません。</p>
 
-    <p>PART 4では、直すたびにSendとDeleteをあなたが手で確かめました。この章では、それをコマンド1回で済ませました。</p>
-
-    <div class="warn">
-      <span class="tag">テストは正しさを保証しません</span>
-      テストが通っても、<span class="mark">仕様が間違っていれば、間違ったとおりに正しく動くだけです。</span><br><br>
-      禁止語のリストに何を入れるか。拒否したとき何を表示するか。<strong>それを決めるのは人間です。</strong>テストは、決めたことが守られているかを見ているだけです。
-    </div>
-
-    <h3><span class="n">6.5.1</span>ここまでで身についたもの</h3>
-
-    <table>
-      <thead><tr><th>PART</th><th>身についたこと</th></tr></thead>
-      <tbody>
-        <tr><td><strong>3</strong></td><td>Agentにファイルを作らせ、承認する</td></tr>
-        <tr><td><strong>4</strong></td><td>自分でテストし、問題を見つけ、直させる</td></tr>
-        <tr><td><strong>5</strong></td><td>完了条件を決め、機械に判定させる</td></tr>
-        <tr><td><strong>6</strong></td><td>テストを盾に、機能を足す</td></tr>
-      </tbody>
-    </table>
-
-    <p>ここまで、Agentは既製品でした。<span class="mark">Clineが何をしているかは、外から見ていただけです。</span></p>
-
-    <p>PART 7では、その中身を自分で作ります。<strong>ツール呼び出し、ループ、停止条件、人間の承認。</strong>Clineがやっていたことを、Pythonで書きます。</p>
+    <blockquote>
+      あなたが作ったAgentの「停止条件」「承認の位置」「戻り先」は、コードを直す仕事に固有のものでしたか。<br>
+      それとも、まったく別の仕事にも当てはまりますか。
+    </blockquote>
   </section>
 
 
+
+  
+
+
   <nav class="pager">
-    <a class="prev" href="part5.html"><span class="dir">← PREV</span><span class="ttl">PART 5　テストで完了条件を作る</span></a>
-    <a class="next" href="part7.html"><span class="dir">NEXT →</span><span class="ttl">PART 7　自分でAgentを組み立てる</span></a>
+    <a class="prev" href="part5.html"><span class="dir">← PREV</span><span class="ttl">PART 5　テストで完了条件を作り、安全に機能を足す</span></a>
+    <a class="next" href="part7.html"><span class="dir">NEXT →</span><span class="ttl">PART 7　Agentic AIで動画制作を回す</span></a>
   </nav>
 
 </div>
