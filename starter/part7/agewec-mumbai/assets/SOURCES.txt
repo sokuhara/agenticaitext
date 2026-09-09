@@ -1,0 +1,10 @@
+# Source log. One or more lines per clip. Fields separated by " | ". Every line starts with cutN.
+# First line:   cutN | where it came from (service name, "own photo/video", or "Pexels: URL") | the prompt you used (or -) | date
+# Extra lines when needed:
+#   cutN | credit | the exact wording required, and where in the video it is shown
+#   cutN | license | e.g. CC BY 4.0
+#   cutN | note | anything else (faces blurred, consent obtained, ...)
+# Example:
+# cut1 | Kling | slow pan over a Mumbai suburban train at dawn, wide shot | 2026-09-10
+# cut6 | Pixabay: https://pixabay.com/videos/... | - | 2026-09-10
+# cut6 | credit | "Video by NAME from Pixabay", shown in the final cut

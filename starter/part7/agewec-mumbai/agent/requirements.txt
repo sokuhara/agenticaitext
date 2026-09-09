@@ -1,0 +1,6 @@
+pillow
+imageio-ffmpeg
+edge-tts
+requests
+langchain-openai
+langgraph

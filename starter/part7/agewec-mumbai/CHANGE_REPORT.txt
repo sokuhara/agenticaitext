@@ -1,0 +1,17 @@
+AGEWEC MUMBAI — AGENT REPORT
+
+Student ID:
+Name:
+Video title:
+Video URL:
+
+1. Theme:
+2. Target audience:
+3. Key points (three or more):
+4. Success conditions added or changed (two or more):
+5. Agent behaviour added or changed (one or more):
+6. Tools used to generate the source clips, and any credit shown in the video:
+7. One decision made by the agent (from EDIT_LOG.txt), and whether you agreed:
+8. One decision made by the human (a revise you gave, or a release decision), and why:
+9. One fact in the narration you verified, and its source:
+10. Files changed:
