@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Appendix D Using video_tools.py</title>
+<style>
+:root{
+  --paper:#f6f5f2;
+  --ink:#1c1c1a;
+  --ink-soft:#565651;
+  --line:#dedcd5;
+  --card:#ffffff;
+  --accent:#475569;
+  --accent-soft:#eef1f5;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 96px}
+
+/* 進行レール */
+.rail{position:sticky;top:0;z-index:20;background:rgba(246,245,242,.94);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+.rail-inner{max-width:780px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;
+  align-items:center;overflow-x:auto;scrollbar-width:none}
+.rail-inner::-webkit-scrollbar{display:none}
+.rail a{
+  flex:0 0 auto;text-decoration:none;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.04em;color:var(--ink-soft);border:1px solid var(--line);
+  background:#fff;border-radius:999px;padding:4px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s;
+}
+.rail a:hover{border-color:var(--accent);color:var(--accent)}
+.rail a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.rail a.na{opacity:.45}
+
+/* 見出し */
+.masthead{padding:56px 0 8px}
+.masthead + .toc,.masthead + section.sec{margin-top:34px}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.18em;color:var(--accent);font-weight:700}
+h1{font-size:2.05rem;line-height:1.35;margin:8px 0 0;letter-spacing:.01em}
+.lede{margin-top:18px;color:var(--ink-soft);font-size:.97rem}
+
+/* 章のつながり */
+.bridge{
+  margin:30px 0 40px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;padding:18px 22px;
+}
+.bridge dl{display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px;font-size:.93rem}
+.bridge dt{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--accent);
+  font-weight:700;padding-top:.42em}
+.bridge dd{color:var(--ink)}
+
+/* 目次 */
+.toc{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:20px 24px;margin-bottom:44px}
+.toc h2{font-size:.8rem;font-family:var(--mono);letter-spacing:.14em;color:var(--ink-soft);
+  font-weight:700;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:none}
+.toc li{margin:5px 0;font-size:.95rem}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:.6em}
+
+/* 本文セクション */
+section.sec{margin:0 0 52px;scroll-margin-top:64px}
+section.sec > h2{
+  font-size:1.35rem;line-height:1.45;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:2px solid var(--line);display:flex;gap:.6em;align-items:baseline;
+}
+section.sec > h2 .n{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700}
+h3{font-size:1.08rem;margin:30px 0 10px;color:var(--ink)}
+h3 .n{font-family:var(--mono);font-size:.82rem;color:var(--accent);margin-right:.5em}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{margin:0 0 14px;font-size:.98rem}
+ul,ol{margin:0 0 16px;padding-left:1.35em}
+li{margin-bottom:6px;font-size:.97rem}
+strong{font-weight:700}
+.mark{background:linear-gradient(transparent 62%,var(--accent-soft) 62%);font-weight:600}
+
+/* 部品 */
+/* 本文はコピー不可。コードとプロンプトだけコピーできる */
+body{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+pre,pre code,code,.prompt,.terminal,textarea,input,
+.copyable,.copyable *{-webkit-user-select:text;-ms-user-select:text;user-select:text}
+.prompt .tag,pre .copy-btn,.prompt .copy-btn{-webkit-user-select:none;user-select:none}
+
+/* コピーボタン */
+pre,.prompt{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;z-index:2;
+  font-family:inherit;font-size:.72rem;line-height:1;padding:5px 9px;
+  border-radius:5px;cursor:pointer;opacity:0;transition:opacity .15s;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);color:#e8eaee}
+.prompt .copy-btn{border-color:var(--accent);background:#fff;color:var(--accent)}
+pre:hover .copy-btn,.prompt:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+.copy-btn.done{opacity:1;border-color:#3fa46a;color:#3fa46a}
+@media print{.copy-btn{display:none}}
+code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:2px 6px;border-radius:4px;color:#8a2846}
+pre{background:#1f2430;color:#eceff4;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre code{background:none;color:inherit;padding:0;font-size:.84rem;line-height:1.65}
+.prompt{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+  padding:14px 18px;margin:14px 0;font-size:.92rem;white-space:pre-wrap;line-height:1.75}
+.prompt .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--accent);font-weight:700;margin-bottom:6px}
+.fig{border:1px dashed #c3bfb4;background:#efedE7;border-radius:10px;padding:16px 18px;
+  margin:16px 0;color:var(--ink-soft);font-size:.85rem;text-align:center;line-height:1.7}
+.note{border-left:3px solid var(--accent);background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.note .tag{display:block;font-weight:700;margin-bottom:4px;color:var(--accent);font-size:.86rem}
+.flow-steps{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.flow-steps p{margin:0 0 8px;padding-left:14px;border-left:3px solid var(--accent);font-size:.95rem}
+.flow-steps p:last-child{margin-bottom:0}
+.flow-steps strong{color:var(--accent)}
+.warn{border:1px solid #e5b4b4;border-left:4px solid #c0392b;background:#fdf0ef;
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:.93rem}
+.warn .tag{display:block;font-weight:700;color:#c0392b;font-size:.86rem;margin-bottom:4px}
+blockquote{border-left:3px solid var(--accent);background:var(--card);margin:16px 0;
+  padding:14px 20px;font-size:.95rem;color:var(--ink-soft);border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:700}
+.caption{font-size:.82rem;color:var(--ink-soft);margin:-8px 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 6px;color:var(--accent);font-size:.95rem}
+.card p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+.missing{border:1px dashed #c3bfb4;border-radius:10px;padding:16px 20px;margin:16px 0;
+  background:#efedE7;font-size:.92rem;color:var(--ink-soft)}
+.missing .tag{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  font-weight:700;color:#9a6b1f;margin-bottom:6px}
+
+/* ページ送り */
+.pager{display:flex;gap:12px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+.pager a{flex:1;text-decoration:none;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:14px 18px;transition:border-color .15s}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-soft);margin-bottom:4px}
+.pager .ttl{font-size:.95rem;font-weight:700}
+.pager .next{text-align:right}
+.pager a.disabled{opacity:.45;pointer-events:none}
+
+@media (max-width:640px){
+  h1{font-size:1.6rem}
+  .wrap{padding:0 16px 72px}
+  .bridge dl{grid-template-columns:1fr;gap:2px}
+  .bridge dt{padding-top:8px}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Chapters">
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a><a href="appendix-d.html" aria-current="page">D</a><a href="appendix-e.html">E</a></div>
+</nav>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">APPENDIX D</div>
+    <h1>Using video_tools.py</h1>
+    <p class="lede"><code>agent/video_tools.py</code> in the Part 7 starter is a set of tools with no judgement of their own, built on ffmpeg and PIL: normalizing, joining, <strong>subtitles</strong>, narration, audio muxing and reading the source log, all in one file. The main text does not explain its insides. This appendix is for anyone who wants to know how the subtitles are made, or who wants to modify a tool itself in 7.3.</p>
+  </header>
+
+  <div class="bridge">
+    <dl>
+      <dt>Previously</dt><dd>In Part 7 the editing agent called the tools in <code>edit_tools.py</code> (<code>add_to_timeline</code>, <code>join_timeline</code>, <code>add_subtitles</code>, <code>add_narration</code>). What is inside those tools is <code>video_tools.py</code>.</dd>
+      <dt>This part</dt><dd>What each function does. How subtitles are made. How to test a tool on its own. Examples of modifications.</dd>
+      <dt>Next</dt><dd>Appendix E is an optional exercise: running the Wan2.1 video model once on Colab.</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="In this part">
+    <h2>In this part</h2>
+    <ol>
+      <li><span class="n">D.1</span><a href="#sd-1">Where this file sits</a></li>
+      <li><span class="n">D.2</span><a href="#sd-2">The functions</a></li>
+      <li><span class="n">D.3</span><a href="#sd-3">How subtitles are made</a></li>
+      <li><span class="n">D.4</span><a href="#sd-4">Normalizing, joining, narration</a></li>
+      <li><span class="n">D.5</span><a href="#sd-5">Testing a tool on its own</a></li>
+      <li><span class="n">D.6</span><a href="#sd-6">Modifications</a></li>
+    </ol>
+  </nav>
+
+
+  <section class="sec" id="sd-1">
+    <h2><span class="n">D.1</span>Where this file sits</h2>
+
+    <p>Section 7.1 separated two ways of combining tools: a fixed procedure and orchestration. <code>video_tools.py</code> is the former. <span class="mark">Same input, same output, every time.</span> It never calls the model and never decides anything.</p>
+
+    <table>
+      <thead><tr><th>File</th><th>Role</th><th>Called by</th></tr></thead>
+      <tbody>
+        <tr><td><code>agent_video.py</code></td><td>The production flow (LangGraph): plan, approval, edit, check, release</td><td>You (<code>python agent/agent_video.py</code>)</td></tr>
+        <tr><td><code>edit_tools.py</code></td><td>The tools handed to the editing agent. Each call is logged</td><td>The editing agent (27B)</td></tr>
+        <tr><td><code>video_tools.py</code></td><td>The ffmpeg and PIL operations themselves</td><td><code>edit_tools.py</code> and <code>check()</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>ffmpeg is the one bundled with <code>imageio-ffmpeg</code>, so nothing needs installing. Every function calls ffmpeg through <code>_run()</code>, which raises ffmpeg's own error text if a call fails.</p>
+  </section>
+
+
+  <section class="sec" id="sd-2">
+    <h2><span class="n">D.2</span>The functions</h2>
+
+    <table>
+      <thead><tr><th>Function</th><th>In → out</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>probe_duration(path)</code></td><td>video or audio → seconds</td><td>Reads <code>Duration:</code> from ffmpeg's output. Used by the length check</td></tr>
+        <tr><td><code>probe_size(path)</code></td><td>video → (width, height)</td><td>Used by <code>list_assets</code> to report orientation</td></tr>
+        <tr><td><code>normalize_clip(src, dst, seconds, start)</code></td><td>any clip → 1280×720, 25 fps, silent, given length</td><td>Brings material to one shape. Inside <code>add_to_timeline</code></td></tr>
+        <tr><td><code>concat_with_crossfade(clips, dst, fade)</code></td><td>normalized clips → one video</td><td>Joins in order with <code>xfade</code>. Inside <code>join_timeline</code></td></tr>
+        <tr><td><code>burn_subtitles(src, dst, subtitles)</code></td><td>video + subtitle list → subtitled video</td><td><strong>Subtitles. D.3</strong>. Inside <code>add_subtitles</code></td></tr>
+        <tr><td><code>narrate(text, dst, voice)</code></td><td>English text → mp3</td><td>Speech via edge-tts. Needs the internet</td></tr>
+        <tr><td><code>mux_audio(video, audio, dst)</code></td><td>video + mp3 → output.mp4</td><td>Pads or trims the audio to the video length</td></tr>
+        <tr><td><code>frame_at(video, seconds, dst)</code></td><td>video → one PNG</td><td>A still at a given time. Used by <code>contact_sheet</code> and by you</td></tr>
+        <tr><td><code>read_sources()</code></td><td><code>SOURCES.txt</code> → {cut: [lines]}</td><td>Reads the source log for the check. Several lines per cut allowed</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+
+  <section class="sec" id="sd-3">
+    <h2><span class="n">D.3</span>How subtitles are made</h2>
+
+    <p><span class="mark">Subtitles are produced by <code>burn_subtitles()</code> in <code>video_tools.py</code>.</span> All the editing agent passes to <code>add_subtitles</code> is JSON of this shape:</p>
+
+<pre><code>[{"start": 0,   "end": 5,  "text": "Mumbai: 7 million riders a day"},
+ {"start": 5,   "end": 10, "text": "Marine Drive, the Queen's Necklace"}]</code></pre>
+
+    <p>The agent decides the timing and the words; the tool draws them, in two steps.</p>
+
+    <div class="flow-steps">
+      <p><strong>1</strong>　For each subtitle line, PIL draws a transparent 1280×720 PNG: a semi-transparent black band with white text, centred near the bottom (<code>_subtitle_png</code>)</p>
+      <p><strong>2</strong>　ffmpeg's <code>overlay</code> filter lays that PNG over the video, with <code>enable='between(t,start,end)'</code> so it shows only in that interval (<code>burn_subtitles</code>)</p>
+    </div>
+
+<pre><code>def _subtitle_png(text: str, path: Path):
+    """Draw one subtitle as a transparent PNG (PIL's bundled font, so it works everywhere)."""
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    font = ImageFont.load_default(size=40)
+    box = d.textbbox((0, 0), text, font=font)
+    tw, th = box[2] - box[0], box[3] - box[1]
+    x, y = (W - tw) // 2, H - 110
+    d.rectangle([x - 24, y - 14, x + tw + 24, y + th + 18], fill=(0, 0, 0, 150))
+    d.text((x, y), text, font=font, fill=(255, 255, 255, 255))
+    img.save(path)
+
+
+def burn_subtitles(src, dst, subtitles):
+    """subtitles: list of {"start": s, "end": s, "text": "..."} -&gt; overlaid on the video."""
+    inputs = ["-i", str(src)]
+    fc, prev = "", "[0:v]"
+    for i, sub in enumerate(subtitles):
+        png = BUILD / f"sub{i}.png"
+        _subtitle_png(sub["text"], png)
+        inputs += ["-i", str(png)]
+        out = "[v]" if i == len(subtitles) - 1 else f"[s{i}]"
+        fc += f"{prev}[{i + 1}:v]overlay=0:0:enable='between(t,{sub['start']},{sub['end']})'{out};"
+        prev = out
+    _run([*inputs, "-filter_complex", fc.rstrip(";"), "-map", "[v]",
+          "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p", str(dst)])</code></pre>
+
+    <p>One subtitle line is one PNG. ffmpeg also has a text filter, <code>drawtext</code>, and it is deliberately not used: it needs a font path that differs by operating system, and colons, apostrophes and quotes must be escaped in ways that reliably trip students up. Falling back to PIL's bundled font means <span class="mark">the result is identical on Windows, Mac and Linux.</span></p>
+
+    <div class="note">
+      <span class="tag">Limits of this approach</span>
+      <ul>
+        <li>PIL's bundled font draws <strong>Latin script only</strong>. Hindi or Marathi on screen needs the font swap in D.6</li>
+        <li>Size is fixed at 40 px, one line. <strong>Long text runs off the right edge.</strong> The agent is told "one short line", but nothing enforces it (adding a length check is a good 7.3 modification)</li>
+        <li>Burned in, so it cannot be removed afterwards. A separate SRT file is shown in D.6</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <section class="sec" id="sd-4">
+    <h2><span class="n">D.4</span>Normalizing, joining, narration</h2>
+
+    <h3>Normalizing: <code>normalize_clip</code></h3>
+    <p>Clips from different services differ in size, frame rate and codec; joined as they are, they fail or stutter. So everything is first brought to 1280×720, 25 fps, H.264, silent. Portrait clips are shrunk and padded with black bars (<code>scale … force_original_aspect_ratio=decrease, pad</code>). <code>seconds</code> and <code>start</code> choose which part of the clip to use.</p>
+
+    <h3>Joining: <code>concat_with_crossfade</code></h3>
+    <p>Normalized clips are joined in order with the <code>xfade</code> filter. Each join overlaps by <code>fade</code> seconds (default 0.6), so <span class="mark">the finished length is the sum of the cuts minus 0.6 × (number of cuts − 1).</span> When the length check in 7.4.6 says the video is short of 30 seconds, this overlap is usually what was forgotten.</p>
+
+    <h3>Narration: <code>narrate</code> and <code>mux_audio</code></h3>
+    <p><code>narrate</code> turns English text into an mp3 with edge-tts (a free library that uses Microsoft's speech service). The default voice is <code>en-IN-NeerjaNeural</code>, Indian English. <strong>It needs an internet connection</strong> and is unrelated to the shared lab server. <code>mux_audio</code> takes the video length as the reference: short audio is padded with silence, long audio is cut. That is why 7.4.6 fails a narration longer than the video: cut audio ends mid-word.</p>
+  </section>
+
+
+  <section class="sec" id="sd-5">
+    <h2><span class="n">D.5</span>Testing a tool on its own</h2>
+
+    <p>The tools run without the editing agent (27B), and without any clips: ffmpeg can generate a test picture.</p>
+
+<pre><code># try_subtitles.py  (put it in the agewec-mumbai folder and run: python try_subtitles.py)
+import sys
+sys.path.insert(0, "agent")
+import video_tools as vt
+
+vt.BUILD.mkdir(exist_ok=True)
+# a 6-second test picture, so you need no clip at all
+vt._run(["-f", "lavfi", "-i", "testsrc=size=1280x720:rate=25", "-t", "6",
+         "-pix_fmt", "yuv420p", str(vt.BUILD / "joined.mp4")])
+
+subs = [{"start": 0,   "end": 2.5, "text": "Mumbai: 7 million riders a day"},
+        {"start": 2.5, "end": 5,   "text": "Marine Drive, the Queen's Necklace"}]
+vt.burn_subtitles(vt.BUILD / "joined.mp4", vt.BUILD / "subtitled.mp4", subs)
+
+vt.frame_at(vt.BUILD / "subtitled.mp4", 1.0, vt.BUILD / "f1.png")   # look at these two
+vt.frame_at(vt.BUILD / "subtitled.mp4", 4.0, vt.BUILD / "f4.png")
+print("done:", vt.probe_duration(vt.BUILD / "subtitled.mp4"), "seconds")</code></pre>
+
+    <p>Open <code>build/f1.png</code> and <code>build/f4.png</code>: white text on a black band at the bottom of the frame, and in <code>f4.png</code> the apostrophe and comma come through as they are. <span class="mark">After modifying the agent, run this unit test first to confirm the tools are intact, then do the full run.</span> No wait for the 27B, so it takes seconds.</p>
+  </section>
+
+
+  <section class="sec" id="sd-6">
+    <h2><span class="n">D.6</span>Modifications</h2>
+
+    <p>Most changes for "one new agent behaviour" in 7.3.2 live in <code>agent_video.py</code> or <code>edit_tools.py</code>. The following touch <code>video_tools.py</code>. Cline can do any of them; <span class="mark">have the unit test from D.5 in place before you ask.</span></p>
+
+    <h3>Change the font (non-Latin text)</h3>
+<pre><code># in _subtitle_png: use a real font file instead of PIL's bundled one
+font = ImageFont.truetype("fonts/NotoSans-Regular.ttf", 40)   # put the .ttf in the project</code></pre>
+    <p>Put a redistributable font file (Noto Sans, for example) in the project and replace <code>load_default</code> with <code>truetype</code>. For Devanagari, Noto Sans Devanagari. Add a line for the font's license to <code>SOURCES.txt</code>.</p>
+
+    <h3>Change subtitle position or size</h3>
+    <p><code>size=40</code> and <code>y = H - 110</code> in <code>_subtitle_png</code>. For a portrait video <code>W, H</code> change too, and then the output size of <code>normalize_clip</code> must change with them.</p>
+
+    <h3>Check subtitle length (a new success condition)</h3>
+<pre><code># in check(), one more success condition: no subtitle longer than 45 characters
+for s in et.LAST_SUBTITLES:
+    if len(s) &gt; 45:
+        problems.append(f"subtitle too long ({len(s)} chars): {s}")</code></pre>
+    <p>This goes in <code>check()</code> in <code>agent_video.py</code>, not in <code>video_tools.py</code>. <code>et.LAST_SUBTITLES</code> holds the text the editing agent actually burned.</p>
+
+    <h3>Write an SRT file as well</h3>
+<pre><code>def write_srt(subtitles, path):
+    """Write the same subtitle list as a .srt file (a sidecar, not burned in)."""
+    def ts(t):
+        h, r = divmod(t, 3600); m, s = divmod(r, 60)
+        return f"{int(h):02}:{int(m):02}:{int(s):02},{int((s % 1) * 1000):03}"
+    lines = []
+    for i, sub in enumerate(subtitles, 1):
+        lines += [str(i), f"{ts(sub['start'])} --&gt; {ts(sub['end'])}", sub["text"], ""]
+    Path(path).write_text("\n".join(lines), encoding="utf-8")</code></pre>
+    <p>An <code>output.srt</code> next to the burned-in version lets you replace the subtitles when uploading to YouTube and the like. Call it inside <code>add_subtitles</code>, after <code>burn_subtitles</code>.</p>
+
+    <h3>Add music</h3>
+    <p>Mix a second audio input into the <code>filter_complex</code> of <code>mux_audio</code> with <code>amix</code>. Check the track's terms and add a <code>music | …</code> line to <code>SOURCES.txt</code> (7.2). Keep it around <code>volume=0.2</code> so the narration stays audible.</p>
+
+    <div class="warn">
+      <span class="tag">Change a tool, revisit the checks</span>
+      Switch to portrait video, for instance, and the checks in 7.4.6 say nothing, but the tiles in <code>contact_sheet</code> (320×180) are still landscape. When you change what a tool assumes, <span class="mark">ask Cline to list every function that depends on it</span> before going on.
+    </div>
+  </section>
+
+
+  <nav class="pager">
+    <a class="prev" href="appendix-c.html"><span class="dir">← PREV</span><span class="ttl">APPENDIX C　Releasing and operating an agent</span></a>
+    <a class="next" href="appendix-e.html"><span class="dir">NEXT →</span><span class="ttl">APPENDIX E　Generate a video clip with Wan2.1</span></a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  function copyText(el) {
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.tag, .copy-btn').forEach(function (n) { n.remove(); });
+    return clone.textContent.replace(/^[\r\n]+/, '').replace(/[\s]+$/, '');
+  }
+  document.querySelectorAll('pre, .prompt').forEach(function (el) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = copyText(el);
+      var done = function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    el.appendChild(btn);
+  });
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>
