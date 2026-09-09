@@ -160,7 +160,7 @@ th{background:var(--accent-soft);font-weight:700}
 <body>
 
 <nav class="rail" aria-label="章の一覧">
-  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html" aria-current="page">7</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a></div>
+  <div class="rail-inner"><a href="index.html">序</a><a href="exercise0.html">演0</a><a href="setup.html">準</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html" aria-current="page">7</a><a href="appendix-a.html">付A</a><a href="appendix-b.html">付B</a><a href="appendix-c.html">付C</a><a href="appendix-d.html">付D</a><a href="appendix-e.html">付E</a></div>
 </nav>
 
 <div class="wrap">
@@ -168,13 +168,13 @@ th{background:var(--accent-soft);font-weight:700}
   <header class="masthead">
     <div class="eyebrow">PART 7</div>
     <h1>Agentic AIで動画制作を回す</h1>
-    <p class="lede">最終課題です。あなたは小さな制作チームのプロデューサーです。世界の人にムンバイへ来てもらうための短い動画を、複数の道具と2回の承認を挟みながら仕上げる制作Agentを、手元のVS Codeで動かします。作るのは動画そのものではなく、動画を仕上げる仕事の流れです。</p>
+    <p class="lede">最終課題です。AGEWEC 2026のムンバイ版を、この授業の形でやります。配布した制作Agentのひな形を自分の目的に合わせて改造し、世界の人にムンバイへ来てもらうための30〜60秒の動画を、その改造したAgentに仕上げさせます。提出するのは動画だけではありません。改造したAgent、制作の記録、動画の3つです。</p>
   </header>
 
   <div class="bridge">
     <dl>
       <dt>前章まで</dt><dd>PART 6で、Agentの中身を自分で組み立てました。ツール呼び出し、分岐、停止条件、人間の承認、中断と再開です。</dd>
-      <dt>この章</dt><dd>同じ設計を、コーディング以外の仕事に当てはめます。企画、承認、素材、組み立て、検査、修正。人間が承認するのは、企画と公開判断です。</dd>
+      <dt>この章</dt><dd>PART 1〜6のまとめです。Cline（PART 3〜5）でAgentのプログラムを改造し、LangChain・LangGraph（PART 6）のツール呼び出し、分岐、承認、検査を、コーディング以外の仕事に当てはめます。</dd>
       <dt>次章へ</dt><dd>Agentのリリースと運用については、付録Cにまとめてあります。</dd>
     </dl>
   </div>
@@ -183,9 +183,9 @@ th{background:var(--accent-soft);font-weight:700}
     <h2>この章の内容</h2>
     <ol>
       <li><span class="n">7.1</span><a href="#s7-1">動画制作を「仕事の流れ」に分ける</a></li>
-      <li><span class="n">7.2</span><a href="#s7-2">参考：Wan2.1を自分で動かしてみる（任意）</a></li>
-      <li><span class="n">7.3</span><a href="#s7-3">素材の規約</a></li>
-      <li><span class="n">7.4</span><a href="#s7-4">本番：制作Agentを動かす</a></li>
+      <li><span class="n">7.2</span><a href="#s7-2">素材の規約</a></li>
+      <li><span class="n">7.3</span><a href="#s7-3">設計と改造：自分の制作Agentにする</a></li>
+      <li><span class="n">7.4</span><a href="#s7-4">本番：改造した制作Agentを動かす</a></li>
       <li><span class="n">7.5</span><a href="#s7-5">公開できない理由を確認する</a></li>
       <li><span class="n">7.6</span><a href="#s7-6">提出と相互評価</a></li>
     </ol>
@@ -197,21 +197,62 @@ th{background:var(--accent-soft);font-weight:700}
 
     <p>PART 6で作ったAgentには、<strong>状態、ツール、分岐、承認</strong>がありました。<span class="mark">その設計を、コーディング以外の仕事へ移します。</span>題材は動画制作です。</p>
 
-    <div class="prompt"><span class="tag">FINAL MISSION</span>AGEWEC Mumbai。
-世界の人にムンバイへ来てもらうための、60秒以下の動画を1本仕上げなさい。
-仕上げるのはあなたではなく、あなたが動かす制作Agentです。
+    <div class="prompt"><span class="tag">FINAL MISSION — AGEWEC Mumbai</span>Can an AI agent make the world want to visit Mumbai?
+配布された動画制作Agentを改造し、世界の人々がムンバイを訪れたくなる30〜60秒の英語動画を、そのAgentに制作させなさい。
+仕上げるのはあなたではなく、あなたが改造して動かす制作Agentです。
 Agentは、企画を書き、あなたの承認を待ち、素材が揃ったら組み立て、検査し、あなたの公開判断で止まります。</div>
+
+    <div class="warn">
+      <span class="tag">最終成果物は動画だけではない</span>
+      <strong>The final product is not only the video. It is the modified agent, the production process, and the video.</strong><br>
+      最終成果物は、動画だけではありません。<span class="mark">改造したAgent、制作の過程（記録）、完成動画。この3つを合わせて最終課題です。</span>改造したAgentのプログラムを提出しない動画は、<strong>最高で30点</strong>までしか付きません。
+    </div>
+
+    <p>AGEWEC 2026は、AIエージェントが北九州のプロモーション動画を自律的に制作する競技でした。評価されたのは完成映像だけでなく、計画、生成過程、ツール連携、再現性です。この章はそのムンバイ版です。題材が北九州からムンバイに変わるだけで、問われることは同じです。<span class="mark">「Agentが何を判断し、人間がどこで判断し、その記録が残っているか」。</span></p>
 
     <h3>やること</h3>
 
-    <p>制作Agentで60秒以下の動画を1本仕上げます。素材は7.3の規約の範囲で自分で作ります。企画、承認、素材、編集、検査、公開判断の順に、約90分。</p>
+    <p>制作Agentのひな形（7.0の準備）をダウンロードし、Clineで自分の動画に合わせて改造し（7.3）、素材を7.2の規約の範囲で作り、改造したAgentで動画を仕上げます（7.4）。前半2時間で設計と改造、後半3時間で実行・素材・編集・提出です。<span class="mark">素材はAgentを起動して絵コンテを承認してから作ります。</span>絵コンテのプロンプトが、素材の生成プロンプトになるからです。</p>
 
-    <p>7.2は参考です。動画生成モデルを自分の手で1回動かしてみたい人向けで、やらなくても本番には影響しません。</p>
+    <table>
+      <thead><tr><th>前半 2時間</th><th></th><th>後半 3時間</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>20分</td><td>ひな形の説明（7.1、7.4.2）</td><td>20分</td><td>改造したAgentを起動し、絵コンテを生成（7.4.3）</td></tr>
+        <tr><td>20分</td><td>テーマ・対象者・要点を決める（7.3.1）</td><td>15分</td><td>絵コンテを読み、一度差し戻してから承認</td></tr>
+        <tr><td>20分</td><td>成功条件と改造点を決める（7.3.2）</td><td>60分</td><td>絵コンテのプロンプトで素材を作る（7.2、7.4.4）。Agentは待っている</td></tr>
+        <tr><td>60分</td><td>ClineでAgentを改造する（7.3.3）</td><td>40分</td><td><code>done</code> で再開し、Agentに編集させる（7.4.5）</td></tr>
+        <tr><td></td><td></td><td>20分</td><td>検査結果を見て、必要なら再実行（7.4.6）</td></tr>
+        <tr><td></td><td></td><td>15分＋10分</td><td>公開判断（7.5）。URLとZIPを提出（7.6）</td></tr>
+      </tbody>
+    </table>
+
+    <p>動画生成モデルを自分の手で1回動かしてみたい人は、付録E（Wan2.1をColabで動かす）を見てください。任意で、やらなくても本番には影響しません。</p>
 
     <div class="warn">
-      <span class="tag">映像の見栄えは評価しません</span>
-      評価するのは、工程の分解、承認の位置、戻り先の設計、素材の出典です。<span class="mark">きれいな動画を1本作った人より、承認で止まり、検査で落ち、戻って直した記録がある人を評価します。</span><br><br>
+      <span class="tag">映像の見栄えだけでは評価しません</span>
+      評価するのは、どんなAgentに改造したか、Agentが何を判断したか、どのToolをどの順に使ったか、どんな検査を加えたか、人間がどこで判断したか、素材の出典です。<span class="mark">きれいな動画を1本作った人より、Agentがどこで止まり、何を測り、落ちたらどう戻るかを自分で設計し、その過程を記録に残した人を評価します。</span>検査に一度も落ちなくて構いません。落ちたときに戻れる形になっているか、そして何が起きたかを記録から追えるかを見ます。<br><br>
       観客としての反応（面白いか、行きたくなるか）は、7.6の相互評価で別に集めます。
+    </div>
+
+    <h3>課題の条件</h3>
+
+    <table>
+      <thead><tr><th>完成動画</th><th>Agent</th></tr></thead>
+      <tbody>
+        <tr><td>長さ <strong>30秒以上、60秒以内</strong></td><td>配布したLangGraphの制作Agentを<strong>改造して</strong>使う（7.3）</td></tr>
+        <tr><td>世界の人を対象とした<strong>英語</strong>の動画</td><td>絵コンテを作り、人間に承認を求める</td></tr>
+        <tr><td><strong>4本以上</strong>の異なる素材を使う（例は7.2）</td><td>利用できる素材を調べ、見て、編集を決める</td></tr>
+        <tr><td><strong>3つ以上</strong>の要点（Key Point、下の枠）を字幕に含める</td><td>複数の素材をつなぎ、字幕とナレーションを付ける</td></tr>
+        <tr><td>素材と事実の出所を記録し、必要ならクレジットを表記する</td><td>完成動画を自動検査する</td></tr>
+        <tr><td>最後に人間が見て公開を承認する</td><td>人間に公開判断を求める</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <span class="tag">要点（Key Point）とは</span>
+      この動画で観客に伝えたいこと1つを、<strong>「伝える文」と「字幕に必ず出す短い言葉」の組</strong>にしたものです。たとえば「ムンバイの近郊鉄道は1日およそ700万人を運ぶ」が伝える文で、<code>7 million</code> が字幕に必ず出す言葉です。<br><br>
+      2つに分けるのは、<span class="mark">機械が「伝わったか」を測れないからです。</span>検査（7.4.6）は、完成動画の字幕に <code>7 million</code> という言葉があるかを探します。言葉があれば、その要点は画面に出たと判定します。伝える文の方は、絵コンテを書くときにモデルへ渡します。<br><br>
+      要点は人間が決めます。Agentは決めません。3つ以上で、事実を含む要点には出典を控えておきます（7.3.1）。
     </div>
 
     <h3>準備</h3>
@@ -223,12 +264,13 @@ Agentは、企画を書き、あなたの承認を待ち、素材が揃ったら
 <pre><code>agewec-mumbai/
 ├── agent/
 │   ├── config.py          接続先。PART 6と同じ4つを書く
-│   ├── video_tools.py     ffmpegの処理（正規化、連結、字幕、ナレーション）
+│   ├── video_tools.py     ffmpegの処理（正規化、連結、字幕、ナレーション）。中身は付録D
 │   ├── edit_tools.py      編集Agentに渡す道具。呼ぶたびにログを残す
 │   ├── agent_video.py     制作Agent本体（LangGraph）
 │   └── requirements.txt
 ├── assets/
-│   └── SOURCES.txt        素材の出典ログ。1カット1行
+│   └── SOURCES.txt        素材の出典ログ。1カットにつき1行以上
+├── CHANGE_REPORT.txt      提出時に書く（7.6）
 └── README.md</code></pre>
 
 <pre><code>pip install -r agent/requirements.txt</code></pre>
@@ -248,7 +290,7 @@ Agentは、企画を書き、あなたの承認を待ち、素材が揃ったら
         <tr><td>1　要点を決める</td><td><span class="mark">人間</span></td><td>この動画で伝える3つのこと。Agentは決めない</td></tr>
         <tr><td>2　絵コンテと原稿</td><td>Agent（27B）</td><td>6〜8カット。各カットの生成プロンプト、秒数、字幕。ナレーション原稿</td></tr>
         <tr><td>3　<strong>承認</strong></td><td><span class="mark">人間</span></td><td>プロンプトを1行ずつ読む。<strong>素材を作る前</strong>に止まる</td></tr>
-        <tr><td>4　素材を作る</td><td><span class="mark">人間</span>＋外の道具</td><td>各カットを7.3の規約の範囲で生成し、<code>assets/</code> に置く。出典を記録</td></tr>
+        <tr><td>4　素材を作る</td><td><span class="mark">人間</span>＋外の道具</td><td>各カットを7.2の規約の範囲で生成し、<code>assets/</code> に置く。出典を記録</td></tr>
         <tr><td>5　編集</td><td><span class="mark">Agent（27B＋ツール）</span></td><td>戻ってきた素材を見て、順番、トリム、つなぎ、字幕の時刻を決め、ツールを呼ぶ</td></tr>
         <tr><td>6　検査</td><td>機械</td><td>尺、要点の字幕、出典ログ、ナレーションの長さ</td></tr>
         <tr><td>7　<strong>公開判断</strong></td><td><span class="mark">人間</span></td><td>見て、承認するか止めるか</td></tr>
@@ -257,7 +299,7 @@ Agentは、企画を書き、あなたの承認を待ち、素材が揃ったら
 
     <p>モデルを呼ぶのは2と5ですが、<span class="mark">2と5は別の種類の仕事です。</span>2は「書く」。文章を入れて JSON を返す、ツールなし。5は「指揮する」。素材を見て、道具をどの順にどう使うかを自分で決める。PART 6で作った、ツールを持つ Agent です。</p>
 
-    <p>4が人間の手にあるのは、素材を作る手段が Agent の外にあるからです。Colab の Wan2.1 は1本に数分かかり、生成サービスはクレジットを消費し、自分で撮るなら現場に行く。<span class="mark">どの手段でも、1回の生成で出るのは数秒で、それを何本も作る工程は人間の段取りです。</span>Agent に回させると、時間とクレジットが判断なしに溶けます。人間が7.3の手段で作り、Agent は待ちます。</p>
+    <p>4が人間の手にあるのは、素材を作る手段が Agent の外にあるからです。Colab の Wan2.1 は1本に数分かかり、生成サービスはクレジットを消費し、自分で撮るなら現場に行く。<span class="mark">どの手段でも、1回の生成で出るのは数秒で、それを何本も作る工程は人間の段取りです。</span>Agent に回させると、時間とクレジットが判断なしに溶けます。人間が7.2の手段で作り、Agent は待ちます。</p>
 
     <h3>固定の手順と、オーケストレーション</h3>
 
@@ -282,73 +324,175 @@ Agentは、企画を書き、あなたの承認を待ち、素材が揃ったら
 
 
   <section class="sec" id="s7-2">
-    <h2><span class="n">7.2</span>参考：Wan2.1を自分で動かしてみる（任意）</h2>
+    <h2><span class="n">7.2</span>素材の規約</h2>
 
-    <p><strong>任意です。</strong>生成サービスの裏で何が起きているかを見たい人は、Google ColabのGPU（T4）で動画生成モデル Wan2.1（1.3B）を1回動かしてみてください。プロンプトは1文、出力は約2秒・480p。GPUが取れない日もあり、生成に5〜10分かかるので、<span class="mark">授業中ではなく、空いた時間に</span>。</p>
+    <p>素材は、<span class="mark">何で作っても構いません。</span>生成サービス、自分のカメラ、フリー素材、どれでもよく、講師は特定のサービスを指定しませんし、契約もしません。規約は道具ではなく、次の3つの条件です。</p>
 
-    <p><a href="starter/part7/part7_practice_wan.ipynb" download><strong>part7_practice_wan.ipynb をダウンロード</strong></a>　→ Colab で開く（ブラウザの Colab か、VS Code の Google Colab 拡張のどちらでも）。ランタイムは <strong>T4 GPU</strong> を選びます。</p>
+    <table>
+      <thead><tr><th>条件</th><th>意味</th></tr></thead>
+      <tbody>
+        <tr><td><strong>出典が書ける</strong></td><td>どこから来た素材か、<code>SOURCES.txt</code> に書ける。書けない素材は使えない</td></tr>
+        <tr><td><strong>規約に従っている</strong></td><td>生成サービスは自分のアカウントで使い、そのサービスの利用規約（商用利用、クレジット）に従う。フリー素材は利用条件が明示されたものだけ</td></tr>
+        <tr><td><strong>権利を確かめた</strong></td><td>著作権、肖像権、商標。下の警告枠の項目を、1本ずつ確かめた</td></tr>
+      </tbody>
+    </table>
 
-    <div class="flow-steps">
-      <p><strong>1</strong>　セル1でライブラリを入れる（2〜3分）</p>
-      <p><strong>2</strong>　セル2の <code>PROMPT</code> を、駅に近づく車窓の1文にする。<span class="mark">決めるのはこの1行だけ</span></p>
-      <p><strong>3</strong>　セル3〜4を実行。重みのダウンロードと生成で <strong>5〜10分</strong></p>
-      <p><strong>4</strong>　できた <code>practice_cut.mp4</code> を見る</p>
-      <p><strong>5</strong>　<code>SEED</code> を変えてもう1回。<strong>同じ電車にならない</strong>ことを見る</p>
+    <p>出典ログの書き方は、素材の出所によって次のようにします。</p>
+
+    <table>
+      <thead><tr><th>出所</th><th>出典ログの書き方</th></tr></thead>
+      <tbody>
+        <tr><td>動画生成・画像生成サービス（Flow、Gemini、Kling、Wanなど）</td><td>サービス名と、使ったプロンプト</td></tr>
+        <tr><td>自分で撮った写真・動画</td><td><code>own photo</code> / <code>own video</code></td></tr>
+        <tr><td>フリー素材サイト（Pexels、Pixabayなど）</td><td>サイト名と素材のURL。クレジットが要るなら、その文言</td></tr>
+        <tr><td>付録EのColabノート（Wan2.1）で作った場合</td><td><code>Colab Wan2.1 (course notebook)</code> と、プロンプト</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="tag">完成動画を1本生成して出すのは、課題ではない</span>
+      Google Flow、Gemini、Wan、Klingなどで<strong>個々の素材</strong>（<code>cut1.mp4</code>、<code>cut2.mp4</code>…）を作るのは構いません。しかし、<span class="mark">そのサービスで完成させた1本の動画を <code>output.mp4</code> として提出するだけでは、課題を満たしません。</span>素材を見て、つなぎ、字幕を付け、検査するのは、あなたが改造した制作Agentの仕事です。<br><br>
+      <em>You may use Google Flow, Gemini, Wan, or another service to generate individual source clips. You may not submit a complete video generated entirely by one of these services as your agent output. Your modified production agent must inspect, assemble, subtitle, and check the final video.</em>
     </div>
 
-    <p>見てほしいのは3つです。</p>
+
+    <h3>「4本以上の異なる素材」の例</h3>
+
+    <p>「異なる」とは、<span class="mark">同じプロンプトの再生成ではない</span>ということです。生成動画だけで揃える必要はありません。むしろ混ぜた方が、編集Agentに判断させる余地が生まれます。</p>
 
     <table>
-      <thead><tr><th></th><th>気づくこと</th><th>工程での答え</th></tr></thead>
+      <thead><tr><th>素材の種類</th><th>例</th><th>出所</th></tr></thead>
       <tbody>
-        <tr><td>長さ</td><td>1回で2秒。60秒は20〜30回分</td><td>カットに分けて、秒数を決める</td></tr>
-        <tr><td>一貫性</td><td>SEEDを変えると別の電車、別の光</td><td>絵コンテで様式を揃え、承認で見る</td></tr>
-        <tr><td>制御</td><td>決めたのは1文。カメラも間も、モデルが決めた</td><td>プロンプトを人間が読んでから生成する</td></tr>
+        <tr><td>生成動画</td><td>夜明けのローカル線、上空から見たMarine Drive、屋台の湯気</td><td>生成サービス</td></tr>
+        <tr><td>自分で撮った動画</td><td>通学路、駅のホーム、家の窓からの雨、キャンパスの中庭</td><td>自分のカメラ</td></tr>
+        <tr><td>自分で撮った写真</td><td>祭りの飾り、食卓の料理。<code>add_to_timeline</code> の前に、ゆっくりズームする数秒の動画にして置く</td><td>自分のカメラ</td></tr>
+        <tr><td>生成画像を動かしたもの</td><td>生成した1枚の絵に、ゆっくりパンを付けた数秒</td><td>生成サービス</td></tr>
+        <tr><td>フリー素材</td><td>海の波、モンスーンの雲、都市の夜景の空撮</td><td>フリー素材サイト</td></tr>
+        <tr><td>画面収録・図</td><td>地図上でムンバイへ寄っていく動き、自作の簡単な図。<span class="mark">地図サービスの利用規約を確認</span></td><td>自分で作る</td></tr>
+        <tr><td>文字だけのカット</td><td>黒背景に一言。冒頭のタイトルや、締めの一文</td><td>自分で作る</td></tr>
       </tbody>
     </table>
 
-    <p>できたクリップは、本番の1カットに使って構いません。出典は <code>Colab Wan2.1 (course notebook)</code> と書きます。</p>
-  </section>
+    <p>たとえば「生成動画2本、自分で撮った動画1本、自分の写真を動かしたもの1本、締めの文字カット1本」で5本です。<span class="mark">素材の種類が違えば、長さも縦横も違います。</span>それを見て揃えるのが、編集Agentの仕事です（7.1）。</p>
 
-
-  <section class="sec" id="s7-3">
-    <h2><span class="n">7.3</span>素材の規約</h2>
-
-    <p>本番の素材は、次の4つの手段で作ったものだけを使います。</p>
-
-    <table>
-      <thead><tr><th></th><th>手段</th><th>出典ログの書き方</th></tr></thead>
-      <tbody>
-        <tr><td><strong>1</strong></td><td>授業のColabノート（Wan2.1）</td><td><code>Colab Wan2.1 (course notebook)</code></td></tr>
-        <tr><td><strong>2</strong></td><td>動画生成・画像生成サービスを、<strong>自分のアカウント</strong>で使う。<span class="mark">そのサービスの利用規約に従うこと</span></td><td>サービス名</td></tr>
-        <tr><td><strong>3</strong></td><td>自分で撮った写真・動画</td><td><code>own photo</code> / <code>own video</code></td></tr>
-        <tr><td><strong>4</strong></td><td>利用条件が明示されたフリー素材サイト（Pexels、Pixabayなど）の、商用可・帰属不要の素材</td><td>サイト名と素材のURL</td></tr>
-      </tbody>
-    </table>
-
-    <p>講師は特定のサービスを指定しません。契約もしません。<span class="mark">何を使うかは、あなたが利用規約を読んで決めます。</span></p>
+    <div class="warn">
+      <span class="tag">著作権と肖像権は、あなたが考える</span>
+      素材を置く前に、1本ずつ次を確かめてください。検査は「出典の行があるか」しか見ません。<span class="mark">中身が使ってよいものかは、機械には分かりません。</span>
+      <ul>
+        <li><strong>クレジット表記が必要か。</strong>出典はすべて <code>SOURCES.txt</code> に書きます。それに加えて、<span class="mark">利用条件が「公開する作品の中での帰属表示」を求めている場合（CC BYなど）は、動画の中にもクレジットを出します。</span>たとえば最後にクレジットのカット（<code>Video: 撮影者名 / サイト名</code>）を入れます。講師だけが見る <code>SOURCES.txt</code> に書くだけでは、その条件を満たしません。表記が必要なのに出せないなら、その素材は使いません</li>
+        <li><strong>人の顔。</strong>自分で撮った動画に通行人や友人の顔が写っているなら、本人の了解があるか、顔が判別できない画角にします。生成プロンプトには「no real people's faces」を残します</li>
+        <li><strong>ロゴ、看板、キャラクター、映画のポスター。</strong>街の映像には自然に写り込みます。画面の中心に来るカットは避けます。映画や音楽の素材そのものは使いません</li>
+        <li><strong>音。</strong>ひな形の音声はナレーションだけで、<strong>標準のAgentはBGMを合成できません</strong>。BGMは任意で、足すなら <code>video_tools.py</code> の改造が必要です（付録D）。その場合も、商用可・帰属条件を確認した音源に限り、<code>SOURCES.txt</code> に <code>music | …</code> の行を足します</li>
+        <li><strong>地図・観光サイトの画像。</strong>スクリーンショットは、そのサービスの規約が許す範囲でだけ使います</li>
+      </ul>
+      迷ったら、使わないか、7.5の公開判断で講師に聞いてください。<strong>「AIが作ったから大丈夫」は理由になりません。</strong>生成サービスにも、商用利用やクレジットについて規約があります。
+    </div>
 
     <h3>出典ログ SOURCES.txt</h3>
 
-    <p><code>assets/SOURCES.txt</code> に、<strong>カットごとに1行</strong>書きます。</p>
+    <p><code>assets/SOURCES.txt</code> に、<strong>カットごとに1行以上</strong>書きます。1行目は出所・プロンプト・日付。クレジットやライセンス、顔の処理など書くことがあれば、<span class="mark">同じ <code>cutN</code> で始まる行を何行でも足します。</span>1行に詰め込む必要はありません。</p>
 
 <pre><code>cut1 | Colab Wan2.1 (course notebook) | slow pan over a Mumbai suburban train at dawn, wide shot | 2026-09-10
 cut2 | Kling | Marine Drive at night from above, streetlights curving along the bay | 2026-09-10
 cut3 | own video | - | 2026-09-08
-cut4 | Pexels: https://www.pexels.com/video/... | - | 2026-09-10</code></pre>
+cut4 | Pexels: https://www.pexels.com/video/... | - | 2026-09-10
+cut5 | own photo (slow zoom) | - | 2026-09-08
+cut6 | Pixabay: https://pixabay.com/videos/... | - | 2026-09-10
+cut6 | credit | "Video by NAME from Pixabay", shown in the final cut
+cut6 | license | Pixabay Content License
+cut3 | note | passers-by not identifiable, shot from behind</code></pre>
 
-    <p>検査（7.4.4）は、この行が無いカットを落とします。<span class="mark">出典を書けない素材は、使えない素材です。</span></p>
+    <p>クレジット表記が必要な素材は、上の cut6 のように、<strong>必要な文言と、動画のどこに出したか</strong>を <code>credit</code> の行に書きます。検査が見るのは「その <code>cutN</code> で始まる行があるか」だけで、行数は問いません。</p>
+
+    <p>検査（7.4.6）は、この行が無いカットを落とします。<span class="mark">出典を書けない素材は、使えない素材です。</span></p>
+  </section>
+
+
+  <section class="sec" id="s7-3">
+    <h2><span class="n">7.3</span>設計と改造：自分の制作Agentにする</h2>
+
+    <p>ひな形はそのまま動きます。しかし、<span class="mark">そのまま動かすのは課題ではありません。</span>課題は「動画を作る」ではなく、「自分の動画のために制作Agentを改造し、動かす」です。PART 3〜5でやったように、Clineに改造を頼みます。</p>
+
+    <h3><span class="n">7.3.1</span>動画を設計する（人間）</h3>
+
+    <p>コードを触る前に、次を決めて紙に書きます。Agentは決めません。</p>
+
+    <table>
+      <thead><tr><th>決めること</th><th>例</th></tr></thead>
+      <tbody>
+        <tr><td>Theme</td><td>Make the world want to visit Mumbai（題材は自由。街の食、ローカル線と日常、Marine Driveと海、建築と歴史、映画産業、技術と教育、市場、夜、未来。組み合わせてもよい）</td></tr>
+        <tr><td>Target audience</td><td>People outside India who may visit Mumbai／University students outside India</td></tr>
+        <tr><td>要点（Key Point）、3つ以上</td><td>伝える文と、字幕に必ず出す短い言葉の組（7.0の枠）。言葉は短い固有名詞や数字が向く。事実を含むなら出典を控える</td></tr>
+        <tr><td>Required subtitles</td><td>必ず画面に出す言葉（例：<code>Study in Mumbai</code>）</td></tr>
+        <tr><td>Duration</td><td>30〜60秒の範囲で、自分の動画の尺（例：40〜50秒）</td></tr>
+        <tr><td>Success conditions</td><td>検査が測ること。次の7.3.2で2つ以上決める</td></tr>
+      </tbody>
+    </table>
+
+    <h3><span class="n">7.3.2</span>必須の変更</h3>
+
+    <p>次の4つは全員が行います。テーマを書き換えるだけでは足りません。<span class="mark">Agentの動作を1つ以上変える</span>ことが必須です。</p>
+
+    <table>
+      <thead><tr><th></th><th>変えること</th><th>どこを</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>テーマと対象者</td><td><code>THEME</code>、<code>AUDIENCE</code></td></tr>
+        <tr><td><strong>2</strong></td><td>要点を3つ以上、自分の動画に合わせて</td><td><code>KEY_POINTS</code></td></tr>
+        <tr><td><strong>3</strong></td><td>成功条件を<strong>2つ以上</strong>追加または変更</td><td><code>check</code> と、その前提となる定数</td></tr>
+        <tr><td><strong>4</strong></td><td>Agentの動作を<strong>1つ以上</strong>追加</td><td>ノード、エッジ、ツール、<code>EDITOR_SYSTEM</code> のいずれか</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>3の例</strong>（成功条件）：尺を自分の範囲（例：40〜50秒）に収める。必須字幕をすべて含む。字幕1行の字数に上限を設ける。同じ素材を2回以上使わない。ナレーションの語数に下限を設ける。特定の表現やロゴを使わない。ひな形にすでにある検査（30〜60秒、4本以上、要点、出典、ナレーション長）を足しても、条件の追加にはなりません。</p>
+
+    <p><strong>4の例</strong>（Agentの動作）：新しいHuman approvalを追加する（例：素材一覧を見た直後に「続ける／止める」を聞く）。素材が不足したときの処理を追加する（例：足りないカットを人間に知らせて再度待つ）。Toolの実行順序を制限する。Agentにカットごとの編集理由を <code>run/</code> に保存させる。公開前チェックリストを追加する。差し戻し回数の上限を超えたときの処理を変える。</p>
+
+    <div class="note">
+      <span class="tag">記録はプログラムが強制する</span>
+      ひな形は、実行のたびに <code>run/EXECUTION_TRACE.jsonl</code> を書きます。絵コンテの生成（版ごとに <code>run/STORYBOARD_V1.json</code> …）、人間の承認・差し戻しとその理由、素材の一覧、Tool呼び出しの1件ずつ、検査の合否、公開判断が、起きた順に1行1イベントで残ります。<span class="mark">LLMに「記録して」と頼んでいるのではなく、各ノードのPythonが、起きた直後に追記しています。</span>あなたが動作を足すときも同じです。新しい承認や検査を足したら、<code>trace("...")</code> を1行添えて、同じファイルに残してください。PART 6の「自由に判断させる範囲を、判断させない層で囲む」と同じ考え方です。
+    </div>
+
+    <h3><span class="n">7.3.3</span>Clineで改造する</h3>
+
+    <p>PART 3〜5と同じく、<strong>Planで計画を読んでからAct</strong>です。最初の依頼は、たとえばこうです。</p>
+
+    <div class="prompt"><span class="tag">CLINE / PLAN</span>Read the complete project in agewec-mumbai/ before editing anything.
+
+I want to adapt this video production agent for a video that encourages
+international students to study in Mumbai.
+
+Requirements:
+1. Change THEME and AUDIENCE, and replace KEY_POINTS with my three points:
+   (a) ..., (b) ..., (c) ...
+2. Add a check that rejects the video if no subtitle contains "Study in Mumbai".
+3. Add a check that rejects any subtitle longer than 45 characters.
+4. Add a second human approval right after the clips are listed: show the
+   list_assets result and ask "continue / stop" before the editor runs.
+   Record that decision with trace(), like the existing approvals.
+
+Do not touch agent/config.py.
+First explain your plan and list the files you will change. Do not edit files yet.</div>
+
+    <p>Planを読んで、変える場所と理由が自分の設計（7.3.1）と合っていればActへ進みます。合っていなければ、指摘して書き直させます。<span class="mark">Clineが何をしたかは、あなたが説明できなければなりません。</span>7.6の <code>CHANGE_REPORT.txt</code> に書くのは、あなたです。</p>
+
+    <div class="note">
+      <span class="tag">変えた行に印を付ける</span>
+      改造した箇所には <code># CHANGED:</code> で始まるコメントを1行添えてください。講師はそこを読みます。Clineに「変更した箇所すべてに <code># CHANGED: 理由</code> のコメントを付けて」と頼めば済みます。
+    </div>
+
+    <p>改造したら、<code>python agent/agent_video.py</code> で一度動かし、最初の絵コンテが出るところまで確かめてから、素材作りに進みます。動かなければ、エラーをClineに貼って直します（PART 5）。</p>
   </section>
 
 
   <section class="sec" id="s7-4">
-    <h2><span class="n">7.4</span>本番：制作Agentを動かす</h2>
+    <h2><span class="n">7.4</span>本番：改造した制作Agentを動かす</h2>
 
-    <h3><span class="n">7.4.1</span>要点3つを決める（人間）</h3>
+    <h3><span class="n">7.4.1</span>要点を確かめる（人間）</h3>
 
     <p><code>agent/agent_video.py</code> の冒頭を開きます。</p>
 
-<pre><code>THEME = &quot;AGEWEC Mumbai: why the world should come and see Mumbai&quot;
+<pre><code>THEME = &quot;AGEWEC Mumbai: make the world want to visit Mumbai&quot;
+AUDIENCE = &quot;People outside India who may visit Mumbai&quot;
 # Each key point: (the statement, the words that must appear in a subtitle for it to count)
 KEY_POINTS = [
     (&quot;The suburban railway carries about 7 million passengers a day&quot;, &quot;7 million&quot;),
@@ -356,11 +500,12 @@ KEY_POINTS = [
     (&quot;Street food: vada pav and pav bhaji&quot;, &quot;vada pav&quot;),
 ]
 MAX_SECONDS = 60          # the check: the video must be at most this long
-MIN_SECONDS = 20          # and at least this long
+MIN_SECONDS = 30          # and at least this long
+MIN_CLIPS = 4             # the check: at least this many DIFFERENT clips on the timeline
 NUM_CUTS = 6              # 5 to 8 works well
-MAX_ROUNDS = 3            # how many times the loop may go back to draft</code></pre>
+MAX_ROUNDS = 3            # how many times the check may send the editor back</code></pre>
 
-    <p><code>KEY_POINTS</code> を自分の3つに書き換えます。各行は「伝える文」と「字幕に必ず入る言葉」の組です。<span class="mark">2つ目の言葉を検査が探します。</span>短い固有名詞や数字が向いています。</p>
+    <p>7.3で改造済みなら、ここは自分の値になっているはずです。<code>KEY_POINTS</code> は自分の3つ以上です。各行は「伝える文」と「字幕に必ず入る言葉」の組です。<span class="mark">2つ目の言葉を検査が探します。</span>短い固有名詞や数字が向いています。</p>
 
     <div class="warn">
       <span class="tag">事実には根拠を</span>
@@ -392,10 +537,13 @@ Run from the agewec-mumbai folder:   python agent/agent_video.py
     <h3><span class="n">7.4.3</span>企画と承認</h3>
 
 <pre><code>def draft(state: State) -&gt; State:
-    &quot;&quot;&quot;The model writes the storyboard and the narration. It does not touch any file.&quot;&quot;&quot;
     feedback = state.get(&quot;feedback&quot;, &quot;&quot;)
+    min_total = MIN_SECONDS + FADE * (NUM_CUTS - 1)
     prompt = f&quot;&quot;&quot;You are planning a PR video of at most {MAX_SECONDS} seconds.
+The cuts will be joined with {FADE}-second crossfades, which shorten the video, so the cut lengths
+must add up to at least {min_total:.0f} seconds and at most {MAX_SECONDS} seconds.
 Theme: {THEME}
+Audience: {AUDIENCE}
 Key points that MUST appear, each in at least one subtitle:
 {chr(10).join(&#x27;- &#x27; + k for k, _ in KEY_POINTS)}
 
@@ -403,30 +551,54 @@ Return ONLY a JSON object with:
 - &quot;storyboard&quot;: a list of exactly {NUM_CUTS} cuts. Each cut: {{&quot;cut&quot;: n, &quot;seconds&quot;: 5-10, &quot;prompt&quot;: &quot;a text-to-video prompt for this shot, one sentence, no real people&#x27;s faces, no logos&quot;, &quot;subtitle&quot;: &quot;one short line shown on screen&quot;}}
 - &quot;narration&quot;: the voice-over for the whole video, at most {int(MAX_SECONDS * 2.3)} words, plain English.
 {(&#x27;Feedback from the human reviewer, apply it: &#x27; + feedback) if feedback else &#x27;&#x27;}&quot;&quot;&quot;
-    text = model.invoke(prompt).content
-    m = re.search(r&quot;\{.*\}&quot;, text, re.S)
-    data = json.loads(m.group(0))
+    data = None
+    for attempt in range(1, 3):                       # the model&#x27;s JSON is not always valid: try twice
+        text = model.invoke(prompt).content
+        try:
+            m = re.search(r&quot;\{.*\}&quot;, text, re.S)
+            if not m:
+                raise ValueError(&quot;no JSON object in the reply&quot;)
+            data = json.loads(m.group(0))
+            if not isinstance(data.get(&quot;storyboard&quot;), list) or &quot;narration&quot; not in data:
+                raise ValueError(&quot;JSON has no &#x27;storyboard&#x27; list or no &#x27;narration&#x27;&quot;)
+            break
+        except Exception as e:
+            trace(&quot;storyboard_error&quot;, attempt=attempt, error=str(e), model_output=text[:2000])
+            print(f&quot;  [draft] attempt {attempt}: the model&#x27;s reply was not a valid storyboard ({e})&quot;)
+    if data is None:
+        raise RuntimeError(&quot;The model did not return a valid storyboard JSON after 2 attempts. &quot;
+                           &quot;Run the agent again; the replies are in run/EXECUTION_TRACE.jsonl.&quot;)
+    version = state.get(&quot;storyboard_version&quot;, 0) + 1
+    trace(&quot;storyboard_generated&quot;, version=version, feedback_applied=feedback,
+          storyboard=data[&quot;storyboard&quot;], narration=data[&quot;narration&quot;])
+    (RUN_DIR / f&quot;STORYBOARD_V{version}.json&quot;).write_text(
+        json.dumps(data, indent=2, ensure_ascii=False), encoding=&quot;utf-8&quot;)
     return {**state, &quot;storyboard&quot;: data[&quot;storyboard&quot;], &quot;narration&quot;: data[&quot;narration&quot;],
-            &quot;round&quot;: state.get(&quot;round&quot;, 0) + 1}
+            &quot;storyboard_version&quot;: version, &quot;feedback&quot;: &quot;&quot;}
 
 
 def approve_storyboard(state: State) -&gt; State:
     &quot;&quot;&quot;Interrupt 1: the human reads every prompt before any clip is generated.&quot;&quot;&quot;
     lines = [f&quot;cut{c[&#x27;cut&#x27;]}  {c[&#x27;seconds&#x27;]}s  subtitle: {c[&#x27;subtitle&#x27;]}\n        prompt: {c[&#x27;prompt&#x27;]}&quot;
              for c in state[&quot;storyboard&quot;]]
+    total = sum(c[&quot;seconds&quot;] for c in state[&quot;storyboard&quot;])
     answer = interrupt({
         &quot;storyboard&quot;: &quot;\n&quot;.join(lines),
         &quot;narration&quot;: state[&quot;narration&quot;],
+        &quot;total_seconds&quot;: f&quot;{total} (about {total - FADE * (len(lines) - 1):.0f}s after crossfades; &quot;
+                         f&quot;the video must be {MIN_SECONDS}-{MAX_SECONDS}s)&quot;,
         &quot;question&quot;: &quot;Approve this storyboard? (approve / revise / stop)&quot;,
     })
+    trace(&quot;human_decision&quot;, stage=&quot;storyboard&quot;, version=state.get(&quot;storyboard_version&quot;),
+          decision=answer[&quot;decision&quot;], feedback=answer.get(&quot;feedback&quot;, &quot;&quot;))
     return {**state, &quot;decision&quot;: answer[&quot;decision&quot;], &quot;feedback&quot;: answer.get(&quot;feedback&quot;, &quot;&quot;)}</code></pre>
 
-    <p><code>draft</code> はモデルを呼ぶ唯一のノードです。JSONで絵コンテと原稿を返させ、ファイルには触らせません。<code>approve_storyboard</code> で止まり、<span class="mark">あなたはプロンプトを1行ずつ読みます。</span>ここで見るのは：</p>
+    <p><code>draft</code> は「書く」ノードです。JSONで絵コンテと原稿を返させ、動画のファイルには触らせません。モデルの返事がJSONとして壊れていることがあるので、2回まで試し、それでも駄目なら理由を <code>run/EXECUTION_TRACE.jsonl</code> に残して止まります。返ってきたJSONは、Pythonが <code>run/STORYBOARD_V1.json</code> として保存し、<code>trace()</code> で実行記録にも残します。モデルに保存を頼んではいません。<code>approve_storyboard</code> で止まり、<span class="mark">あなたはプロンプトを1行ずつ読みます。</span>ここで見るのは：</p>
 
     <ul>
       <li>要点3つが、どこかのカットの字幕に入っているか</li>
-      <li>プロンプトに、人の顔・著名人・ロゴが混ざっていないか（7.3）</li>
-      <li>秒数の合計が60を超えていないか。<strong>超えていたら revise で戻す</strong></li>
+      <li>プロンプトに、人の顔・著名人・ロゴが混ざっていないか（7.2）</li>
+      <li>秒数の合計が足りているか。カットは0.6秒ずつ重ねてつなぐので、<span class="mark">完成尺は「合計 − 0.6 ×（カット数 − 1）」</span>です。6カットで30秒に届かせるには合計33秒以上が要ります。承認画面の <code>total_seconds</code> にこの計算が出ます。<strong>外れていたら revise で戻す</strong></li>
     </ul>
 
     <p>気になる点があれば <code>revise</code> と、直してほしいことを1行。モデルは指摘を受けて書き直します。</p>
@@ -438,13 +610,14 @@ def approve_storyboard(state: State) -&gt; State:
     expected = [f&quot;assets/cut{c[&#x27;cut&#x27;]}.mp4&quot; for c in state[&quot;storyboard&quot;]]
     answer = interrupt({
         &quot;instruction&quot;: &quot;Generate each cut with the allowed tools, save them as the files below, &quot;
-                       &quot;and write one line per cut in assets/SOURCES.txt. Missing cuts are fine; &quot;
+                       &quot;and write at least one line per cut in assets/SOURCES.txt. Missing cuts are fine; &quot;
                        &quot;the editor will work with what is there. Then type: done&quot;,
         &quot;files&quot;: expected,
     })
+    trace(&quot;human_decision&quot;, stage=&quot;clips&quot;, decision=answer[&quot;decision&quot;])
     return {**state, &quot;decision&quot;: answer[&quot;decision&quot;]}</code></pre>
 
-    <p>止まっている間に、あなたは7.3の手段で各カットを作り、<code>assets/cut1.mp4 …</code> に置き、<code>SOURCES.txt</code> に1行ずつ書きます。<span class="mark">全部揃わなくても構いません。</span>無いカットは、編集Agentが「無い」と知ったうえで組み立てます。<code>done</code> と打つと次へ進みます。</p>
+    <p>止まっている間に、あなたは7.2の条件の範囲で各カットを作り、<code>assets/cut1.mp4 …</code> に置き、<code>SOURCES.txt</code> に出典を書きます（7.2）。<span class="mark">全部揃わなくても構いません。</span>無いカットは、編集Agentが「無い」と知ったうえで組み立てます。<code>done</code> と打つと次へ進みます。<code>assets/</code> に1本も無いときは <code>done</code> を受け付けません。</p>
 
     <h3><span class="n">7.4.5</span>編集：オーケストレーション</h3>
 
@@ -468,6 +641,9 @@ def list_assets() -&gt; str:
 def contact_sheet() -&gt; str:
     &quot;&quot;&quot;Make one image with a frame from each clip (first, middle, last) so you can see what each cut shows. Returns the image path.&quot;&quot;&quot;
     paths = sorted(vt.ASSETS.glob(&quot;cut*.mp4&quot;))
+    if not paths:
+        _log(&quot;contact_sheet -&gt; ERROR: no clips in assets/&quot;)
+        return &quot;ERROR: No clips were found in assets/. Add at least four clips (cut1.mp4, cut2.mp4, ...).&quot;
     vt.BUILD.mkdir(exist_ok=True)
     tiles = []
     for p in paths:
@@ -539,39 +715,58 @@ def add_narration(text: str) -&gt; str:
     return f&quot;output.mp4 written. audio {audio_len:.1f}s, video {video_len:.1f}s&quot;
 
 
-EDIT_TOOLS = [list_assets, contact_sheet, add_to_timeline, clear_timeline, join_timeline, add_subtitles, add_narration]</code></pre>
+# list_assets and contact_sheet are run by the edit node BEFORE the agent starts (their results go into
+# its first message), so the agent itself only gets the editing tools.
+EDIT_TOOLS = [add_to_timeline, clear_timeline, join_timeline, add_subtitles, add_narration]</code></pre>
 
-    <p>Agent本体は、PART 6の <code>create_react_agent</code> と同じです。違うのは、渡す道具と、指示と、<strong>最初のメッセージに画像が入る</strong>ことです。共有サーバの27Bは画像が読めるので、各カットの最初・中間・最後のフレームを並べた一覧（<code>contact_sheet</code>）を見せてから判断させます。</p>
+    <div class="note">
+      <span class="tag">字幕を描くのは video_tools.py</span>
+      <code>add_subtitles</code> が呼んでいる <code>vt.burn_subtitles</code> が、字幕を作ります。字幕1行ごとにPILで透明なPNGを描き、ffmpegの <code>overlay</code> で指定区間だけ動画に重ねる仕組みです。<span class="mark">仕組み、制約（英語のみ、1行40px固定）、手元での単体テスト、フォント変更やSRT出力などの改造は、付録Dにまとめてあります。</span><a href="appendix-d.html">付録D　video_tools.py の使い方</a>
+    </div>
 
-<pre><code>EDITOR_SYSTEM = f&quot;&quot;&quot;You are the editor of a short PR video. You have tools to inspect the clips and to build the video.
+    <p>Agent本体は、PART 6の <code>create_react_agent</code> と同じです。違いは、渡す道具と、指示と、<strong>最初のメッセージに素材の一覧と画像が入る</strong>ことです。<code>list_assets</code> と <code>contact_sheet</code> は、Agentが選んで呼ぶ道具ではなく、<span class="mark">編集ノードのPythonが先に実行する固定の前処理</span>です。その結果（各カットの長さ・縦横・出典の有無と、最初・中間・最後のフレームを並べた一覧画像）を最初のメッセージに入れて渡し、Agentは編集の道具だけを呼びます。共有サーバの27Bは画像が読めるので、見てから決められます。</p>
+
+<pre><code>EDITOR_SYSTEM = f&quot;&quot;&quot;You are the editor of a short PR video. You have tools to build the video.
 Work like this:
-1. Call list_assets, then contact_sheet, and look at the sheet before deciding anything.
+1. Your first message contains the list of available clips (with lengths, sizes and whether each has a
+   source line) and a contact sheet showing the first, middle and last frame of every clip. Look at
+   them before deciding anything.
 2. Decide the order and the length of each clip. Follow the storyboard where the clips allow it;
    if a clip is missing, too short, or does not show what its prompt asked for, say so and adapt
    (reorder, reuse a good clip for two beats, drop a cut).
 3. Build the timeline with add_to_timeline, then join_timeline, then add_subtitles, then add_narration.
-4. The finished video must be between {MIN_SECONDS} and {MAX_SECONDS} seconds.
+4. The finished video must be between {MIN_SECONDS} and {MAX_SECONDS} seconds and use at least
+   {MIN_CLIPS} different clips. Joins take {FADE}s each, so plan the clip lengths accordingly.
    Each of these phrases must appear in some subtitle: {&#x27;, &#x27;.join(repr(w) for _, w in KEY_POINTS)}.
    The narration must not be longer than the video: cut words before you cut clips.
 5. Finish with a short summary of the decisions you made and why, especially where you departed from the storyboard.
-Never invent clip numbers that list_assets did not return.&quot;&quot;&quot;
+Never invent clip numbers that are not in the clip list.&quot;&quot;&quot;
 
 editor = create_react_agent(model, et.EDIT_TOOLS, prompt=EDITOR_SYSTEM)
 
 
 def edit(state: State) -&gt; State:
-    et.LOG.clear()
-    et._timeline.clear()
+    rnd = state.get(&quot;edit_rounds&quot;, 0) + 1
+    et._timeline.clear()                      # the timeline starts empty each round ...
+    et.LOG.append(f&quot;===== EDIT ROUND {rnd} =====&quot;)   # ... but the log keeps every round
+    # Fixed pre-processing, done by Python, not chosen by the model: list the clips and make the sheet.
+    assets = et.list_assets.invoke({})
+    sheet = et.contact_sheet.invoke({})
+    trace(&quot;assets_detected&quot;, round=rnd, assets=json.loads(assets))
     brief = {&quot;storyboard&quot;: state[&quot;storyboard&quot;], &quot;narration&quot;: state[&quot;narration&quot;]}
-    text = &quot;Storyboard and narration as approved:\n&quot; + json.dumps(brief, indent=1)
+    text = (&quot;Storyboard and narration as approved:\n&quot; + json.dumps(brief, indent=1)
+            + &quot;\n\nClips actually available (from list_assets):\n&quot; + assets)
     if state.get(&quot;feedback&quot;):
         text += &quot;\n\nThe last attempt failed the check. Fix these:\n&quot; + state[&quot;feedback&quot;]
-    # The contact sheet is made first so the model can SEE the clips in its first message.
-    sheet = et.contact_sheet.invoke({})
     msg = HumanMessage(content=[{&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: text}, et.image_message(sheet)])
     result = editor.invoke({&quot;messages&quot;: [msg]}, {&quot;recursion_limit&quot;: 40})
     summary = result[&quot;messages&quot;][-1].content
-    return {**state, &quot;edit_summary&quot;: summary, &quot;edit_rounds&quot;: state.get(&quot;edit_rounds&quot;, 0) + 1}</code></pre>
+    et.LOG.append(f&quot;EDITOR SUMMARY (round {rnd}): {summary}&quot;)
+    trace(&quot;edit_finished&quot;, round=rnd, summary=summary,
+          timeline=[{&quot;cut&quot;: c[&quot;cut&quot;], &quot;seconds&quot;: c[&quot;seconds&quot;], &quot;start&quot;: c[&quot;start&quot;]} for c in et._timeline])
+    return {**state, &quot;edit_summary&quot;: summary, &quot;edit_rounds&quot;: rnd}</code></pre>
+
+    <p>再編集（検査で落ちて戻ったとき）は、タイムラインは空にしますが、<code>et.LOG</code> は消しません。<code>===== EDIT ROUND 2 =====</code> の見出しを足して続けるので、<span class="mark">1回目に何をして、検査でどう落ち、2回目でどう直したか</span>が1つのログに残ります。</p>
 
     <p>指示（<code>EDITOR_SYSTEM</code>）に書いてあるのは、順番の決め方ではありません。<span class="mark">見てから決めること、絵コンテからずれたら理由を言うこと、守る制約、最後に決定をまとめること</span>です。順番そのものは、素材を見た Agent が決めます。</p>
 
@@ -598,21 +793,27 @@ def edit(state: State) -&gt; State:
         for statement, words in KEY_POINTS:
             if words.lower() not in subs_text:
                 problems.append(f&quot;no subtitle mentions &#x27;{words}&#x27; (key point: {statement})&quot;)
+        unique_cuts = {c[&quot;cut&quot;] for c in et._timeline}
+        if len(unique_cuts) &lt; MIN_CLIPS:
+            problems.append(f&quot;only {len(unique_cuts)} different clips were used; at least {MIN_CLIPS} are required&quot;)
         sources = vt.read_sources()
         for c in et._timeline:
             if c[&quot;cut&quot;] not in sources:
                 problems.append(f&quot;cut{c[&#x27;cut&#x27;]} is on the timeline but has no line in assets/SOURCES.txt&quot;)
     text = &quot;OK&quot; if not problems else &quot;\n&quot;.join(&quot;- &quot; + p for p in problems)
     print(&quot;\nCHECK:&quot;, text)
+    et.LOG.append(&quot;CHECK: &quot; + (&quot;PASSED&quot; if not problems else &quot;FAILED\n&quot; + text))
+    trace(&quot;check_completed&quot;, round=state.get(&quot;edit_rounds&quot;), passed=not problems, problems=problems)
     return {**state, &quot;check_output&quot;: text, &quot;passed&quot;: not problems, &quot;feedback&quot;: &quot;&quot; if not problems else text}</code></pre>
 
-    <p>検査は固定の手順です。編集Agentが何を決めていても、ここは同じ物差しで測ります。落ちた理由は文で出て、<code>feedback</code> として <code>edit</code> に戻ります（<code>MAX_ROUNDS</code> 回まで）。</p>
+    <p>検査は固定の手順です。編集Agentが何を決めていても、ここは同じ物差しで測ります。7.3.2で加えた成功条件も、この <code>problems</code> に文で足す形にします。落ちた理由は文で出て、<code>feedback</code> として <code>edit</code> に戻ります（<code>MAX_ROUNDS</code> 回まで）。</p>
 
     <table>
       <thead><tr><th>検査</th><th>落ちたとき編集Agentがやること</th></tr></thead>
       <tbody>
         <tr><td>output.mp4 ができているか</td><td>道具の順序をやり直す</td></tr>
-        <tr><td>尺が20〜60秒か</td><td>クリップを削る／伸ばす</td></tr>
+        <tr><td>尺が30〜60秒か</td><td>クリップを削る／伸ばす</td></tr>
+        <tr><td>異なる素材を4本以上使ったか</td><td>使っていないカットを足す。無いなら人間が素材を足す</td></tr>
         <tr><td>ナレーションが動画より短いか</td><td>原稿を削ってから音声を作り直す</td></tr>
         <tr><td>要点の言葉が字幕にあるか</td><td>字幕を直す</td></tr>
         <tr><td>使ったカット全部に出典ログがあるか</td><td>これだけは人間。<code>SOURCES.txt</code> に書く</td></tr>
@@ -623,11 +824,13 @@ def edit(state: State) -&gt; State:
 
 <pre><code>python agent/agent_video.py</code></pre>
 
-    <p>最初に <code>draft</code> が数十秒かかります（27Bの応答待ち）。素材を置いて <code>done</code> と打つと、編集Agentが道具を呼ぶ様子が <code>[tool] …</code> の行で流れます。最後に <code>output.mp4</code> と、Agentの決定の要約、ツールのログが出て、公開判断で止まります。</p>
+    <p>最初に <code>draft</code> が数十秒かかります（27Bの応答待ち）。素材を置いて <code>done</code> と打つと、編集Agentが道具を呼ぶ様子が <code>[tool] …</code> の行で流れます。最後に <code>output.mp4</code> と、Agentの決定の要約、ツールのログが出て、公開判断で止まります。公開判断は <code>approve</code> か <code>stop</code> だけです。ここから絵コンテには戻れません。</p>
+
+    <p>終了すると、<code>EDIT_LOG.txt</code>（全ラウンドのTool呼び出しと検査結果）と <code>run/EXECUTION_TRACE.jsonl</code>（起きたことすべての時系列）が残ります。<span class="mark">この2つが7.6の「制作の記録」です。</span>再実行すると、前回の <code>run/</code> の中身は <code>run/previous_日時/</code> へ移り、新しい記録が始まります。</p>
 
     <div class="note">
-      <span class="tag">必ず1回は revise を通す</span>
-      1回目の絵コンテに文句がなくても、何か1つ指摘して戻してください。<span class="mark">戻せることを確かめるのが目的です。</span>PART 6と同じで、承認の仕組みは差し戻せるように作ります。
+      <span class="tag">revise を1回は通す</span>
+      この課題では、絵コンテの承認で <code>revise</code> を少なくとも1回使ってください。<span class="mark">ワークフローが企画ノードへ戻れることを、自分の目で確かめるためです。</span>1回目の絵コンテが十分でも、具体的な改善点を1つ挙げて戻します。「不満を探す」のではなく、戻り経路の動作確認です。差し戻しと理由は <code>run/EXECUTION_TRACE.jsonl</code> に残り、<code>CHANGE_REPORT.txt</code> の8に書く材料になります。
     </div>
   </section>
 
@@ -654,38 +857,115 @@ def edit(state: State) -&gt; State:
   <section class="sec" id="s7-6">
     <h2><span class="n">7.6</span>提出と相互評価</h2>
 
-    <p>提出は2つに分かれます。<strong>動画は観客に、工程は講師に</strong>見せます。</p>
+    <div class="warn">
+      <span class="tag">提出物は3つ</span>
+      <strong>The final product is not only the video. It is the modified agent, the production process, and the video.</strong><br>
+      <span class="mark">改造したAgent、制作の記録、完成動画。3つ揃って最終課題です。</span>Agentのプログラムを提出しない動画は、最高で30点です。
+    </div>
+
+    <p>提出は2つに分かれます。<strong>動画は観客に、Agentと記録は講師に</strong>見せます。</p>
 
     <table>
       <thead><tr><th>何を</th><th>どこへ</th><th>誰が見る</th><th>観点</th></tr></thead>
       <tbody>
-        <tr><td><code>output.mp4</code> を Google Drive に置き、共有を「リンクを知っている全員」にして、その URL</td><td>nmims2026 の <strong>Assignment 2</strong> カード</td><td>クラスメイト7人</td><td>Q1〜Q8。世界の観客として「ムンバイに行きたくなるか」</td></tr>
-        <tr><td><code>agewec-mumbai</code> フォルダの zip（<code>config.py</code> を除く。<code>assets/</code>、<code>SOURCES.txt</code>、<code>EDIT_LOG.txt</code>、<code>REPORT.txt</code> を含む）</td><td>Google フォーム</td><td>講師</td><td>工程の分解、承認の位置、戻り先、出典</td></tr>
+        <tr><td><code>output.mp4</code> を Google Drive または OneDrive に置き、その閲覧URL</td><td>nmims2026 の <strong>Assignment 2</strong> カード</td><td>クラスメイト7人</td><td>Q1〜Q8。世界の観客として「ムンバイに行きたくなるか」</td></tr>
+        <tr><td><code>PART7_学籍番号.zip</code>（改造したAgent、<code>run/</code> の実行記録、<code>EDIT_LOG.txt</code>、<code>assets/SOURCES.txt</code>、<code>CHANGE_REPORT.txt</code>）</td><td>Google フォーム（講師のみ閲覧）</td><td>講師</td><td>改造の内容、Agentの判断、人間の判断、検査、出典</td></tr>
       </tbody>
     </table>
 
-    <h3>REPORT.txt に書くこと</h3>
+    <p>動画とプログラムを分けるのは、相互評価では動画の内容と魅力だけを見せ、<span class="mark">プログラムやログはクラスメイトに公開しない</span>ためです。</p>
+
+    <h3>1　完成動画の共有</h3>
+
+    <p>Google Drive または OneDrive にアップロードし、共有を次のとおりに設定します。</p>
+
+<pre><code>Upload output.mp4 to Google Drive or OneDrive.
+
+Set the sharing permission to:
+- Anyone with the link can view
+- No sign-in required
+- Viewer permission only
+
+Do not use:
+- Restricted access
+- Access limited to your university
+- Edit permission
+
+Keep the link available for at least one month after submission.</code></pre>
+
+    <p>提出する前に、<span class="mark">ブラウザのシークレット（プライベート）ウィンドウでそのURLを開いてください。</span>ログインなしで再生できれば合格です。「自分のアカウントでは見えるが、他人には見えない」動画は、評価されません。</p>
+
+    <p>評価システムには、Student ID、Video title、Short description（1〜2行）、動画URL、素材の生成に使ったツールを入力し、送信前に次を確認します。</p>
+
+<pre><code>□ I confirmed that the video link opens without signing in (Incognito / Private window).
+□ I set the permission to "Anyone with the link can view".
+□ I did not grant edit permission.
+□ I will keep the video available for at least one month.
+□ The submitted video was assembled and checked by my modified production agent.</code></pre>
+
+    <h3>2　Agentと記録の提出</h3>
+
+    <p><code>config.py</code> を除いて、次の形で zip にします。<span class="mark">APIキーや接続情報の入ったファイルは、提出しません。</span></p>
+
+<pre><code>PART7_学籍番号/
+├── agent/
+│   ├── agent_video.py      改造したAgent本体（# CHANGED: の印付き）
+│   ├── edit_tools.py
+│   ├── video_tools.py
+│   └── requirements.txt
+├── assets/
+│   └── SOURCES.txt         素材の出典（動画ファイル本体は入れない）
+├── run/                    EXECUTION_TRACE.jsonl、STORYBOARD_V*.json。Agentが自動で書く
+├── CHANGE_REPORT.txt       何をどう改造したか（下の形式）
+└── EDIT_LOG.txt            全ラウンドのTool呼び出し、検査結果、決定の要約</code></pre>
+
+    <p>フォルダの形は配布時のまま保ちます。<code>config.py</code> と <code>assets/*.mp4</code>、<code>build/</code>、<code>output.mp4</code> を抜くだけです。形を変えると、講師がそのまま再実行できなくなります。</p>
+
+    <h3>3　CHANGE_REPORT.txt</h3>
+
+    <p>短く書きます。各項目1〜3行。ひな形は <code>CHANGE_REPORT.txt</code> として配布フォルダに入っています。</p>
+
+<pre><code>AGEWEC MUMBAI — AGENT REPORT
+
+Student ID:
+Name:
+Video title:
+Video URL:
+
+1. Theme:
+2. Target audience:
+3. Key points (three or more):
+4. Success conditions added or changed (two or more):
+5. Agent behaviour added or changed (one or more):
+6. Tools used to generate the source clips, and any credit shown in the video:
+7. One decision made by the agent (from EDIT_LOG.txt), and whether you agreed:
+8. One decision made by the human (a revise you gave, or a release decision), and why:
+9. One fact in the narration you verified, and its source:
+10. Files changed:</code></pre>
+
+    <p><code>PART7_学籍番号.zip</code> という名前で、次のフォームからアップロードします。</p>
+    <p><a href="FORM_URL_PART7" target="_blank" rel="noopener"><strong>FORM_URL_PART7</strong></a></p>
+
+    <h3>採点</h3>
 
     <table>
-      <thead><tr><th></th><th>書くこと</th></tr></thead>
+      <thead><tr><th>配点</th><th>見るところ</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td>絵コンテの承認で <code>revise</code> した指摘（1行）と、それで絵コンテがどう変わったか</td></tr>
-        <tr><td><strong>2</strong></td><td>編集Agentが絵コンテからずらした点（<code>EDIT_LOG.txt</code> の決定要約から1つ）と、その判断に納得したか</td></tr>
-        <tr><td><strong>3</strong></td><td>ナレーションの事実で、根拠を確かめた1つと、その出典</td></tr>
-        <tr><td><strong>4</strong></td><td>検査で落ちたことがあれば、その文と、Agentがどう直したか。落ちなかったなら「落ちなかった」</td></tr>
+        <tr><td>40</td><td>改造したAgent：必須の変更4つ（7.3.2）が入っているか。加えた検査や動作が、設計（7.3.1）と対応しているか</td></tr>
+        <tr><td>30</td><td>制作の記録：<code>run/EXECUTION_TRACE.jsonl</code> と <code>EDIT_LOG.txt</code> に、承認と差し戻し、Tool呼び出し、検査の合否と修正が残っているか。<code>CHANGE_REPORT.txt</code> の7〜9がそれと一致するか</td></tr>
+        <tr><td>30</td><td>完成動画：30〜60秒、英語、4本以上の素材、要点の字幕、出典と必要なクレジット表記。ログインなしで開けるか</td></tr>
       </tbody>
     </table>
 
-    <p><code>agewec-mumbai</code> フォルダを右クリックして圧縮し、<code>PART7_学籍番号.zip</code> という名前で次のフォームからアップロードします。</p>
-    <p><a href="FORM_URL_PART7" target="_blank" rel="noopener"><strong>FORM_URL_PART7</strong></a></p>
+    <p>Agentのプログラムが無い場合、上の1行目と2行目は採点できません。<strong>動画だけの提出は最高30点</strong>というのは、そういう意味です。</p>
 
     <h3>相互評価</h3>
 
-    <p>Drive の共有は、<span class="mark">提出から1か月間は解除しないでください。</span>相互評価と採点がその間に行われます。<br><br>nmims2026 に動画のリンクを提出すると、クラスメイトの動画が7本割り当てられます。<span class="mark">観客として見て、Q1〜Q8に答えてください。</span>工程の良し悪しはここでは見ません。「来たくなるか」「人に見せたくなるか」だけです。</p>
+    <p>動画リンクは、<span class="mark">提出から1か月間は解除しないでください。</span>相互評価と採点がその間に行われます。<br><br>nmims2026 に動画のリンクを提出すると、クラスメイトの動画が7本割り当てられます。<span class="mark">観客として見て、Q1〜Q8に答えてください。</span>工程の良し悪しはここでは見ません。「来たくなるか」「人に見せたくなるか」だけです。</p>
 
     <div class="prompt"><span class="tag">FINAL</span>最初の質問に戻ります。「Agentic AIは何ができるか」。
 この章の答えは、「人間が決めた要点と承認の中で、書き、素材を見て組み立て、測ることができる」です。
-テーマを決めたのも、プロンプトを読んだのも、素材を作ったのも、事実を確かめたのも、公開すると決めたのも、あなたです。
+テーマを決めたのも、Agentを改造したのも、プロンプトを読んだのも、素材を作ったのも、事実を確かめたのも、公開すると決めたのも、あなたです。
 それがプロデューサーの仕事で、これからは誰もがその席に座ります。</div>
   </section>
 
