@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PART 7 Build the agent yourself</title>
+<title>PART 7 Run video production with an agent</title>
 <style>
 :root{
   --paper:#f6f5f2;
@@ -11,8 +11,8 @@
   --ink-soft:#565651;
   --line:#dedcd5;
   --card:#ffffff;
-  --accent:#7c3aed;
-  --accent-soft:#f1ecfe;
+  --accent:#be185d;
+  --accent-soft:#fce7f0;
   --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -160,1006 +160,539 @@ th{background:var(--accent-soft);font-weight:700}
 <body>
 
 <nav class="rail" aria-label="Parts">
-  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html" aria-current="page">7</a><a href="part8.html">8</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html" aria-current="page">7</a><a href="appendix-a.html">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
 </nav>
 
 <div class="wrap">
 
   <header class="masthead">
     <div class="eyebrow">PART 7</div>
-    <h1>Build the agent yourself</h1>
-    <p class="lede">So far the agent has been someone else's product. Here you write the inside of it: tool calling, a loop, a stopping condition, branching and human approval, in Python, LangChain and LangGraph.</p>
+    <h1>Running video production with agentic AI</h1>
+    <p class="lede">The final assignment. You are the producer of a small production team. In VS Code on your own machine, you run a production agent that finishes a short video meant to bring the world to Mumbai, using several tools and stopping twice for your approval. What you build is not a video. It is the way a video gets made.</p>
   </header>
 
   <div class="bridge">
     <dl>
-      <dt>Previously</dt><dd>In Part 6 you added features to Vibe Chat with tests behind you. Cline did the editing; you approved it.</dd>
-      <dt>This part</dt><dd>One test is failing. You build an agent that finds the cause, fixes it, and stops for your approval before the change is accepted.</dd>
-      <dt>Next</dt><dd>Part 8 takes the same design and applies it to work that is not coding.</dd>
+      <dt>So far</dt><dd>In Part 6 you assembled an agent yourself: tool calls, branching, a stop condition, human approval, interrupt and resume.</dd>
+      <dt>This part</dt><dd>The same design applied to work that is not coding: planning, approval, material, assembly, checks, revision. Humans approve the plan and the release.</dd>
+      <dt>After</dt><dd>Releasing and operating an agent is covered in Appendix C.</dd>
     </dl>
   </div>
 
-  <nav class="toc" aria-label="Contents of this part">
+  <nav class="toc" aria-label="Contents">
     <h2>In this part</h2>
     <ol>
-      <li><span class="n">7.0</span><a href="#s7-0">What you do in this part</a></li>
-      <li><span class="n">7.1</span><a href="#s7-1">A minimal agent in plain Python</a></li>
-      <li><span class="n">7.2</span><a href="#s7-2">Connecting the pieces with LangChain</a></li>
-      <li><span class="n">7.3</span><a href="#s7-3">Designing the flow with LangGraph</a></li>
-      <li><span class="n">7.4</span><a href="#s7-4">Approval, interruption and resuming</a></li>
-      <li><span class="n">7.5</span><a href="#s7-5">Optional: connect to live data with MCP</a></li>
-      <li><span class="n">7.6</span><a href="#s7-6">What to hand in</a></li>
+      <li><span class="n">7.1</span><a href="#s7-1">Breaking video production into a flow</a></li>
+      <li><span class="n">7.2</span><a href="#s7-2">For reference: running Wan2.1 yourself (optional)</a></li>
+      <li><span class="n">7.3</span><a href="#s7-3">Rules for material</a></li>
+      <li><span class="n">7.4</span><a href="#s7-4">The real thing: running the production agent</a></li>
+      <li><span class="n">7.5</span><a href="#s7-5">Why you still cannot publish</a></li>
+      <li><span class="n">7.6</span><a href="#s7-6">Hand-in and peer evaluation</a></li>
     </ol>
   </nav>
 
 
-
   <section class="sec" id="s7-0" style="margin-bottom:44px">
-    <h2><span class="n">7.0</span>What you do in this part</h2>
+    <h2><span class="n">7.0</span>What this part does</h2>
 
-    <div class="prompt"><span class="tag">MISSION</span>One test is failing. Build an agent that finds the cause and fixes it.
+    <p>The agent you built in Part 6 had <strong>state, tools, branching and approval</strong>. <span class="mark">Now that design moves to work that is not coding.</span> The subject is video production.</p>
 
-Not Cline. Your own Python.</div>
+    <div class="prompt"><span class="tag">FINAL MISSION</span>AGEWEC Mumbai.
+Finish one video of at most 60 seconds whose purpose is to bring people from around the world to Mumbai.
+You do not finish it. The production agent you run does.
+It drafts the plan, waits for your approval, assembles the video once the material is in place, checks it, and stops for your decision to publish.</div>
 
-    <p>Until now the agent was somebody else's product. <span class="mark">Here you write the inside of it.</span></p>
+    <h3>What you do</h3>
 
-    <h3><span class="n">7.0.1</span>Before you start</h3>
+    <p>Finish one video of at most 60 seconds with the production agent. You make the material yourself, within the rules in 7.3. Plan, approve, material, edit, check, release decision: about 90 minutes.</p>
 
-    <p>As in Part 6, <span class="mark">everyone starts from the same folder.</span> It is the vibe-chat from the end of Part 6 (banned words included, four tests), with this part's agent code added as an <code>agent/</code> folder.</p>
-
-    <p><a href="../starter/part7/vibe-chat-part7-starter.zip" download><strong>Download vibe-chat-part7-starter.zip</strong></a></p>
-
-<pre><code>vibe-chat/
-├── app.py                 the Flask app at the end of Part 6
-├── templates/index.html
-├── tests/test_app.py      four tests
-├── requirements.txt
-└── agent/
-    ├── config.py          where to connect. Fill this in first
-    ├── tools.py           7.1  the tools the agent may use, with limits
-    ├── agent_plain.py     7.1  the agent in plain Python
-    ├── demo_structured.py 7.2  structured-output exercise
-    ├── agent_langchain.py 7.2  the same agent with LangChain
-    ├── agent_graph.py     7.3-7.4  flow, stop condition, approval
-    ├── break_app.py       7.0  break the app on purpose
-    └── requirements.txt</code></pre>
-
-    <h4>1　Unzip and install</h4>
-
-    <p>Open the unzipped <code>vibe-chat</code> in VS Code and, in the terminal:</p>
-
-<pre><code>pip install -r requirements.txt
-pip install -r agent/requirements.txt
-pytest</code></pre>
-
-    <p><code>4 passed</code> means you are ready.</p>
-
-    <h4>2　Fill in the connection</h4>
-
-    <p>Open <code>agent/config.py</code> and enter the same four values you gave Cline in Part 3.</p>
-
-    <table>
-      <thead><tr><th>Variable</th><th>Value</th></tr></thead>
-      <tbody>
-        <tr><td><code>BASE_URL</code></td><td>Your server (<code>https://pc11.okuharalab.com/v1</code> etc.; table in 3.1.3)</td></tr>
-        <tr><td><code>MODEL</code></td><td>The Model ID for that server (<code>qwen38_1:latest</code> etc.; numbers must match)</td></tr>
-        <tr><td><code>CF_ACCESS_CLIENT_ID</code></td><td>The Client ID you were given</td></tr>
-        <tr><td><code>CF_ACCESS_CLIENT_SECRET</code></td><td>The Client Secret you were given</td></tr>
-      </tbody>
-    </table>
+    <p>7.2 is for reference. It is for anyone who wants to run a video model with their own hands once; skipping it has no effect on the assignment.</p>
 
     <div class="warn">
-      <span class="tag">Never hand in or share config.py</span>
-      It contains the Client Secret. <span class="mark">Leave <code>agent/config.py</code> out of the zip you submit.</span>
+      <span class="tag">Looks are not graded</span>
+      What is graded: how the work is split into steps, where approval sits, where the loop goes back to, and where the material came from. <span class="mark">Someone who stopped at approval, failed a check and went back scores higher than someone who produced one pretty video.</span><br><br>
+      Audience reaction (is it interesting, do I want to go) is collected separately, in the peer evaluation in 7.6.
     </div>
 
-    <h4>3　Break it on purpose</h4>
+    <h3>Setup</h3>
 
-    <p>As in 5.5, comment out the empty-name check in <code>app.py</code>. By hand, or with the script:</p>
+    <p>The production agent runs in VS Code on your machine. The folder has the same shape as Part 6.</p>
 
-<pre><code>python agent/break_app.py
-pytest</code></pre>
+    <p><a href="../starter/part7/agewec-mumbai-starter.zip" download><strong>Download agewec-mumbai-starter.zip</strong></a></p>
 
-    <p><code>1 failed, 3 passed</code> means you are ready. <span class="mark">Investigating that failure, fixing it and getting the tests to pass is the goal you give your agent.</span></p>
+<pre><code>agewec-mumbai/
+├── agent/
+│   ├── config.py          where to connect. Same four values as Part 6
+│   ├── video_tools.py     ffmpeg operations (normalize, join, subtitles, narration)
+│   ├── edit_tools.py      the tools handed to the editing agent. Each call is logged
+│   ├── agent_video.py     the production agent (LangGraph)
+│   └── requirements.txt
+├── assets/
+│   └── SOURCES.txt        the source log. One line per cut
+└── README.md</code></pre>
 
-    <div class="note">
-      <span class="tag">Then forget what you broke</span>
-      All you tell the agent is "a test is failing, find out why and fix it". <span class="mark">You do not tell it where.</span> You are watching whether it can find it on its own.
-    </div>
+<pre><code>pip install -r agent/requirements.txt</code></pre>
 
-    <h3><span class="n">7.0.2</span>What counts as finished</h3>
-
-    <table>
-      <thead><tr><th></th><th>Condition</th></tr></thead>
-      <tbody>
-        <tr><td><strong>1</strong></td><td>The agent calls tools and edits a file</td></tr>
-        <tr><td><strong>2</strong></td><td>It runs the tests and reads the result</td></tr>
-        <tr><td><strong>3</strong></td><td>It gives up after a fixed number of attempts, rather than looping forever</td></tr>
-        <tr><td><strong>4</strong></td><td><span class="mark">It stops and waits for a human before the change is accepted</span></td></tr>
-      </tbody>
-    </table>
-
-    <p>Number 4 is the part that distinguishes this from a script. <strong>Section 7.4 builds it.</strong></p>
-
-    <div class="note">
-      <span class="tag">How this part works</span>
-      All the code is in <code>agent/</code>. <span class="mark">You do not type it in.</span> In each section you read it, run it, and change one thing.<br><br>
-      <strong>7.1</strong>　Required. Read and run the plain-Python agent, so you know what the libraries do for you<br>
-      <strong>7.2</strong>　Instructor demo. The same thing written with LangChain<br>
-      <strong>7.3–7.4</strong>　Required. Stop condition and approval. <strong>Send a change back with revise, then change MAX_ATTEMPTS and run again</strong><br>
-      <strong>7.5</strong>　Optional. MCP
-    </div>
+    <p>ffmpeg comes bundled with <code>imageio-ffmpeg</code>, so nothing else needs installing. Fill in <code>agent/config.py</code> with the same four values as Part 6 (Base URL, Model ID, Client ID, Client Secret). <span class="mark">config.py is never handed in.</span></p>
   </section>
+
 
   <section class="sec" id="s7-1">
-    <h2><span class="n">7.1</span>A minimal agent in plain Python</h2>
+    <h2><span class="n">7.1</span>Breaking video production into a flow</h2>
 
-    <p>No frameworks yet. <span class="mark">The loop is short enough to read in one go.</span></p>
-
-    <h3><span class="n">7.1.1</span>Put limits on the tools</h3>
-
-    <p>Before writing the loop, restrict what the tools can reach. <strong>An agent can only do what its tools allow.</strong></p>
-
-    <div class="warn">
-      <span class="tag">Write the limits first, not later</span>
-      A <code>write_file</code> that takes any path can write anywhere on your machine. <span class="mark">Adding a check afterwards is how you forget one.</span><br><br>
-      <code>_safe_path</code> below refuses anything outside the project. <strong>Every tool goes through it.</strong>
-    </div>
-
-<pre><code>&quot;&quot;&quot;Tools the agent may use. Every tool is a plain Python function with limits built in.
-
-PROJECT_ROOT is the vibe-chat folder (the parent of this agent/ folder), whatever the
-current working directory is.
-&quot;&quot;&quot;
-
-import difflib
-import subprocess
-import sys
-from pathlib import Path
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
-# Files the agent may overwrite: .py files directly under the project root, or under tests/.
-WRITE_ROOTS = [PROJECT_ROOT, PROJECT_ROOT / &quot;tests&quot;]
-
-# Files whose &quot;before&quot; state we keep, so we can show a diff without git.
-WATCHED_FILES = [&quot;app.py&quot;, &quot;tests/test_app.py&quot;]
-
-
-def _safe_path(path: str) -&gt; Path:
-    &quot;&quot;&quot;Resolve a path and refuse anything outside the project.&quot;&quot;&quot;
-    target = (PROJECT_ROOT / path).resolve()
-    if PROJECT_ROOT not in target.parents and target != PROJECT_ROOT:
-        raise ValueError(&quot;Files outside the project cannot be accessed.&quot;)
-    return target
-
-
-def read_file(path: str) -&gt; str:
-    &quot;&quot;&quot;Read a file inside the project (first 4000 characters).&quot;&quot;&quot;
-    return _safe_path(path).read_text(encoding=&quot;utf-8&quot;)[:4000]
-
-
-def write_file(path: str, content: str) -&gt; str:
-    &quot;&quot;&quot;Overwrite a .py file directly under the project root or under tests/.&quot;&quot;&quot;
-    target = _safe_path(path)
-    if not any(root == target.parent for root in WRITE_ROOTS):
-        raise ValueError(&quot;Only files directly under the project root or under tests/ may be written.&quot;)
-    if target.suffix != &quot;.py&quot;:
-        raise ValueError(&quot;Only .py files may be written.&quot;)
-    target.write_text(content, encoding=&quot;utf-8&quot;)
-    return f&quot;Updated {path}&quot;
-
-
-def run_tests() -&gt; str:
-    &quot;&quot;&quot;Run pytest in the project and return the tail of its output.&quot;&quot;&quot;
-    r = subprocess.run(
-        [sys.executable, &quot;-m&quot;, &quot;pytest&quot;, &quot;-q&quot;],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    return (r.stdout + r.stderr)[-4000:]
-
-
-def tests_pass() -&gt; bool:
-    r = subprocess.run([sys.executable, &quot;-m&quot;, &quot;pytest&quot;, &quot;-q&quot;], cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=120)
-    return r.returncode == 0
-
-
-# ---- diff without git ---------------------------------------------------------
-
-def snapshot() -&gt; dict:
-    &quot;&quot;&quot;Remember the current content of the watched files.&quot;&quot;&quot;
-    out = {}
-    for rel in WATCHED_FILES:
-        p = PROJECT_ROOT / rel
-        out[rel] = p.read_text(encoding=&quot;utf-8&quot;) if p.exists() else &quot;&quot;
-    return out
-
-
-def make_diff(before: dict) -&gt; str:
-    &quot;&quot;&quot;Unified diff between a snapshot and the files as they are now.&quot;&quot;&quot;
-    chunks = []
-    for rel, old in before.items():
-        p = PROJECT_ROOT / rel
-        new = p.read_text(encoding=&quot;utf-8&quot;) if p.exists() else &quot;&quot;
-        if old == new:
-            continue
-        chunks.append(&quot;&quot;.join(difflib.unified_diff(
-            old.splitlines(keepends=True), new.splitlines(keepends=True),
-            fromfile=f&quot;{rel} (before)&quot;, tofile=f&quot;{rel} (after)&quot;)))
-    return &quot;\n&quot;.join(chunks) if chunks else &quot;(no changes)&quot;
-
-
-TOOLS = {&quot;read_file&quot;: read_file, &quot;write_file&quot;: write_file, &quot;run_tests&quot;: run_tests}</code></pre>
+    <p>"Make a video" is not one job. Split, it looks like this.</p>
 
     <table>
-      <thead><tr><th>Limit</th><th>What it prevents</th></tr></thead>
+      <thead><tr><th>Step</th><th>Who</th><th>What is decided</th></tr></thead>
       <tbody>
-        <tr><td><code>_safe_path</code></td><td>Reaching outside the project, including via <code>../</code></td></tr>
-        <tr><td><code>WRITE_ROOTS</code></td><td>Writing anywhere except the project root and <code>tests/</code></td></tr>
-        <tr><td><code>.py</code> only</td><td>Overwriting configuration or data files</td></tr>
-        <tr><td><code>timeout=120</code></td><td>A test run that never returns</td></tr>
-        <tr><td><code>[-4000:]</code></td><td>A huge output filling the context</td></tr>
+        <tr><td>1　Key points</td><td><span class="mark">Human</span></td><td>The three things the video says. Not the agent's call</td></tr>
+        <tr><td>2　Storyboard and script</td><td>Agent (27B)</td><td>6–8 cuts. For each: the generation prompt, seconds, subtitle. The narration</td></tr>
+        <tr><td>3　<strong>Approval</strong></td><td><span class="mark">Human</span></td><td>Read every prompt. Stop <strong>before</strong> any material is made</td></tr>
+        <tr><td>4　Material</td><td><span class="mark">Human</span> + outside tools</td><td>Generate each cut within the rules in 7.3, put it in <code>assets/</code>, log the source</td></tr>
+        <tr><td>5　Editing</td><td><span class="mark">Agent (27B + tools)</span></td><td>Looks at the clips that came back and decides order, trims, transitions and subtitle timing, calling the tools itself</td></tr>
+        <tr><td>6　Check</td><td>Machine</td><td>Length, key points in subtitles, source log, narration length</td></tr>
+        <tr><td>7　<strong>Release decision</strong></td><td><span class="mark">Human</span></td><td>Watch it. Approve or stop</td></tr>
       </tbody>
     </table>
 
-    <h3><span class="n">7.1.2</span>The tool definitions and the loop</h3>
+    <p>The model is called in steps 2 and 5, but <span class="mark">they are different kinds of work.</span> Step 2 writes: text in, JSON out, no tools. Step 5 orchestrates: it looks at the material and decides for itself which tools to call, in what order, with what values. It is the tool-using agent from Part 6, pointed at a different job.</p>
 
-<pre><code>&quot;&quot;&quot;7.1 — The smallest possible agent, in plain Python.
+    <p>Step 4 stays in human hands because the means of making material lie outside the agent. Wan2.1 on Colab takes minutes per clip, generation services spend credits, and shooting it yourself means going there. <span class="mark">Whichever way, one run gives a few seconds, and making several of them is human logistics.</span> An agent left to loop over it burns time and credits without judgement. A person makes the cuts by the means in 7.3 while the agent waits.</p>
 
-Run from the vibe-chat folder:   python agent/agent_plain.py
+    <h3>Fixed procedure versus orchestration</h3>
 
-The loop below is the whole idea of an agent:
-  1. we give the model a list of tools (SCHEMA)
-  2. the model answers with tool calls (or a final message)
-  3. WE run the tool and send the result back
-  4. repeat, with a hard limit on the number of steps
-&quot;&quot;&quot;
-
-import json
-
-import requests
-
-from config import BASE_URL, MODEL, HEADERS, API_KEY
-from tools import TOOLS
-
-SCHEMA = [
-    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
-        &quot;name&quot;: &quot;read_file&quot;,
-        &quot;description&quot;: &quot;Read a file inside the project. Use it to look at app.py and tests/test_app.py.&quot;,
-        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;,
-                       &quot;properties&quot;: {&quot;path&quot;: {&quot;type&quot;: &quot;string&quot;}},
-                       &quot;required&quot;: [&quot;path&quot;]}}},
-    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
-        &quot;name&quot;: &quot;write_file&quot;,
-        &quot;description&quot;: &quot;Overwrite a .py file inside the project with new content.&quot;,
-        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;,
-                       &quot;properties&quot;: {&quot;path&quot;: {&quot;type&quot;: &quot;string&quot;},
-                                      &quot;content&quot;: {&quot;type&quot;: &quot;string&quot;}},
-                       &quot;required&quot;: [&quot;path&quot;, &quot;content&quot;]}}},
-    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
-        &quot;name&quot;: &quot;run_tests&quot;,
-        &quot;description&quot;: &quot;Run pytest and return the result.&quot;,
-        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: {}}}},
-]
-
-SYSTEM = (
-    &quot;You are a careful coding agent working inside a small Flask project. &quot;
-    &quot;Use the tools to read files, edit files and run the tests. &quot;
-    &quot;Fix the failing test by fixing the application code, not by changing the test. &quot;
-    &quot;When the tests pass, reply with a short summary of what you changed.&quot;
-)
-
-
-def chat(messages):
-    &quot;&quot;&quot;One call to the OpenAI-compatible endpoint of the shared server.&quot;&quot;&quot;
-    r = requests.post(
-        f&quot;{BASE_URL}/chat/completions&quot;,
-        headers={**HEADERS, &quot;Authorization&quot;: f&quot;Bearer {API_KEY}&quot;, &quot;Content-Type&quot;: &quot;application/json&quot;},
-        json={&quot;model&quot;: MODEL, &quot;messages&quot;: messages, &quot;tools&quot;: SCHEMA, &quot;temperature&quot;: 0},
-        timeout=300,
-    )
-    r.raise_for_status()
-    return r.json()[&quot;choices&quot;][0][&quot;message&quot;]
-
-
-def agent(goal: str, max_steps: int = 12) -&gt; str:
-    messages = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM}, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: goal}]
-    for step in range(max_steps):
-        msg = chat(messages)
-        messages.append(msg)
-        calls = msg.get(&quot;tool_calls&quot;) or []
-        if not calls:
-            return msg.get(&quot;content&quot;) or &quot;(no content)&quot;       # no tool call: the model is done
-        for call in calls:
-            name = call[&quot;function&quot;][&quot;name&quot;]
-            args = json.loads(call[&quot;function&quot;].get(&quot;arguments&quot;) or &quot;{}&quot;)
-            shown = {k: (v[:60] + &quot;…&quot; if isinstance(v, str) and len(v) &gt; 60 else v) for k, v in args.items()}
-            print(f&quot;[{step}] {name}({shown})&quot;)
-            try:
-                result = TOOLS[name](**args)
-            except Exception as e:                              # a failure is also a result
-                result = f&quot;ERROR: {e}&quot;
-            messages.append({&quot;role&quot;: &quot;tool&quot;, &quot;tool_call_id&quot;: call[&quot;id&quot;], &quot;content&quot;: str(result)})
-    return &quot;Stopped: reached the maximum number of steps.&quot;
-
-
-if __name__ == &quot;__main__&quot;:
-    print(agent(&quot;Run the tests, find out why one of them fails, and fix it.&quot;))</code></pre>
-
-    <h3><span class="n">7.1.3</span>The core of an agent is in this loop</h3>
-
-    <p><span class="mark">Of everything in this part, <code>TOOLS[name](**args)</code> is the line to remember.</span> This is where a file gets read. Where it gets written. Where a command runs.</p>
-
-    <p>The model returned a string. <strong>Your code is what executes.</strong> When Part 1 said the model does not act directly, this line is what it meant.</p>
-
-    <div class="warn">
-      <span class="tag">Write the stopping condition yourself</span>
-      <code>max_steps</code> is the limit. Without it, a model that keeps proposing tools keeps being called. <span class="mark">It will not stop on its own.</span><br><br>
-      That costs money on a paid API, and on any API it means an agent editing files with nobody watching. <strong>If you build the agent, you write the stopping condition.</strong>
-    </div>
+    <p>There are two ways to put tools together.</p>
 
     <table>
-      <thead><tr><th>In the loop</th><th>What it corresponds to</th></tr></thead>
+      <thead><tr><th></th><th>Fixed procedure (a script)</th><th>Orchestration (an agent)</th></tr></thead>
       <tbody>
-        <tr><td><code>chat(messages)</code></td><td>Decide</td></tr>
-        <tr><td><code>TOOLS[name](**args)</code></td><td>Execute</td></tr>
-        <tr><td><code>messages.append(...)</code></td><td>Feed the result back</td></tr>
-        <tr><td><code>for step in range(...)</code></td><td>Repeat, with a limit</td></tr>
+        <tr><td>Who decides the order</td><td>Whoever wrote it. Same every time</td><td>The model. Depends on the situation</td></tr>
+        <tr><td>Suits</td><td>Inputs of a known shape, where the same result is required</td><td>Inputs that vary, go missing, or come in surplus</td></tr>
+        <tr><td>In this part</td><td>The check (6). The <strong>tools themselves</strong>: normalize, join, and so on</td><td>Editing (5). <strong>How the tools are used</strong></td></tr>
+        <tr><td>Risk</td><td>Breaks on unexpected input</td><td>Hard to see what happened. Hence the <strong>log</strong></td></tr>
       </tbody>
     </table>
 
-    <p><span class="mark">Cline is doing the same four things, with a user interface around them.</span></p>
+    <p>The clips come from three services, differ in length and orientation, and some cuts failed to generate. <span class="mark">"cut3 is missing, use a different part of cut1"; "the portrait one, keep short"</span>: these are decided on the spot, and a fixed procedure cannot list them in advance. So editing is orchestrated, and it is wrapped on both sides by a fixed check and a human decision. <strong>A zone of free judgement, enclosed by layers that do not judge.</strong> That is the shape carried over from Part 6.</p>
 
-    <div class="note">
-      <span class="tag">If it does not run</span>
-      The endpoint is the same shared server Cline uses. <span class="mark">If Cline works, matching the four values in <code>config.py</code> is all it takes.</span><br><br>
-      <code>401</code> / <code>403</code> / an HTML login page → Client ID / Secret<br>
-      <code>model ... not found</code> → the server number in <code>BASE_URL</code> and the number in <code>MODEL</code> do not match<br>
-      <code>502</code> → that server's Ollama is down; tell the instructor<br>
-      It stops early → <code>max_steps</code> was reached. The <code>[n] tool(args)</code> lines show what it did
-    </div>
+    <h3>What one generation cannot make</h3>
+
+    <p>A video model returns two to five seconds per run. The next run knows nothing about the last one. <span class="mark">A sequence in time, like a train slowing to a stop, doors opening, the view changing, cannot come out of one run.</span> You split it into cuts, decide order and length, and join them. That is the flow. You will see it as soon as you start making material.</p>
   </section>
+
 
   <section class="sec" id="s7-2">
-    <h2><span class="n">7.2</span>Connecting the pieces with LangChain</h2>
+    <h2><span class="n">7.2</span>For reference: running Wan2.1 yourself (optional)</h2>
 
-    <p>The plain loop works, but every piece is hand-wired. <span class="mark">LangChain gives those pieces standard shapes.</span></p>
+    <p><strong>Optional.</strong> If you want to see what happens behind a generation service, run the video model Wan2.1 (1.3B) once on a Colab GPU (T4). One sentence in, about two seconds of 480p video out. GPUs are not always available and a run takes 5–10 minutes, so <span class="mark">do this in your own time, not during class</span>.</p>
 
-    <h3><span class="n">7.2.1</span>Six ideas in LangChain</h3>
+    <p><a href="../starter/part7/part7_practice_wan.ipynb" download><strong>Download part7_practice_wan.ipynb</strong></a> → open it in Colab (the browser, or the Google Colab extension in VS Code). Choose the <strong>T4 GPU</strong> runtime.</p>
 
-    <table>
-      <thead><tr><th>Idea</th><th>Role</th><th>Where it appears here</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Model I/O</strong></td><td>Send input to a model, take output back</td><td>The travel example, and the agent's model calls</td></tr>
-        <tr><td><strong>Chain</strong></td><td>Run prompt, model and output handling in order</td><td>The structured travel output</td></tr>
-        <tr><td><strong>Agent</strong></td><td>The model chooses which tool to use next</td><td>Investigating and fixing the failing test</td></tr>
-        <tr><td><strong>Retrieval</strong></td><td>Fetch outside data and answer from it</td><td>The kitchen board in 7.5</td></tr>
-        <tr><td><strong>Memory</strong></td><td>Hold state or conversation across steps</td><td>Pausing and resuming in 7.4</td></tr>
-        <tr><td><strong>Callbacks</strong></td><td>Record or display events during a run</td><td>Named here only; not in the required code</td></tr>
-      </tbody>
-    </table>
-
-    <div class="note">
-      <span class="tag">You do not need all of them</span>
-      Use the pieces you need. <span class="mark">Start with Model I/O and Chain.</span> Agent, Memory and Retrieval come after that.
+    <div class="flow-steps">
+      <p><strong>1</strong>　Cell 1 installs the libraries (2–3 min)</p>
+      <p><strong>2</strong>　In cell 2, make <code>PROMPT</code> one sentence about a train window approaching a station. <span class="mark">This is the only line you decide</span></p>
+      <p><strong>3</strong>　Run cells 3–4. Downloading the weights and generating takes <strong>5–10 min</strong></p>
+      <p><strong>4</strong>　Watch <code>practice_cut.mp4</code></p>
+      <p><strong>5</strong>　Change <code>SEED</code> and run again. <strong>It is not the same train</strong></p>
     </div>
 
-    <h3><span class="n">7.2.2</span>A small exercise: a travel suggestion in a fixed shape</h3>
-
-    <p>Pulling specific fields out of free-form prose is difficult. <span class="mark">The program below forces the output into four fields:</span> place, city, how to get there, and what makes it worth it.</p>
-
-<pre><code>python agent/demo_structured.py</code></pre>
-
-<pre><code>&quot;&quot;&quot;7.2.2 — LangChain: force the model to answer in a fixed shape.
-
-Run from the vibe-chat folder:   python agent/demo_structured.py
-&quot;&quot;&quot;
-
-from pydantic import BaseModel, Field
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
-
-from config import BASE_URL, MODEL, HEADERS, API_KEY
-
-
-class Destination(BaseModel):
-    name: str = Field(description=&quot;Name of the place&quot;)
-    city: str = Field(description=&quot;City or region&quot;)
-    access: str = Field(description=&quot;How to get there from central Mumbai&quot;)
-    highlight: str = Field(description=&quot;What makes it worth the trip&quot;)
-
-
-prompt = ChatPromptTemplate.from_messages([
-    (&quot;system&quot;, &quot;You are a travel adviser for Mumbai.&quot;),
-    (&quot;human&quot;, &quot;Suggest one place to visit within about one hour of central Mumbai.&quot;),
-])
-
-model = ChatOpenAI(base_url=BASE_URL, api_key=API_KEY, model=MODEL, temperature=0,
-                   default_headers=HEADERS)
-structured_model = model.with_structured_output(Destination, method=&quot;function_calling&quot;)
-
-# Prompt -&gt; Model -&gt; Destination
-chain = prompt | structured_model
-result = chain.invoke({})
-
-print(&quot;Place:    &quot;, result.name)
-print(&quot;City:     &quot;, result.city)
-print(&quot;Access:   &quot;, result.access)
-print(&quot;Highlight:&quot;, result.highlight)</code></pre>
-
-    <h4>What to do with it</h4>
-
-    <p>Run it, then change one thing and run it again. <span class="mark">Change a <code>description</code>, add a field, or change the city in the prompt.</span></p>
-
-    <p>The point is that <strong>the output shape is fixed by your class, not by the wording of the reply.</strong></p>
-
-    <h3><span class="n">7.2.3</span>From a Chain to an Agent</h3>
-
-    <p>A Chain runs in a fixed order. <span class="mark">An Agent decides what to do next from the result.</span></p>
+    <p>Three things to notice.</p>
 
     <table>
-      <thead><tr><th></th><th>Chain</th><th>Agent</th></tr></thead>
+      <thead><tr><th></th><th>What you see</th><th>What the flow does about it</th></tr></thead>
       <tbody>
-        <tr><td>Order of steps</td><td>Fixed when you write it</td><td>Decided at run time</td></tr>
-        <tr><td>Tools</td><td>Not used</td><td>Chosen by the model</td></tr>
-        <tr><td>Repeats</td><td>Runs once</td><td>Loops until a condition is met</td></tr>
-        <tr><td>Good for</td><td>A known sequence</td><td>Work whose steps depend on what it finds</td></tr>
+        <tr><td>Length</td><td>Two seconds per run. Sixty seconds is 20–30 runs</td><td>Split into cuts with set lengths</td></tr>
+        <tr><td>Consistency</td><td>A new seed gives a different train, different light</td><td>The storyboard fixes the style; approval checks it</td></tr>
+        <tr><td>Control</td><td>You decided one sentence. Camera, pacing, content: the model decided</td><td>A human reads the prompts before anything is generated</td></tr>
       </tbody>
     </table>
 
-<pre><code>python agent/agent_langchain.py</code></pre>
-
-<pre><code>&quot;&quot;&quot;7.2.3 — The same agent as 7.1, but LangChain/LangGraph run the loop.
-
-Run from the vibe-chat folder:   python agent/agent_langchain.py
-&quot;&quot;&quot;
-
-from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
-
-from config import BASE_URL, MODEL, HEADERS, API_KEY
-import tools as t
-
-
-# The docstring of each tool is what the model sees. 7.2.4 asks you to change them.
-@tool
-def read_file(path: str) -&gt; str:
-    &quot;&quot;&quot;Read a file inside the project. Use it to look at app.py and tests/test_app.py.&quot;&quot;&quot;
-    return t.read_file(path)
-
-
-@tool
-def write_file(path: str, content: str) -&gt; str:
-    &quot;&quot;&quot;Overwrite a .py file inside the project with new content.&quot;&quot;&quot;
-    return t.write_file(path, content)
-
-
-@tool
-def run_tests() -&gt; str:
-    &quot;&quot;&quot;Run pytest and return the result.&quot;&quot;&quot;
-    return t.run_tests()
-
-
-model = ChatOpenAI(base_url=BASE_URL, api_key=API_KEY, model=MODEL, temperature=0,
-                   default_headers=HEADERS)
-
-SYSTEM = (
-    &quot;You are a careful coding agent working inside a small Flask project. &quot;
-    &quot;Fix the failing test by fixing the application code, not by changing the test. &quot;
-    &quot;When the tests pass, reply with a short summary of what you changed.&quot;
-)
-
-agent_executor = create_react_agent(model, [read_file, write_file, run_tests], prompt=SYSTEM)
-
-
-def run(goal: str) -&gt; str:
-    result = agent_executor.invoke({&quot;messages&quot;: [(&quot;user&quot;, goal)]}, {&quot;recursion_limit&quot;: 30})
-    return result[&quot;messages&quot;][-1].content
-
-
-if __name__ == &quot;__main__&quot;:
-    print(run(&quot;Run the tests, find out why one of them fails, and fix it.&quot;))</code></pre>
-
-    <table>
-      <thead><tr><th>7.1</th><th>7.2</th></tr></thead>
-      <tbody>
-        <tr><td>You write <code>SCHEMA</code> by hand</td><td><code>@tool</code> reads the signature and the docstring</td></tr>
-        <tr><td>You write the loop</td><td><code>create_agent</code> provides it</td></tr>
-        <tr><td>You dispatch on the name yourself</td><td>Handled for you</td></tr>
-        <tr><td>The safety checks are yours</td><td><span class="mark">Still yours. Nothing changed there</span></td></tr>
-      </tbody>
-    </table>
-
-    <div class="warn">
-      <span class="tag">The last row is the point</span>
-      A framework gives you the loop, the schema and the dispatch. <span class="mark">It does not decide what the agent is allowed to touch.</span><br><br>
-      <code>_safe_path</code> and <code>WRITE_ROOTS</code> are still your code. <strong>Delete them and nothing else stops a write outside the project.</strong>
-    </div>
-
-    <div class="note">
-      <span class="tag">Same server as Cline</span>
-      <code>ChatOpenAI</code> is given <code>base_url</code> and <code>default_headers</code>; underneath it is the shared server's Qwen, exactly as in Part 3. <code>create_react_agent</code> runs the loop you wrote by hand in 7.1.
-    </div>
-
-    <h3><span class="n">7.2.4</span>Exercise: change a docstring and compare</h3>
-
-    <p>The docstring is not a comment. <strong>It is the description the model reads when choosing a tool.</strong></p>
-
-    <p>In <code>agent/agent_langchain.py</code>, change <code>read_file</code>'s docstring to something vague, such as "does something with files", and run the same task again.</p>
-
-    <table>
-      <thead><tr><th>Watch for</th></tr></thead>
-      <tbody>
-        <tr><td>Does it still pick the right tool?</td></tr>
-        <tr><td>Does it call the wrong one first?</td></tr>
-        <tr><td>Does it take more steps to finish?</td></tr>
-      </tbody>
-    </table>
-
-    <p><span class="mark">Record what changed.</span> This is the same lesson as Part 2: what you write determines what the model can do.</p>
+    <p>You may use the clip as one cut of your final video. Log it as <code>Colab Wan2.1 (course notebook)</code>.</p>
   </section>
+
 
   <section class="sec" id="s7-3">
-    <h2><span class="n">7.3</span>Designing the flow with LangGraph</h2>
+    <h2><span class="n">7.3</span>Rules for material</h2>
 
-    <p>Next, the shape of the work. <span class="mark">Where it branches after a failure, how many retries are allowed, and where a human is asked.</span></p>
+    <p>Material for the final video comes from these four ways only.</p>
 
-    <h3><span class="n">7.3.1</span>The flow you build</h3>
+    <table>
+      <thead><tr><th></th><th>How</th><th>How to log it</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>The course Colab notebook (Wan2.1)</td><td><code>Colab Wan2.1 (course notebook)</code></td></tr>
+        <tr><td><strong>2</strong></td><td>A video or image generation service, on <strong>your own account</strong>. <span class="mark">Follow that service's terms of use</span></td><td>The service name</td></tr>
+        <tr><td><strong>3</strong></td><td>Photos or video you shot yourself</td><td><code>own photo</code> / <code>own video</code></td></tr>
+        <tr><td><strong>4</strong></td><td>Free stock sites with explicit terms (Pexels, Pixabay, etc.), items marked free for commercial use, no attribution required</td><td>Site name and the item's URL</td></tr>
+      </tbody>
+    </table>
 
-<div class="fig" style="background:var(--card);border-style:solid;border-color:var(--line);padding:18px 12px">
-      <svg viewBox="0 0 720 300" style="width:100%;max-width:720px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LangGraph routing diagram">
-        <defs>
-          <marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
-            <path d="M0,0 L9,4.5 L0,9 z" fill="#9aa0ab"/>
-          </marker>
-        </defs>
-        <g font-family="system-ui, sans-serif" font-size="14" text-anchor="middle">
-          <g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5">
-            <rect x="16"  y="120" width="92"  height="42" rx="9"/>
-            <rect x="160" y="120" width="118" height="42" rx="9"/>
-            <rect x="330" y="120" width="92"  height="42" rx="9"/>
-            <rect x="474" y="42"  width="98"  height="42" rx="9"/>
-            <rect x="474" y="232" width="98"  height="42" rx="9"/>
-          </g>
-          <rect x="612" y="42" width="86" height="42" rx="9" fill="#eef0f2" stroke="#b9bec7" stroke-width="1.5"/>
-          <g fill="var(--ink)" font-weight="700">
-            <text x="62"  y="147">plan</text>
-            <text x="219" y="147">implement</text>
-            <text x="376" y="147">check</text>
-            <text x="523" y="69">review</text>
-            <text x="523" y="259">give up</text>
-            <text x="655" y="69">end</text>
-          </g>
-          <g stroke="#9aa0ab" stroke-width="1.6" fill="none" marker-end="url(#ah)">
-            <path d="M108,141 H152"/>
-            <path d="M278,141 H322"/>
-            <path d="M422,134 H448 V63 H466"/>
-            <path d="M572,63 H604"/>
-            <path d="M422,150 H460 V253 H466"/>
-            <path d="M376,162 V196 H219 V166"/>
-            <path d="M523,84 V104 H240 V116" stroke-dasharray="5 4"/>
-          </g>
-          <g font-size="12" fill="#6c727d" font-weight="600">
-            <rect x="424" y="86"  width="48" height="18" rx="9" fill="#fff"/><text x="448" y="99">pass</text>
-            <rect x="416" y="192" width="88" height="18" rx="9" fill="#fff"/><text x="460" y="205">fail (3rd)</text>
-            <rect x="258" y="187" width="104" height="18" rx="9" fill="#fff"/><text x="310" y="200">fail (&lt; 3)</text>
-            <rect x="556" y="24"  width="96" height="18" rx="9" fill="#fff"/><text x="604" y="37">approve / stop</text>
-            <rect x="328" y="95"  width="50" height="18" rx="9" fill="#fff"/><text x="353" y="108">revise</text>
-          </g>
-        </g>
-      </svg>
-      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:6px">
-        Solid lines are the normal path. The dashed line is the send-back from <code>revise</code>
-      </div>
-    </div>
+    <p>The instructor does not name a service and does not hold an account for you. <span class="mark">Which one you use is your decision, after reading its terms.</span></p>
 
-    <p><strong>The only place an LLM is called is <code>implement</code>.</strong> Everything else is ordinary Python.</p>
+    <h3>The source log, SOURCES.txt</h3>
 
+    <p>In <code>assets/SOURCES.txt</code>, <strong>one line per cut</strong>.</p>
 
+<pre><code>cut1 | Colab Wan2.1 (course notebook) | slow pan over a Mumbai suburban train at dawn, wide shot | 2026-09-10
+cut2 | Kling | Marine Drive at night from above, streetlights curving along the bay | 2026-09-10
+cut3 | own video | - | 2026-09-08
+cut4 | Pexels: https://www.pexels.com/video/... | - | 2026-09-10</code></pre>
 
-<pre><code>from typing import TypedDict
-
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import StateGraph, START, END
-from langgraph.types import interrupt, Command
-
-import tools as t
-from agent_langchain import agent_executor
-
-MAX_ATTEMPTS = 3        # 7.3.2: the stop condition. Try changing it.
-
-
-class State(TypedDict, total=False):
-    goal: str
-    attempts: int
-    before: dict          # snapshot of the watched files, taken in plan
-    check_output: str
-    passed: bool
-    diff: str
-    decision: str
-    review_feedback: str
-
-
-def plan(state: State) -&gt; State:
-    return {**state, &quot;attempts&quot;: 0, &quot;before&quot;: t.snapshot()}
-
-
-def implement(state: State) -&gt; State:
-    # The only place the model is called.
-    prompt = state[&quot;goal&quot;]
-    if state.get(&quot;check_output&quot;):
-        prompt += f&quot;\n\nResult of the last test run:\n{state[&#x27;check_output&#x27;]}&quot;
-    if state.get(&quot;review_feedback&quot;):
-        prompt += f&quot;\n\nFeedback from the human reviewer:\n{state[&#x27;review_feedback&#x27;]}&quot;
-    agent_executor.invoke({&quot;messages&quot;: [(&quot;user&quot;, prompt)]}, {&quot;recursion_limit&quot;: 30})
-    return {**state, &quot;attempts&quot;: state[&quot;attempts&quot;] + 1}
-
-
-def check(state: State) -&gt; State:
-    # pytest is a node of its own. The model never gets to &quot;say&quot; the tests passed.
-    output = t.run_tests()
-    return {**state, &quot;check_output&quot;: output, &quot;passed&quot;: t.tests_pass()}
-
-
-def route_after_check(state: State) -&gt; str:
-    if state[&quot;passed&quot;]:
-        return &quot;review&quot;
-    if state[&quot;attempts&quot;] &gt;= MAX_ATTEMPTS:
-        return &quot;give_up&quot;
-    return &quot;implement&quot;
-
-
-def give_up(state: State) -&gt; State:
-    print(f&quot;\nGave up after {MAX_ATTEMPTS} attempts. Handing over to a human.\n&quot;)
-    print(state[&quot;check_output&quot;])
-    return state</code></pre>
-
-    <div class="note">
-      <span class="tag">Not assembled yet</span>
-      The nodes and the branching are in place. <span class="mark">Building the graph and calling <code>compile()</code> happens in 7.4</span>, because <code>review</code> does not exist yet.
-    </div>
-
-    <h3><span class="n">7.3.2</span>Build the stopping condition into the design</h3>
-
-    <p><code>MAX_ATTEMPTS</code> is the retry limit. After three failures the agent stops and hands the result back to a person.</p>
-
-    <p>Retrying forever is a cost problem and a safety problem. <strong>If you build the agent, you write the stopping condition.</strong></p>
-
-    <div class="warn">
-      <span class="tag">Why <code>check</code> is its own node</span>
-      Rather than letting the LLM claim it ran <code>pytest</code>, the graph runs it as a node every time. <span class="mark">This is where turning your finish conditions into tests, back in Part 5, starts paying off.</span><br><br>
-      The structure means <strong>the agent can only reach "done" when the <code>check</code> node returns success.</strong>
-    </div>
+    <p>The check (7.4.4) fails any cut without a line here. <span class="mark">Material you cannot log is material you cannot use.</span></p>
   </section>
+
 
   <section class="sec" id="s7-4">
-    <h2><span class="n">7.4</span>Approval, interruption and resuming</h2>
+    <h2><span class="n">7.4</span>The real thing: running the production agent</h2>
 
-    <p>The <code>review</code> node stops the run and waits for a human decision. The diff is made by comparing the files now with the copy taken in <code>plan</code> (<code>snapshot</code>); git is not needed.</p>
+    <h3><span class="n">7.4.1</span>Decide the three key points (human)</h3>
 
-<pre><code>def review(state: State) -&gt; State:
-    diff = t.make_diff(state[&quot;before&quot;])
-    answer = interrupt({
-        &quot;diff&quot;: diff[:4000],
-        &quot;check_output&quot;: state[&quot;check_output&quot;],
-        &quot;question&quot;: &quot;Approve these changes?&quot;,
-        &quot;choices&quot;: [&quot;approve&quot;, &quot;revise&quot;, &quot;stop&quot;],
-    })
-    return {**state, &quot;diff&quot;: diff,
-            &quot;decision&quot;: answer[&quot;decision&quot;],
-            &quot;review_feedback&quot;: answer.get(&quot;feedback&quot;, &quot;&quot;)}
+    <p>Open the top of <code>agent/agent_video.py</code>.</p>
 
+<pre><code>THEME = &quot;AGEWEC Mumbai: why the world should come and see Mumbai&quot;
+# Each key point: (the statement, the words that must appear in a subtitle for it to count)
+KEY_POINTS = [
+    (&quot;The suburban railway carries about 7 million passengers a day&quot;, &quot;7 million&quot;),
+    (&quot;Marine Drive at night, the &#x27;Queen&#x27;s Necklace&#x27;&quot;, &quot;marine drive&quot;),
+    (&quot;Street food: vada pav and pav bhaji&quot;, &quot;vada pav&quot;),
+]
+MAX_SECONDS = 60          # the check: the video must be at most this long
+MIN_SECONDS = 20          # and at least this long
+NUM_CUTS = 6              # 5 to 8 works well
+MAX_ROUNDS = 3            # how many times the loop may go back to draft</code></pre>
 
-def route_after_review(state: State) -&gt; str:
-    if state[&quot;decision&quot;] == &quot;revise&quot;:
-        return &quot;implement&quot;          # send the feedback back to the agent
-    return END                      # approve and stop both end here</code></pre>
-
-    <h3><span class="n">7.4.1</span>Now assemble it</h3>
-
-<pre><code>graph = StateGraph(State)
-graph.add_node(&quot;plan&quot;, plan)
-graph.add_node(&quot;implement&quot;, implement)
-graph.add_node(&quot;check&quot;, check)
-graph.add_node(&quot;review&quot;, review)
-graph.add_node(&quot;give_up&quot;, give_up)
-graph.add_edge(START, &quot;plan&quot;)
-graph.add_edge(&quot;plan&quot;, &quot;implement&quot;)
-graph.add_edge(&quot;implement&quot;, &quot;check&quot;)
-graph.add_conditional_edges(&quot;check&quot;, route_after_check)
-graph.add_conditional_edges(&quot;review&quot;, route_after_review)
-graph.add_edge(&quot;give_up&quot;, END)
-app = graph.compile(checkpointer=MemorySaver())
-
-
-def main():
-    config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;task-001&quot;}}
-    result = app.invoke({&quot;goal&quot;: &quot;Run the tests, find out why one of them fails, and fix it.&quot;}, config)
-
-    # While the graph is paused at `review`, show the diff and ask the human.
-    while &quot;__interrupt__&quot; in result:
-        payload = result[&quot;__interrupt__&quot;][0].value
-        print(&quot;\n&quot; + &quot;=&quot; * 60)
-        print(&quot;TESTS:\n&quot; + payload[&quot;check_output&quot;].strip().splitlines()[-1])
-        print(&quot;-&quot; * 60)
-        print(&quot;DIFF:\n&quot; + payload[&quot;diff&quot;])
-        print(&quot;=&quot; * 60)
-        decision = &quot;&quot;
-        while decision not in (&quot;approve&quot;, &quot;revise&quot;, &quot;stop&quot;):
-            decision = input(&quot;approve / revise / stop &gt; &quot;).strip().lower()
-        feedback = input(&quot;What should be changed? &gt; &quot;) if decision == &quot;revise&quot; else &quot;&quot;
-        result = app.invoke(Command(resume={&quot;decision&quot;: decision, &quot;feedback&quot;: feedback}), config)
-
-    print(&quot;\nFinished. Decision:&quot;, result.get(&quot;decision&quot;, &quot;(gave up)&quot;))
-
-
-if __name__ == &quot;__main__&quot;:
-    main()</code></pre>
-
-    <h4>Run it</h4>
-
-<pre><code>python agent/break_app.py      # if you have not broken it yet
-python agent/agent_graph.py</code></pre>
-
-    <p>When the agent's fix makes the tests pass, the diff is printed and the program stops at <code>approve / revise / stop &gt;</code>. <span class="mark">This is condition 4 in 7.0.2.</span> The agent does not end on its own.</p>
-
-    <h4>Revise at least once</h4>
-
-    <p>Read the diff. The first time, choose <code>revise</code> and write one line of feedback in English, for example:</p>
-
-<pre><code>Do not change tests/test_app.py. Fix app.py only.
-Keep the error message exactly "User name cannot be empty."</code></pre>
-
-    <p>The agent goes back to <code>implement</code> with the last test output and your feedback. <strong>How the second diff differs from the first is what you write in REPORT.txt (7.6).</strong> When you are satisfied, <code>approve</code>.</p>
-
-    <h4>Change the stop condition</h4>
-
-    <p>Set <code>MAX_ATTEMPTS = 3</code> in <code>agent/agent_graph.py</code> to <code>1</code>, break the app again and run. If one attempt is not enough, the run goes to <code>give_up</code> and hands over to you. <span class="mark">"The agent gives up" is behaviour you designed.</span> Put it back to 3 afterwards.</p>
-
-    <p>Choosing <code>revise</code> sends the run back to <code>implement</code>. <span class="mark">The agent tries again using the previous test output and your feedback.</span></p>
-
-    <p><strong>An approval mechanism needs a route back, and a way to carry the reason.</strong> Approve-or-nothing is not an approval mechanism.</p>
-
-    <div class="note">
-      <span class="tag">MemorySaver keeps state in memory</span>
-      With a <code>thread_id</code> you can resume a paused run <span class="mark">within the same Python process.</span><br><br>
-      End the program and the MemorySaver state is gone. To resume on another day, use a durable checkpointer such as SQLite or PostgreSQL. <strong>For this exercise, pausing and resuming within a session is enough.</strong>
-    </div>
+    <p>Replace <code>KEY_POINTS</code> with your three. Each is a pair: the statement, and the words that must appear in a subtitle. <span class="mark">The check looks for the second part.</span> Short proper nouns or numbers work best.</p>
 
     <div class="warn">
-      <span class="tag">Put side effects after the approval</span>
-      Write any node containing <code>interrupt()</code> <span class="mark">on the assumption that it re-runs from the top when resumed.</span><br><br>
-      Put a write to the outside world before the approval and it happens again on every resume. Sending mail, charging a card, deleting a file: <strong>those go in a separate node after the approval.</strong><br><br>
-      Keeping nodes small is not only about readability.
+      <span class="tag">Facts need sources</span>
+      If a key point is a number like "7 million a day", keep one source for it. The facts in the narration are checked in 7.5. <strong>Invented tourist information is the worst thing a PR video can carry.</strong>
     </div>
 
-    <h3><span class="n">7.4.2</span>Where to put approvals</h3>
+    <h3><span class="n">7.4.2</span>Read the flow</h3>
+
+<pre><code>&quot;&quot;&quot;PART 7 — A production workflow for a short PR video.
+
+    draft ──► approve_storyboard ──► wait_for_clips ──► edit ──► check ──pass──► review ──► END
+                     │ (interrupt)         │ (interrupt)   ▲         │ fail
+                     └─ revise ─────────►draft             └─────────┘ (back to edit, MAX_ROUNDS)
+
+Two nodes talk to the model, and they are different kinds of node:
+
+  draft  — the model WRITES a plan (storyboard, narration). Plain text in, JSON out. No tools.
+  edit   — the model ORCHESTRATES: it looks at the clips that actually came back, decides the
+           order, the trims, the transitions and the subtitle timing, and calls the editing
+           tools itself. This is the agent from PART 6, pointed at a different job.
+
+Everything else is fixed code or a human decision.
+
+Run from the agewec-mumbai folder:   python agent/agent_video.py
+&quot;&quot;&quot;</code></pre>
+
+    <p>The Part 6 shape with three interrupts: <strong>storyboard approval</strong>, <strong>waiting for material</strong>, <strong>release decision</strong>. The second is the agent waiting for human work. And <code>edit</code>, like <code>implement</code> in Part 6, is a node with <span class="mark">a tool-using agent running inside it.</span></p>
+
+    <h3><span class="n">7.4.3</span>Plan and approval</h3>
+
+<pre><code>def draft(state: State) -&gt; State:
+    &quot;&quot;&quot;The model writes the storyboard and the narration. It does not touch any file.&quot;&quot;&quot;
+    feedback = state.get(&quot;feedback&quot;, &quot;&quot;)
+    prompt = f&quot;&quot;&quot;You are planning a PR video of at most {MAX_SECONDS} seconds.
+Theme: {THEME}
+Key points that MUST appear, each in at least one subtitle:
+{chr(10).join(&#x27;- &#x27; + k for k, _ in KEY_POINTS)}
+
+Return ONLY a JSON object with:
+- &quot;storyboard&quot;: a list of exactly {NUM_CUTS} cuts. Each cut: {{&quot;cut&quot;: n, &quot;seconds&quot;: 5-10, &quot;prompt&quot;: &quot;a text-to-video prompt for this shot, one sentence, no real people&#x27;s faces, no logos&quot;, &quot;subtitle&quot;: &quot;one short line shown on screen&quot;}}
+- &quot;narration&quot;: the voice-over for the whole video, at most {int(MAX_SECONDS * 2.3)} words, plain English.
+{(&#x27;Feedback from the human reviewer, apply it: &#x27; + feedback) if feedback else &#x27;&#x27;}&quot;&quot;&quot;
+    text = model.invoke(prompt).content
+    m = re.search(r&quot;\{.*\}&quot;, text, re.S)
+    data = json.loads(m.group(0))
+    return {**state, &quot;storyboard&quot;: data[&quot;storyboard&quot;], &quot;narration&quot;: data[&quot;narration&quot;],
+            &quot;round&quot;: state.get(&quot;round&quot;, 0) + 1}
+
+
+def approve_storyboard(state: State) -&gt; State:
+    &quot;&quot;&quot;Interrupt 1: the human reads every prompt before any clip is generated.&quot;&quot;&quot;
+    lines = [f&quot;cut{c[&#x27;cut&#x27;]}  {c[&#x27;seconds&#x27;]}s  subtitle: {c[&#x27;subtitle&#x27;]}\n        prompt: {c[&#x27;prompt&#x27;]}&quot;
+             for c in state[&quot;storyboard&quot;]]
+    answer = interrupt({
+        &quot;storyboard&quot;: &quot;\n&quot;.join(lines),
+        &quot;narration&quot;: state[&quot;narration&quot;],
+        &quot;question&quot;: &quot;Approve this storyboard? (approve / revise / stop)&quot;,
+    })
+    return {**state, &quot;decision&quot;: answer[&quot;decision&quot;], &quot;feedback&quot;: answer.get(&quot;feedback&quot;, &quot;&quot;)}</code></pre>
+
+    <p><code>draft</code> is the only node that calls the model. It returns the storyboard and script as JSON and touches no file. The run stops at <code>approve_storyboard</code>, and <span class="mark">you read every prompt.</span> What to look for:</p>
+
+    <ul>
+      <li>Do the three key points appear in some cut's subtitle?</li>
+      <li>Do any prompts contain faces, celebrities or logos (7.3)?</li>
+      <li>Do the seconds add up to more than 60? <strong>If so, send it back with revise</strong></li>
+    </ul>
+
+    <p>If something is off, type <code>revise</code> and one line of what should change. The model rewrites with your feedback.</p>
+
+    <h3><span class="n">7.4.4</span>Waiting for material</h3>
+
+<pre><code>def wait_for_clips(state: State) -&gt; State:
+    &quot;&quot;&quot;Interrupt 2: the human generates the clips with the allowed tools and puts them in assets/.&quot;&quot;&quot;
+    expected = [f&quot;assets/cut{c[&#x27;cut&#x27;]}.mp4&quot; for c in state[&quot;storyboard&quot;]]
+    answer = interrupt({
+        &quot;instruction&quot;: &quot;Generate each cut with the allowed tools, save them as the files below, &quot;
+                       &quot;and write one line per cut in assets/SOURCES.txt. Missing cuts are fine; &quot;
+                       &quot;the editor will work with what is there. Then type: done&quot;,
+        &quot;files&quot;: expected,
+    })
+    return {**state, &quot;decision&quot;: answer[&quot;decision&quot;]}</code></pre>
+
+    <p>While the run waits, you make each cut by one of the means in 7.3, save it as <code>assets/cut1.mp4 …</code>, and write one line per cut in <code>SOURCES.txt</code>. <span class="mark">They do not all have to be there.</span> The editing agent builds with what exists, knowing what is missing. Type <code>done</code> to continue.</p>
+
+    <h3><span class="n">7.4.5</span>Editing: orchestration</h3>
+
+    <p>The tools handed to the editing agent. Each is small, makes no judgement, and logs every call.</p>
+
+<pre><code>@tool
+def list_assets() -&gt; str:
+    &quot;&quot;&quot;List the clips in assets/ with their length in seconds, width and height, and whether SOURCES.txt has a line for them.&quot;&quot;&quot;
+    sources = vt.read_sources()
+    rows = []
+    for p in sorted(vt.ASSETS.glob(&quot;cut*.mp4&quot;)):
+        n = int(p.stem[3:])
+        w, h = vt.probe_size(p)
+        rows.append({&quot;cut&quot;: n, &quot;file&quot;: p.name, &quot;seconds&quot;: round(vt.probe_duration(p), 1),
+                     &quot;width&quot;: w, &quot;height&quot;: h, &quot;has_source&quot;: n in sources})
+    _log(f&quot;list_assets -&gt; {len(rows)} clips&quot;)
+    return json.dumps(rows)
+
+
+@tool
+def contact_sheet() -&gt; str:
+    &quot;&quot;&quot;Make one image with a frame from each clip (first, middle, last) so you can see what each cut shows. Returns the image path.&quot;&quot;&quot;
+    paths = sorted(vt.ASSETS.glob(&quot;cut*.mp4&quot;))
+    vt.BUILD.mkdir(exist_ok=True)
+    tiles = []
+    for p in paths:
+        d = vt.probe_duration(p)
+        for k, t in enumerate((0.2, d / 2, max(0.2, d - 0.3))):
+            out = vt.BUILD / f&quot;sheet_{p.stem}_{k}.png&quot;
+            vt.frame_at(p, t, out)
+            tiles.append(Image.open(out).resize((320, 180)))
+    cols = 3
+    rows = (len(tiles) + cols - 1) // cols
+    sheet = Image.new(&quot;RGB&quot;, (320 * cols, 180 * rows), &quot;black&quot;)
+    for i, im in enumerate(tiles):
+        sheet.paste(im, ((i % cols) * 320, (i // cols) * 180))
+    out = vt.BUILD / &quot;contact_sheet.png&quot;
+    sheet.save(out)
+    _log(&quot;contact_sheet -&gt; build/contact_sheet.png&quot;)
+    return str(out)
+
+
+@tool
+def add_to_timeline(cut: int, seconds: float, start: float = 0.0) -&gt; str:
+    &quot;&quot;&quot;Append a clip to the timeline: cut number, how many seconds to use, and where in the clip to start (seconds). Clips are normalized to 1280x720 here.&quot;&quot;&quot;
+    src = vt.ASSETS / f&quot;cut{cut}.mp4&quot;
+    if not src.exists():
+        return f&quot;ERROR: {src.name} does not exist&quot;
+    dst = vt.BUILD / f&quot;t{len(_timeline) + 1}_cut{cut}.mp4&quot;
+    vt.normalize_clip(src, dst, seconds, start=start)
+    _timeline.append({&quot;cut&quot;: cut, &quot;seconds&quot;: seconds, &quot;start&quot;: start, &quot;file&quot;: str(dst)})
+    _log(f&quot;add_to_timeline(cut={cut}, seconds={seconds}, start={start})&quot;)
+    return f&quot;timeline now has {len(_timeline)} clips, total {sum(c[&#x27;seconds&#x27;] for c in _timeline):.1f}s&quot;
+
+
+@tool
+def clear_timeline() -&gt; str:
+    &quot;&quot;&quot;Empty the timeline to start the order again.&quot;&quot;&quot;
+    _timeline.clear()
+    _log(&quot;clear_timeline&quot;)
+    return &quot;timeline cleared&quot;
+
+
+@tool
+def join_timeline(fade: float = 0.6) -&gt; str:
+    &quot;&quot;&quot;Join the timeline clips in order with a crossfade of `fade` seconds between each pair. Writes build/joined.mp4 and returns its length.&quot;&quot;&quot;
+    if not _timeline:
+        return &quot;ERROR: timeline is empty&quot;
+    vt.concat_with_crossfade([c[&quot;file&quot;] for c in _timeline], vt.BUILD / &quot;joined.mp4&quot;, fade=fade)
+    d = vt.probe_duration(vt.BUILD / &quot;joined.mp4&quot;)
+    _log(f&quot;join_timeline(fade={fade}) -&gt; {d:.1f}s&quot;)
+    return f&quot;joined.mp4 is {d:.1f}s&quot;
+
+
+@tool
+def add_subtitles(subtitles_json: str) -&gt; str:
+    &quot;&quot;&quot;Burn subtitles onto build/joined.mp4. subtitles_json is a JSON list of {&quot;start&quot;: seconds, &quot;end&quot;: seconds, &quot;text&quot;: &quot;...&quot;}. Writes build/subtitled.mp4.&quot;&quot;&quot;
+    subs = json.loads(subtitles_json)
+    LAST_SUBTITLES[:] = [s[&quot;text&quot;] for s in subs]
+    vt.burn_subtitles(vt.BUILD / &quot;joined.mp4&quot;, vt.BUILD / &quot;subtitled.mp4&quot;, subs)
+    _log(f&quot;add_subtitles({len(subs)} lines)&quot;)
+    return f&quot;{len(subs)} subtitles burned&quot;
+
+
+@tool
+def add_narration(text: str) -&gt; str:
+    &quot;&quot;&quot;Turn the narration text into speech and put it under build/subtitled.mp4. Writes output.mp4 and returns the audio and video lengths.&quot;&quot;&quot;
+    audio_len = vt.narrate(text, vt.BUILD / &quot;narration.mp3&quot;)
+    vt.mux_audio(vt.BUILD / &quot;subtitled.mp4&quot;, vt.BUILD / &quot;narration.mp3&quot;, vt.PROJECT_ROOT / &quot;output.mp4&quot;)
+    video_len = vt.probe_duration(vt.PROJECT_ROOT / &quot;output.mp4&quot;)
+    _log(f&quot;add_narration({len(text.split())} words) -&gt; audio {audio_len:.1f}s, video {video_len:.1f}s&quot;)
+    return f&quot;output.mp4 written. audio {audio_len:.1f}s, video {video_len:.1f}s&quot;
+
+
+EDIT_TOOLS = [list_assets, contact_sheet, add_to_timeline, clear_timeline, join_timeline, add_subtitles, add_narration]</code></pre>
+
+    <p>The agent itself is the same <code>create_react_agent</code> as in Part 6. What differs is the tools, the instructions, and that <strong>the first message contains an image</strong>. The 27B on the shared server can read images, so it is shown a sheet with the first, middle and last frame of every clip (<code>contact_sheet</code>) before it decides anything.</p>
+
+<pre><code>EDITOR_SYSTEM = f&quot;&quot;&quot;You are the editor of a short PR video. You have tools to inspect the clips and to build the video.
+Work like this:
+1. Call list_assets, then contact_sheet, and look at the sheet before deciding anything.
+2. Decide the order and the length of each clip. Follow the storyboard where the clips allow it;
+   if a clip is missing, too short, or does not show what its prompt asked for, say so and adapt
+   (reorder, reuse a good clip for two beats, drop a cut).
+3. Build the timeline with add_to_timeline, then join_timeline, then add_subtitles, then add_narration.
+4. The finished video must be between {MIN_SECONDS} and {MAX_SECONDS} seconds.
+   Each of these phrases must appear in some subtitle: {&#x27;, &#x27;.join(repr(w) for _, w in KEY_POINTS)}.
+   The narration must not be longer than the video: cut words before you cut clips.
+5. Finish with a short summary of the decisions you made and why, especially where you departed from the storyboard.
+Never invent clip numbers that list_assets did not return.&quot;&quot;&quot;
+
+editor = create_react_agent(model, et.EDIT_TOOLS, prompt=EDITOR_SYSTEM)
+
+
+def edit(state: State) -&gt; State:
+    et.LOG.clear()
+    et._timeline.clear()
+    brief = {&quot;storyboard&quot;: state[&quot;storyboard&quot;], &quot;narration&quot;: state[&quot;narration&quot;]}
+    text = &quot;Storyboard and narration as approved:\n&quot; + json.dumps(brief, indent=1)
+    if state.get(&quot;feedback&quot;):
+        text += &quot;\n\nThe last attempt failed the check. Fix these:\n&quot; + state[&quot;feedback&quot;]
+    # The contact sheet is made first so the model can SEE the clips in its first message.
+    sheet = et.contact_sheet.invoke({})
+    msg = HumanMessage(content=[{&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: text}, et.image_message(sheet)])
+    result = editor.invoke({&quot;messages&quot;: [msg]}, {&quot;recursion_limit&quot;: 40})
+    summary = result[&quot;messages&quot;][-1].content
+    return {**state, &quot;edit_summary&quot;: summary, &quot;edit_rounds&quot;: state.get(&quot;edit_rounds&quot;, 0) + 1}</code></pre>
+
+    <p>The instructions (<code>EDITOR_SYSTEM</code>) do not say what order to use. <span class="mark">They say: look before you decide, explain any departure from the storyboard, obey these constraints, summarize your decisions at the end.</span> The order itself is decided by the agent, after looking at the material.</p>
+
+    <div class="note">
+      <span class="tag">Follow what it did through the log</span>
+      The weakness of orchestration is that it is hard to see what happened. So the tools keep the log. Lines like <code>add_to_timeline(cut=1, seconds=8, start=0.5)</code> accumulate in order, and <span class="mark">at the release decision (7.4.7) they are shown to you together with the agent's own summary.</span> When the run ends they are written to <code>EDIT_LOG.txt</code>.
+    </div>
+
+    <h3><span class="n">7.4.6</span>The check</h3>
+
+<pre><code>def check(state: State) -&gt; State:
+    problems = []
+    out = vt.PROJECT_ROOT / &quot;output.mp4&quot;
+    if not out.exists():
+        problems.append(&quot;output.mp4 was not written: the editor did not finish the tool sequence&quot;)
+    else:
+        dur = vt.probe_duration(out)
+        if not (MIN_SECONDS &lt;= dur &lt;= MAX_SECONDS):
+            problems.append(f&quot;length is {dur:.1f}s, must be between {MIN_SECONDS} and {MAX_SECONDS}s&quot;)
+        narr = vt.BUILD / &quot;narration.mp3&quot;
+        if narr.exists() and vt.probe_duration(narr) &gt; dur + 0.5:
+            problems.append(&quot;narration is longer than the video: shorten the narration&quot;)
+        subs_text = &quot; &quot;.join(et.LAST_SUBTITLES).lower()      # the subtitles the editor actually burned
+        for statement, words in KEY_POINTS:
+            if words.lower() not in subs_text:
+                problems.append(f&quot;no subtitle mentions &#x27;{words}&#x27; (key point: {statement})&quot;)
+        sources = vt.read_sources()
+        for c in et._timeline:
+            if c[&quot;cut&quot;] not in sources:
+                problems.append(f&quot;cut{c[&#x27;cut&#x27;]} is on the timeline but has no line in assets/SOURCES.txt&quot;)
+    text = &quot;OK&quot; if not problems else &quot;\n&quot;.join(&quot;- &quot; + p for p in problems)
+    print(&quot;\nCHECK:&quot;, text)
+    return {**state, &quot;check_output&quot;: text, &quot;passed&quot;: not problems, &quot;feedback&quot;: &quot;&quot; if not problems else text}</code></pre>
+
+    <p>The check is a fixed procedure. Whatever the editing agent decided, it is measured here with the same ruler. Failures come out as sentences and go back to <code>edit</code> as <code>feedback</code>, up to <code>MAX_ROUNDS</code> times.</p>
 
     <table>
-      <thead><tr><th>Put one</th><th>Why</th></tr></thead>
+      <thead><tr><th>Check</th><th>What the editing agent does on failure</th></tr></thead>
       <tbody>
-        <tr><td><strong>Before anything irreversible</strong></td><td>Deleting, sending, publishing, charging. Always stop before something you cannot undo</td></tr>
-        <tr><td><strong>When the blast radius grows</strong></td><td>Stop when the number of files or lines changed passes a threshold</td></tr>
-        <tr><td><strong>When the agent is stuck</strong></td><td>Handing back after three attempts is a correct ending, not a failure</td></tr>
-        <tr><td><strong>When it reaches outside</strong></td><td>Network calls, external APIs</td></tr>
+        <tr><td>output.mp4 exists</td><td>Redo the tool sequence</td></tr>
+        <tr><td>Length between 20 and 60 s</td><td>Trim or extend clips</td></tr>
+        <tr><td>Narration no longer than the video</td><td>Cut words, then regenerate the audio</td></tr>
+        <tr><td>Key-point words in the subtitles</td><td>Fix the subtitles</td></tr>
+        <tr><td>A source line for every cut used</td><td>Only a human can fix this: write it in <code>SOURCES.txt</code></td></tr>
       </tbody>
     </table>
 
+    <h3><span class="n">7.4.7</span>Run it</h3>
+
+<pre><code>python agent/agent_video.py</code></pre>
+
+    <p><code>draft</code> takes some tens of seconds at first (waiting for the 27B). After you place the clips and type <code>done</code>, you see the editing agent calling tools as <code>[tool] …</code> lines. At the end, <code>output.mp4</code>, the agent's summary of its decisions and the tool log are shown, and the run stops for the release decision.</p>
+
     <div class="note">
-      <span class="tag">Back to Exercise 0</span>
-      Remember the column headed <strong>"check a human must keep"</strong> in <a href="exercise0.html">Exercise 0</a>. <span class="mark">What you wrote there in words, you are now placing in code.</span>
+      <span class="tag">Revise at least once</span>
+      Even if the first storyboard is fine, find one thing to say and send it back. <span class="mark">The point is to confirm the route back works.</span> As in Part 6, an approval step is built so that things can be sent back.
     </div>
   </section>
+
 
   <section class="sec" id="s7-5">
-    <h2><span class="n">7.5</span>Optional: connect to live data with MCP</h2>
+    <h2><span class="n">7.5</span>Why you still cannot publish</h2>
 
-    <p>So far you wrote the tools yourself. <span class="mark">MCP is a common standard for connecting existing external tools to an agent.</span></p>
-
-    <p>In this section you build one read-only MCP tool, and confirm that <strong>a change in outside data changes what the agent decides.</strong></p>
-
-    <div class="note">
-      <span class="tag">Why go back to Cline here</span>
-      Connecting your own agent to MCP needs additional client code. <span class="mark">This section uses Cline as the MCP client.</span> The point is connecting a tool that lives in another process, through a common format. Connecting from your own agent is covered in <a href="appendix-c.html">Appendix C</a>.
-    </div>
+    <p><code>output.mp4</code> exists. The check passed. <span class="mark">You still cannot publish it as it is.</span> The check only looked at shape.</p>
 
     <table>
-      <thead><tr><th>Your tools from 7.1</th><th>An MCP tool</th></tr></thead>
+      <thead><tr><th>What a human confirms before release</th><th>Why a machine cannot</th></tr></thead>
       <tbody>
-        <tr><td>Functions in the same Python process</td><td>Functions provided by a separate server process</td></tr>
-        <tr><td>You write the schema</td><td>The server sends the tool definitions</td></tr>
-        <tr><td>Tied to your repository</td><td>Reusable from any MCP client</td></tr>
+        <tr><td>Are the facts in the narration right (numbers, places, history)?</td><td>The 27B writes facts that sound right. It holds no evidence</td></tr>
+        <tr><td>Are the sources real, and within the terms?</td><td>The check can see that a line exists, not whether it is true</td></tr>
+        <tr><td>Would someone who lives in Mumbai feel uncomfortable watching it?</td><td>The prejudice on the flip side of "charm" is invisible to a machine</td></tr>
+        <tr><td>Do the key points work as a reason to come?</td><td>A word in a subtitle is not the same as a message that lands</td></tr>
       </tbody>
     </table>
 
-    <h3><span class="n">7.5.1</span>Start a kitchen board server</h3>
-
-<pre><code>pip install mcp</code></pre>
-
-<pre><code># tools/kitchen_board_mcp.py
-import json
-from pathlib import Path
-from mcp.server.fastmcp import FastMCP
-
-mcp = FastMCP("Kitchen Board")
-DATA_PATH = Path(__file__).parent.parent / "data" / "kitchen_board.json"
-
-
-@mcp.tool()
-def get_kitchen_board() -&gt; list[dict]:
-    &quot;&quot;&quot;Get the current kitchen board. Use only when deciding order priority.&quot;&quot;&quot;
-    return json.loads(DATA_PATH.read_text(encoding="utf-8"))
-
-
-if __name__ == "__main__":
-    mcp.run(transport="stdio")</code></pre>
-
-<pre><code>// data/kitchen_board.json
-[
-  {"order_id": 31, "table": 12, "item": "Prawn Curry",
-   "status": "pending", "wait_minutes": 14, "allergy_alert": true},
-  {"order_id": 32, "table": 4,  "item": "Chicken Biryani",
-   "status": "pending", "wait_minutes": 11, "allergy_alert": false},
-  {"order_id": 33, "table": 8,  "item": "Masala Dosa",
-   "status": "cooking", "wait_minutes": 9,  "allergy_alert": false}
-]</code></pre>
-
-<pre><code>{
-  "mcpServers": {
-    "kitchen-board": {
-      "command": "python",
-      "args": ["tools/kitchen_board_mcp.py"]
-    }
-  }
-}</code></pre>
-
-    <div class="warn">
-      <span class="tag">This configuration is for Cline</span>
-      <span class="mark">The <code>mcpServers</code> block is Cline's.</span> The agent you built in 7.3 does not read it. Your own agent would need its own MCP client.
-    </div>
-
-    <h4>Check the connection</h4>
-
-    <div class="prompt"><span class="tag">PROMPT</span>Call the MCP tool get_kitchen_board exactly once,
-and list the three order_id values it returns.</div>
-
-    <p>If the tool name appears in the run history and three numbers come back, you are connected.</p>
-
-    <h3><span class="n">7.5.2</span>Mission: read the kitchen board</h3>
-
-    <div class="warn">
-      <span class="tag">The situation</span>
-      12:18. Orders are queued on the board. Some have been waiting a long time, one has an allergy alert, and one is already cooking.<br><br>
-      Have the agent decide <strong>the next two actions to take.</strong> <span class="mark">The order list is not inside the agent.</span> Without fetching it from MCP, it cannot decide anything.
-    </div>
-
-    <div class="prompt"><span class="tag">PROMPT</span>You are a kitchen assistant agent.
-
-Fetch the current order list from the MCP tool get_kitchen_board,
-and give the next two actions to take, each with a reason.
-
-For any order with an allergy alert, do not say "start cooking".
-Report it as needing human confirmation.</div>
-
-<pre><code>kitchen-board.get_kitchen_board({})
-  -&gt; returns the current orders
-  -&gt; Agent: "Start cooking order 32. It has waited 11 minutes
-     and carries no alert.
-     Order 31 has waited longest at 14 minutes, but it has a
-     shellfish allergy alert, so it needs human confirmation
-     rather than being started."</code></pre>
-
-    <p>Order 31 has waited the longest. <span class="mark">It also has an allergy alert.</span> So the agent does not start it, and asks a person instead.</p>
-
-    <h3><span class="n">7.5.3</span>Change the situation and ask again</h3>
-
-    <div class="warn">
-      <span class="tag">Update</span>
-      The order for table 4 has been cancelled.<br>
-      Table 15 has been waiting 18 minutes, with no allergy alert.
-    </div>
-
-    <p>Edit <code>data/kitchen_board.json</code>, then send the same question again. <strong>Do not change the agent's code or the prompt.</strong></p>
-
-    <p>The priority changes. <span class="mark">Four things to notice.</span></p>
-
-    <ol>
-      <li>The agent <strong>was not remembering</strong> the order list</li>
-      <li>It fetches <strong>the current situation</strong> through MCP every time</li>
-      <li>When the outside data changes, <strong>the decision changes</strong></li>
-      <li>The allergy call is still <span class="mark">handed back to a person</span></li>
-    </ol>
-
-    <div class="note">
-      <span class="tag">This is where MCP earns its place</span>
-      MCP gets interesting when an agent goes and gets <span class="mark">the current state of the world</span> and changes its behaviour accordingly.<br><br>
-      The agent knows nothing about the restaurant in advance. It uses a tool to find out.
-    </div>
-
-    <h3><span class="n">7.5.4</span>What is happening</h3>
-
-    <table>
-      <thead><tr><th></th><th></th></tr></thead>
-      <tbody>
-        <tr><td><strong>1</strong></td><td><code>kitchen_board_mcp.py</code> runs in a separate process from the agent</td></tr>
-        <tr><td><strong>2</strong></td><td>At startup the agent receives the name, description and arguments of the available tools</td></tr>
-        <tr><td><strong>3</strong></td><td>The agent chooses <code>get_kitchen_board</code></td></tr>
-        <tr><td><strong>4</strong></td><td>The MCP server returns the current data</td></tr>
-        <tr><td><strong>5</strong></td><td>The agent reads the result and decides what to do next</td></tr>
-      </tbody>
-    </table>
-
-    <p><span class="mark">The steps are the same four as in 7.1.</span> With MCP, the tool happens to live in another process.</p>
-
-    <h3><span class="n">7.5.5</span>Where this could go</h3>
-
-    <table>
-      <thead><tr><th>Here</th><th>Next</th></tr></thead>
-      <tbody>
-        <tr><td>A JSON kitchen board</td><td>Live data from SQLite or a business API</td></tr>
-        <tr><td>Read only</td><td>Updates, behind a human approval</td></tr>
-      </tbody>
-    </table>
-
-    <p>Before you take the second row, <span class="mark">remember where you decided approvals go in 7.4.</span> The moment reading becomes writing, an irreversible operation enters the picture.</p>
-
-    <div class="warn">
-      <span class="tag">Two rules when connecting things</span>
-      <strong>Enable the smallest set of tools the work needs.</strong> Every enabled tool definition is sent to the model on every call. Turn off what you are not using.<br><br>
-      <strong>Only connect servers you trust.</strong> <span class="mark">An MCP server runs code on your machine, with whatever permissions you gave the agent.</span>
-    </div>
-
-    <p>In this part you implemented tool calling, a loop, branching, a stopping condition, human approval, interruption, resuming and fetching outside data. <strong>Part 8 applies the same structure to video production.</strong></p>
+    <p>Confirm these four, then press <code>approve</code>. That is the producer's job. <strong>What the agent did was write, look at the material and join it, and measure.</strong> You handed the joining decisions to the agent, but they are in the log, they were measured by the check, and you looked last.</p>
   </section>
 
+
   <section class="sec" id="s7-6">
-    <h2><span class="n">7.6</span>What to hand in</h2>
+    <h2><span class="n">7.6</span>Hand-in and peer evaluation</h2>
 
-    <p>You hand in <strong>one zip file</strong>: the <code>vibe-chat</code> folder with <code>REPORT.txt</code> added and <code>agent/config.py</code> removed.</p>
+    <p>There are two hand-ins. <strong>The video goes to the audience; the process goes to the instructor.</strong></p>
 
-<pre><code>vibe-chat/
-├── app.py, templates/, tests/
-├── agent/                 ← without config.py
-└── REPORT.txt             ← add this</code></pre>
+    <table>
+      <thead><tr><th>What</th><th>Where</th><th>Who sees it</th><th>Lens</th></tr></thead>
+      <tbody>
+        <tr><td><code>output.mp4</code> uploaded to Google Drive, shared with "anyone with the link", and that URL</td><td>The <strong>Assignment 2</strong> card in nmims2026</td><td>Seven classmates</td><td>Q1–Q8: as a viewer from anywhere in the world, does it make you want to go to Mumbai?</td></tr>
+        <tr><td>A zip of the <code>agewec-mumbai</code> folder (without <code>config.py</code>; with <code>assets/</code>, <code>SOURCES.txt</code>, <code>EDIT_LOG.txt</code> and <code>REPORT.txt</code>)</td><td>Google Form</td><td>Instructor</td><td>Steps, approval, the way back, sources</td></tr>
+      </tbody>
+    </table>
 
-    <p><code>REPORT.txt</code> has three entries.</p>
+    <h3>REPORT.txt</h3>
 
     <table>
       <thead><tr><th></th><th>Write</th></tr></thead>
       <tbody>
-        <tr><td><strong>1</strong></td><td>The one line you gave with <code>revise</code>, and how the second diff differed from the first</td></tr>
-        <tr><td><strong>2</strong></td><td>What happened with <code>MAX_ATTEMPTS = 1</code> (fixed in one go, or went to give_up)</td></tr>
-        <tr><td><strong>3</strong></td><td>Only if you did 7.5: how the agent's judgement changed before and after editing <code>kitchen_board.json</code></td></tr>
+        <tr><td><strong>1</strong></td><td>The one line you gave with <code>revise</code> at storyboard approval, and how the storyboard changed</td></tr>
+        <tr><td><strong>2</strong></td><td>One place where the editing agent departed from the storyboard (from the decision summary in <code>EDIT_LOG.txt</code>), and whether you agreed with it</td></tr>
+        <tr><td><strong>3</strong></td><td>One fact from the narration that you verified, and its source</td></tr>
+        <tr><td><strong>4</strong></td><td>If a check failed: its sentence and how the agent fixed it. If none failed, say so</td></tr>
       </tbody>
     </table>
 
-    <div class="note">
-      <span class="tag">Entry 1 matters most</span>
-      <span class="mark">A record of sending the change back and having it redone counts for more than a change approved first time.</span> An approval step is not built so that you can approve. It is built so that you can send things back.<br><br>
-      Even if the first diff is fine, <strong>find one thing to say and send it back.</strong> The point is to confirm that the route back works.
-    </div>
-
-    <p>Right-click the <code>vibe-chat</code> folder, compress it, name it <code>PART7_StudentID.zip</code>, and upload it here.</p>
+    <p>Right-click the <code>agewec-mumbai</code> folder, compress it, name it <code>PART7_StudentID.zip</code>, and upload it here.</p>
     <p><a href="FORM_URL_PART7" target="_blank" rel="noopener"><strong>FORM_URL_PART7</strong></a></p>
 
-    <h3><span class="n">7.6.1</span>Something to think about</h3>
+    <h3>Peer evaluation</h3>
 
-    <p>Preparation for the next part. You do not have to write an answer.</p>
+    <p><span class="mark">Keep the Drive link open for one month after submitting.</span> Peer evaluation and grading happen in that time.<br><br>Once you submit your video link in nmims2026, seven classmates' videos are assigned to you. <span class="mark">Watch as a viewer and answer Q1–Q8.</span> Process is not judged there; only whether you would want to go, and whether you would share it.</p>
 
-    <p>The stopping condition, the approval points and the send-back route you built: <span class="mark">were they specific to fixing code?</span></p>
-
-    <p><strong>Or would they apply to completely different work?</strong></p>
+    <div class="prompt"><span class="tag">FINAL</span>Back to the first question: what can agentic AI do?
+This part's answer: within the key points a human chose and the approvals a human gave, it can write, look at material and assemble it, and measure.
+You chose the theme, read the prompts, made the material, checked the facts, and decided to publish.
+That is the producer's job, and from here on everyone sits in that seat.</div>
   </section>
 
 
-
   <nav class="pager">
-    <a class="prev" href="part6.html"><span class="dir">← PREV</span><span class="ttl">PART 6　Add features without breaking things</span></a>
-    <a class="next" href="part8.html"><span class="dir">NEXT →</span><span class="ttl">PART 8　Run video production with an agent</span></a>
+    <a class="prev" href="part6.html"><span class="dir">← PREV</span><span class="ttl">PART 6　Build the agent yourself</span></a>
+    <a class="next" href="appendix-a.html"><span class="dir">NEXT →</span><span class="ttl">APPENDIX A　Running everything with local models</span></a>
   </nav>
 
 </div>

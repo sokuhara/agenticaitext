@@ -160,7 +160,7 @@ th{background:var(--accent-soft);font-weight:700}
 <body>
 
 <nav class="rail" aria-label="Parts">
-  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="part8.html">8</a><a href="appendix-a.html" aria-current="page">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
+  <div class="rail-inner"><a href="index.html">0</a><a href="exercise0.html">Ex0</a><a href="setup.html">Set</a><a href="part1.html">1</a><a href="part2.html">2</a><a href="part3.html">3</a><a href="part4.html">4</a><a href="part5.html">5</a><a href="part6.html">6</a><a href="part7.html">7</a><a href="appendix-a.html" aria-current="page">A</a><a href="appendix-b.html">B</a><a href="appendix-c.html">C</a></div>
 </nav>
 
 <div class="wrap">
@@ -173,7 +173,7 @@ th{background:var(--accent-soft);font-weight:700}
 
   <div class="bridge">
     <dl>
-      <dt>Previously</dt><dd>Part 8 applied the agent design to video production.</dd>
+      <dt>Previously</dt><dd>Part 7 applied the agent design to video production.</dd>
       <dt>This part</dt><dd>Ollama setup, the two-model split, connecting to a shared server, and what to do when things do not work.</dd>
       <dt>Next</dt><dd>Appendix B records the original Node.js and TypeScript build.</dd>
     </dl>
@@ -228,7 +228,7 @@ th{background:var(--accent-soft);font-weight:700}
 
     <p>The default Ollama build of Qwen3.8 27B is around 18 GB at Q4_K_M quantisation, with tool calling and thinking. <span class="mark">Tool calling is exactly what a coding agent needs, so whether a model supports it is the deciding factor.</span> With about 24 GB of VRAM it fits at a usable context length.</p>
 
-    <p>Qwen3.5 4B also supports tool calling. It is enough for work like Exercise 1 in Part 2, where the target is clear and each change is small. <strong>It is too small for the long implementation loops in Part 6.</strong></p>
+    <p>Qwen3.5 4B also supports tool calling. It is enough for work like Exercise 1 in Part 2, where the target is clear and each change is small. <strong>It is too small for the long implementation loops in Part 5.</strong></p>
 
     <p><span class="mark">Treat the 4B as good for small, precise requests</span>, and use the 27B from Part 5 onwards.</p>
 
@@ -266,7 +266,7 @@ ollama ps</code></pre>
 
     <p>A model supporting a long context does nothing on its own. <strong>The runtime default is what applies unless you set <code>num_ctx</code>.</strong></p>
 
-    <p>The reliable approach is a derived model with the setting baked in. <strong>This also matters when you run your own agent in Part 7.</strong> Setting <code>num_ctx</code> in code affects one call; changing the model default is safer.</p>
+    <p>The reliable approach is a derived model with the setting baked in. <strong>This also matters when you run your own agent in Part 6.</strong> Setting <code>num_ctx</code> in code affects one call; changing the model default is safer.</p>
 
 <pre><code># Modelfile.agent
 FROM qwen3.8:27b
@@ -474,7 +474,7 @@ cat ~/.continue/.env</code></pre>
       <span class="tag">If custom headers are not supported</span>
       Some versions have no field for adding headers. Two ways round it.<br><br>
       <strong>1. Tunnel.</strong> Use <code>cloudflared access tcp</code> to forward a local port, and set the Base URL to <code>http://localhost:&lt;port&gt;/v1</code>. The tunnel handles authentication, so the extension never needs the headers.<br><br>
-      <strong>2. A local proxy.</strong> A small server that adds the headers and forwards. After Part 7 you can write it in a few dozen lines.
+      <strong>2. A local proxy.</strong> A small server that adds the headers and forwards. After Part 6 you can write it in a few dozen lines.
     </div>
 
     <div class="warn">
@@ -531,7 +531,7 @@ cat ~/.continue/.env</code></pre>
 
     <p>Cline's file rewriting requires the target string to match exactly. Local models tend to need several retries here.</p>
 
-    <p>The remedy is to <strong>touch fewer files and change less per request.</strong> Apply the "cut the work into small iterations" idea from Part 6 more aggressively.</p>
+    <p>The remedy is to <strong>touch fewer files and change less per request.</strong> Apply the "cut the work into small iterations" idea from Part 5 more aggressively.</p>
 
     <h3><span class="n">A.6.3</span>Tool calls printed as text</h3>
 
@@ -678,7 +678,7 @@ cat ~/.continue/.env</code></pre>
       Install it as a Feature, or use an image with <code>uv</code> already in it. <strong><code>postCreateCommand</code> should only contain things already on the PATH.</strong>
     </div>
 
-    <p>The Node.js Feature is there because many MCP servers are distributed through <code>npx</code>. You are not writing JavaScript in the application (Part 7).</p>
+    <p>The Node.js Feature is there because many MCP servers are distributed through <code>npx</code>. You are not writing JavaScript in the application (Part 6).</p>
 
     <p>The same <code>devcontainer.json</code> works in GitHub Codespaces. <span class="mark">If some students have no Docker locally, that is the more reliable route.</span></p>
   </section>
@@ -859,7 +859,7 @@ cat controls.txt | ollama run qwen3.5:4b</code></pre>
   <section class="sec" id="sa-12">
     <h2><span class="n">A.12</span>Enabling the GPU in browser Colab</h2>
 
-    <p>Part 8 connects to Colab from VS Code. <span class="mark">If that does not work for you, the browser is fine.</span></p>
+    <p>Part 7 connects to Colab from VS Code. <span class="mark">If that does not work for you, the browser is fine.</span></p>
 
     <p>But <strong>you have to enable the GPU yourself.</strong> Forget it and the video generation never finishes.</p>
 
@@ -891,7 +891,7 @@ cat controls.txt | ollama run qwen3.5:4b</code></pre>
 
 
   <nav class="pager">
-    <a class="prev" href="part8.html"><span class="dir">← PREV</span><span class="ttl">PART 8　Run video production with an agent</span></a>
+    <a class="prev" href="part7.html"><span class="dir">← PREV</span><span class="ttl">PART 7　Run video production with an agent</span></a>
     <a class="next" href="appendix-b.html"><span class="dir">NEXT →</span><span class="ttl">APPENDIX B　The Node.js / TypeScript build</span></a>
   </nav>
 
